@@ -1,0 +1,6 @@
+{
+  "name": "NexoCampo 2026 - Supervisión Agrícola",
+  "description": "Versión experimental e independiente de NexoCampo para supervisión de labores agrícolas, registro de jornadas, asistencia y rendimiento offline-first.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

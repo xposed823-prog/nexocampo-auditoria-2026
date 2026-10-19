@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>NexoCampo 2026 - Supervisión Agrícola</title>
+    <meta name="description" content="PWA Offline-First de alto rendimiento para supervisión de labores agrícolas, registro de jornadas, asistencia y rendimiento." />
+    
+    <!-- PWA y Metadatos Móviles -->
+    <meta name="theme-color" content="#15803d" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="NexoCampo" />
+    <meta name="application-name" content="NexoCampo" />
+    <meta name="msapplication-TileColor" content="#15803d" />
+    
+    <!-- Enlace al Manifiesto PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Iconos de Aplicación -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    
+    <!-- Redes Sociales y Open Graph -->
+    <meta property="og:title" content="NexoCampo 2026 - Supervisión Agrícola" />
+    <meta property="og:description" content="PWA Offline-First de alto rendimiento para supervisión de labores agrícolas, registro de jornadas, asistencia y rendimiento." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/pwa-512x512.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NexoCampo 2026 - Supervisión Agrícola" />
+    <meta name="twitter:description" content="PWA Offline-First de alto rendimiento para supervisión de labores agrícolas, registro de jornadas, asistencia y rendimiento." />
+  </head>
+  <body class="bg-slate-50 text-slate-900 antialiased select-none">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Registro preventivo de Service Worker al cargar el documento
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+            .then((reg) => {
+              console.log('[NexoCampo HTML] Service Worker activo con scope:', reg.scope);
+            })
+            .catch((err) => {
+              console.warn('[NexoCampo HTML] Error en registro preliminar de SW:', err);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
