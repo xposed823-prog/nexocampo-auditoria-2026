@@ -21,6 +21,7 @@ import {
   determinarEstadoVisual,
   EstadoVisualNegocio
 } from './domain/formValidators';
+import { COLABORADORES_CATALOGO, AREAS_AGRONOMICAS, LABORES_AGRONOMICAS } from './domain/catalogoAgronomico';
 
 // Componentes Modulares Desacoplados
 import { Header } from './components/layout/Header';
@@ -63,15 +64,8 @@ const DOCUMENTOS_TAREA_2 = [
   { id: '14', archivo: '14-accesibilidad.md', titulo: 'Accesibilidad WCAG 2.2 AA', resumen: 'Contraste 4.5:1+, áreas táctiles >=44x44px, foco visible, modo sol campo y pruebas para lectores de pantalla.' },
 ];
 
-// Colaboradores ficticios anonimizados para pruebas
-const COLABORADORES_MOCK = [
-  { id: 'col_1', codigo: 'COL-001', alias: 'J. Pérez', rol: 'Podador experto', cuadrilla: 'Cuadrilla Norte' },
-  { id: 'col_2', codigo: 'COL-002', alias: 'M. Gómez', rol: 'Operario campo', cuadrilla: 'Cuadrilla Norte' },
-  { id: 'col_3', codigo: 'COL-003', alias: 'C. Rodríguez', rol: 'Encargado malla', cuadrilla: 'Cuadrilla Coberturas' },
-  { id: 'col_4', codigo: 'COL-004', alias: 'A. Martínez', rol: 'Operario campo', cuadrilla: 'Cuadrilla Coberturas' },
-  { id: 'col_5', codigo: 'COL-005', alias: 'L. Hernández', rol: 'Tractorista', cuadrilla: 'Cuadrilla Maquinaria' },
-  { id: 'col_6', codigo: 'COL-006', alias: 'R. Sánchez', rol: 'Operario campo', cuadrilla: 'Cuadrilla Norte' },
-];
+// Catálogo de colaboradores reales del sistema
+const COLABORADORES_MOCK = COLABORADORES_CATALOGO;
 
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
@@ -85,9 +79,9 @@ export default function App() {
   const [polisombraIntegrantes, setPolisombraIntegrantes] = useState<string[]>(['col_3', 'col_4']);
   const [polisombraInicio, setPolisombraInicio] = useState('06:30');
   const [polisombraFin, setPolisombraFin] = useState('11:30');
-  const [polisombraArea, setPolisombraArea] = useState('Sector Norte');
-  const [polisombraBloque, setPolisombraBloque] = useState('Bloque 2');
-  const [polisombraTunel, setPolisombraTunel] = useState('Túnel 4');
+  const [polisombraArea, setPolisombraArea] = useState('Jamaica');
+  const [polisombraBloque, setPolisombraBloque] = useState('T5');
+  const [polisombraTunel, setPolisombraTunel] = useState('Túnel 1');
   const [polisombraCantTotal, setPolisombraCantTotal] = useState(100);
   const [polisombraCantComp, setPolisombraCantComp] = useState(75);
   const [polisombraCondiciones, setPolisombraCondiciones] = useState<string[]>(['soleado', 'vientos_fuertes']);
@@ -542,6 +536,25 @@ export default function App() {
             setPwaArchivoSeleccionado={setPwaArchivoSeleccionado}
           />
         )}
+
+        {/* Footer Barra de Estado NexoCampo PRO */}
+        <footer className={`mt-8 mb-4 py-3 px-4 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] ${
+          modoSol ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-slate-900/60 border-slate-800 text-slate-400'
+        }`}>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span className="font-semibold text-slate-200">NexoCampo PRO v18.1.9</span>
+            <span>·</span>
+            <span>Motor Offline-First (IndexedDB & Background Sync)</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span>Áreas: Jamaica · Piloto · Púrpura · Naranja</span>
+            <span>·</span>
+            <span className="font-mono font-medium text-emerald-400">36 Colaboradores</span>
+            <span>·</span>
+            <span className="font-mono font-medium text-emerald-400">23 Labores</span>
+          </div>
+        </footer>
       </main>
 
       {/* MODAL JUSTIFICACIÓN DE SALDOS PENDIENTES */}
@@ -641,7 +654,6 @@ export default function App() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

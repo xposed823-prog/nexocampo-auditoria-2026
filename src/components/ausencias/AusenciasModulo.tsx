@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UserX, Plus, CheckCircle2 } from 'lucide-react';
+import { COLABORADORES_CATALOGO } from '../../domain/catalogoAgronomico';
 
 export interface AusenciasModuloProps {
   modoSol: boolean;
@@ -8,11 +9,11 @@ export interface AusenciasModuloProps {
 
 export const AusenciasModulo: React.FC<AusenciasModuloProps> = ({ modoSol, dispararToast }) => {
   const [ausencias, setAusencias] = useState([
-    { id: 'aus-1', colaborador: 'COL-003 · C. Rodríguez', tipo: 'Incapacidad Médica', fecha: '2026-10-19', certificado: true, justificada: true },
-    { id: 'aus-2', colaborador: 'COL-006 · R. Sánchez', tipo: 'Permiso Personal', fecha: '2026-10-18', certificado: false, justificada: true }
+    { id: 'aus-1', colaborador: 'COL-001 · Anderson Cortes Mendez', tipo: 'Incapacidad Médica', fecha: '2026-10-19', certificado: true, justificada: true },
+    { id: 'aus-2', colaborador: 'COL-006 · Clisman Andres Marin Giraldo', tipo: 'Permiso Personal', fecha: '2026-10-18', certificado: false, justificada: true }
   ]);
 
-  const [colaborador, setColaborador] = useState('COL-002 · M. Gómez');
+  const [colaborador, setColaborador] = useState(`${COLABORADORES_CATALOGO[0].codigo} · ${COLABORADORES_CATALOGO[0].nombreCompleto}`);
   const [tipo, setTipo] = useState('Incapacidad Médica');
   const [fecha, setFecha] = useState('2026-10-20');
   const [justificada, setJustificada] = useState(true);
@@ -82,12 +83,17 @@ export const AusenciasModulo: React.FC<AusenciasModuloProps> = ({ modoSol, dispa
           <div className="space-y-3 text-xs">
             <div>
               <label className="block text-slate-400 mb-1 font-semibold">Colaborador</label>
-              <input
-                type="text"
+              <select
                 value={colaborador}
                 onChange={(e) => setColaborador(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100"
-              />
+              >
+                {COLABORADORES_CATALOGO.map((c) => (
+                  <option key={c.id} value={`${c.codigo} · ${c.nombreCompleto}`}>
+                    {c.codigo} · {c.nombreCompleto} ({c.cuadrilla})
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-slate-400 mb-1 font-semibold">Tipo de Ausencia</label>

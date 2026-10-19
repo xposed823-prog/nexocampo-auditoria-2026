@@ -1,5 +1,6 @@
 import React from 'react';
 import { HardHat, Plus, X } from 'lucide-react';
+import { AREAS_AGRONOMICAS } from '../../domain/catalogoAgronomico';
 
 export interface IncidenteItem {
   id: string;
@@ -147,13 +148,22 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Área / Bloque / Túnel</label>
-              <input
-                type="text"
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Área y Ubicación Agronómica</label>
+              <select
                 value={incidenteArea}
                 onChange={(e) => setIncidenteArea(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs"
-              />
+                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs font-medium text-slate-100"
+              >
+                {AREAS_AGRONOMICAS.map((a) => (
+                  <optgroup key={a.id} label={`Área ${a.nombre} (${a.codigo})`}>
+                    {a.bloques.map((b) => (
+                      <option key={`${a.id}-${b.id}`} value={`Área ${a.nombre} - ${b.nombre}`}>
+                        Área {a.nombre} · Bloque {b.nombre} ({b.totalTuneles} túneles)
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
             </div>
 
             <div>

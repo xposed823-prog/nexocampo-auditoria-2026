@@ -4,6 +4,7 @@ import { ClipboardCheck } from 'lucide-react';
 export interface ColaboradorItem {
   id: string;
   codigo: string;
+  nombreCompleto?: string;
   alias: string;
   rol: string;
   cuadrilla: string;
@@ -28,6 +29,19 @@ export const AsistenciaModulo: React.FC<AsistenciaModuloProps> = ({
   setMatrizAsistencia,
   dispararToast
 }) => {
+  const [filtroBusqueda, setFiltroBusqueda] = React.useState('');
+
+  const colaboradoresFiltrados = React.useMemo(() => {
+    if (!filtroBusqueda.trim()) return colaboradoresMock;
+    const term = filtroBusqueda.toLowerCase();
+    return colaboradoresMock.filter(c =>
+      c.nombreCompleto?.toLowerCase().includes(term) ||
+      c.alias.toLowerCase().includes(term) ||
+      c.codigo.toLowerCase().includes(term) ||
+      c.cuadrilla.toLowerCase().includes(term)
+    );
+  }, [colaboradoresMock, filtroBusqueda]);
+
   return (
     <div className="space-y-6">
       <div className={`p-4 rounded-xl border ${modoSol ? 'bg-slate-50 border-slate-300' : 'bg-slate-800/40 border-slate-700/60'}`}>
@@ -57,6 +71,22 @@ export const AsistenciaModulo: React.FC<AsistenciaModuloProps> = ({
         </div>
       </div>
 
+      {/* Buscador de Colaboradores de Campo */}
+      <div className="flex items-center justify-between gap-3">
+        <input
+          type="text"
+          placeholder="Buscar por nombre, código (COL-001) o cuadrilla..."
+          value={filtroBusqueda}
+          onChange={(e) => setFiltroBusqueda(e.target.value)}
+          className={`flex-1 max-w-md px-3 py-2 rounded-lg border text-xs ${
+            modoSol ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-100 placeholder-slate-500'
+          }`}
+        />
+        <span className="text-xs font-mono text-slate-400">
+          Mostrando {colaboradoresFiltrados.length} de {colaboradoresMock.length} colaboradores
+        </span>
+      </div>
+
       {/* Tabla Matriz Semanal Accesible */}
       <div className={`rounded-xl border overflow-hidden ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/40 border-slate-700/60'}`}>
         <div className="overflow-x-auto">
@@ -73,11 +103,12 @@ export const AsistenciaModulo: React.FC<AsistenciaModuloProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/40">
-              {colaboradoresMock.map((col) => (
+              {colaboradoresFiltrados.map((col) => (
                 <tr key={col.id} className="hover:bg-slate-800/30">
                   <td className="p-3 font-medium">
-                    <span className="font-mono font-bold text-emerald-400 block">{col.codigo}</span>
-                    <span className="text-[11px] text-slate-300">{col.alias}</span>
+                    <span className="font-mono font-bold text-emerald-400 block text-[11px]">{col.codigo}</span>
+                    <span className="text-xs text-slate-200 block font-semibold">{col.nombreCompleto || col.alias}</span>
+                    {col.nombreCompleto && <span className="text-[10px] text-slate-400 block">{col.alias}</span>}
                   </td>
                   <td className="p-3 hidden sm:table-cell text-[11px] text-slate-400">
                     {col.rol} · {col.cuadrilla}

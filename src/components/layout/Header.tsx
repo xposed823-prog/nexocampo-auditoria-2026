@@ -36,24 +36,37 @@ export const Header: React.FC<HeaderProps> = ({
     <header className={`sticky top-0 z-40 border-b ${modoSol ? 'bg-slate-50/95 border-slate-300' : 'bg-slate-900/90 border-slate-800 backdrop-blur-md'}`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 flex items-center justify-between gap-2">
         
-        {/* Logotipo Original NexoCampo */}
-        <div className="flex items-center gap-2 min-w-0">
-          <svg
-            className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 text-emerald-500"
-            viewBox="0 0 32 32"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-label="Logotipo NexoCampo"
-          >
-            <rect width="32" height="32" rx="8" fill="currentColor" fillOpacity="0.15" />
-            <path d="M16 6L23 14H9L16 6Z" fill="currentColor" />
-            <path d="M9 16H23L16 26L9 16Z" fill="currentColor" fillOpacity="0.8" />
-            <circle cx="16" cy="15" r="3" fill="#ffffff" />
-          </svg>
+        {/* Logotipo Oficial NexoCampo PRO */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 shrink-0 rounded-[10px] bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-[0_4px_12px_rgba(34,197,94,0.35)] border border-emerald-400/30">
+            <svg
+              className="w-5 h-5 text-white"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 22V12" />
+              <path d="M12 12C12 7.5 7.5 5 2 6c0 5.5 3.5 10 10 10z" />
+              <path d="M12 12C12 7.5 16.5 5 22 6c0 5.5-3.5 10-10 10z" />
+            </svg>
+          </div>
           <div className="min-w-0">
-            <span className="font-bold text-sm sm:text-base tracking-tight block truncate leading-tight">NEXOCAMPO 2026</span>
-            <span className={`text-[10px] block truncate ${modoSol ? 'text-slate-600' : 'text-slate-400'}`}>
-              Supervisión Agrícola · Android UI
+            <div className="flex items-center gap-1.5">
+              <span className="font-extrabold text-sm sm:text-base tracking-tight text-white leading-none">
+                NexoCampo
+              </span>
+              <span className="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                PRO
+              </span>
+              <span className="hidden sm:inline-block text-[10px] font-mono text-slate-400">
+                v18.1.9
+              </span>
+            </div>
+            <span className={`text-[9px] sm:text-[10px] font-medium tracking-wide block truncate uppercase mt-0.5 ${modoSol ? 'text-slate-600' : 'text-slate-400'}`}>
+              SISTEMA INTEGRADO DE GESTIÓN AGRÍCOLA
             </span>
           </div>
         </div>

@@ -8,6 +8,7 @@ import {
   Plus
 } from 'lucide-react';
 import { EstadoVisualNegocio } from '../../domain/formValidators';
+import { AREAS_AGRONOMICAS } from '../../domain/catalogoAgronomico';
 
 export interface ColaboradorItem {
   id: string;
@@ -156,36 +157,91 @@ export const PlasticoModulo: React.FC<PlasticoModuloProps> = ({
             </div>
           </div>
 
-          {/* Ubicación Agronómica */}
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Área</label>
-              <input
-                type="text"
-                value={polisombraArea}
-                onChange={(e) => setPolisombraArea(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Bloque</label>
-              <input
-                type="text"
-                value={polisombraBloque}
-                onChange={(e) => setPolisombraBloque(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Túnel</label>
-              <input
-                type="text"
-                value={polisombraTunel}
-                onChange={(e) => setPolisombraTunel(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs"
-              />
-            </div>
-          </div>
+          {/* Ubicación Agronómica Dinámica (Áreas, Bloques y Túneles) */}
+          {(() => {
+            const areaSeleccionada = AREAS_AGRONOMICAS.find(a => a.nombre.toLowerCase() === polisombraArea.toLowerCase()) || AREAS_AGRONOMICAS[0];
+            const bloquesDisponibles = areaSeleccionada ? areaSeleccionada.bloques : [];
+            const bloqueSeleccionado = bloquesDisponibles.find(b => b.nombre.toLowerCase() === polisombraBloque.toLowerCase()) || bloquesDisponibles[0];
+            const tunelesDisponibles = bloqueSeleccionado ? bloqueSeleccionado.tuneles : ['Túnel 1', 'Túnel 2', 'Túnel 3', 'Túnel 4'];
+
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1">
+                    Área Agronómica
+                  </label>
+                  <select
+                    value={polisombraArea}
+                    onChange={(e) => {
+                      const nuevoNombreArea = e.target.value;
+                      setPolisombraArea(nuevoNombreArea);
+                      const nuevaArea = AREAS_AGRONOMICAS.find(a => a.nombre === nuevoNombreArea);
+                      if (nuevaArea && nuevaArea.bloques.length > 0) {
+                        setPolisombraBloque(nuevaArea.bloques[0].nombre);
+                        if (nuevaArea.bloques[0].tuneles.length > 0) {
+                          setPolisombraTunel(nuevaArea.bloques[0].tuneles[0]);
+                        }
+                      }
+                    }}
+                    className={`w-full px-3 py-2 rounded-lg border text-xs font-medium ${
+                      modoSol ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-200'
+                    }`}
+                  >
+                    {AREAS_AGRONOMICAS.map((a) => (
+                      <option key={a.id} value={a.nombre}>
+                        {a.nombre} ({a.codigo})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1">
+                    Bloque
+                  </label>
+                  <select
+                    value={polisombraBloque}
+                    onChange={(e) => {
+                      const nuevoBloqueNombre = e.target.value;
+                      setPolisombraBloque(nuevoBloqueNombre);
+                      const bloqueEncontrado = bloquesDisponibles.find(b => b.nombre === nuevoBloqueNombre);
+                      if (bloqueEncontrado && bloqueEncontrado.tuneles.length > 0) {
+                        setPolisombraTunel(bloqueEncontrado.tuneles[0]);
+                      }
+                    }}
+                    className={`w-full px-3 py-2 rounded-lg border text-xs font-medium ${
+                      modoSol ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-200'
+                    }`}
+                  >
+                    {bloquesDisponibles.map((b) => (
+                      <option key={b.id} value={b.nombre}>
+                        {b.nombre} ({b.totalTuneles} túneles)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1">
+                    Túnel ({bloqueSeleccionado ? `${bloqueSeleccionado.totalTuneles} totales` : ''})
+                  </label>
+                  <select
+                    value={polisombraTunel}
+                    onChange={(e) => setPolisombraTunel(e.target.value)}
+                    className={`w-full px-3 py-2 rounded-lg border text-xs font-medium ${
+                      modoSol ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-200'
+                    }`}
+                  >
+                    {tunelesDisponibles.map((tunelNombre) => (
+                      <option key={tunelNombre} value={tunelNombre}>
+                        {tunelNombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Integrantes de Cuadrilla (Máx 6) */}
           <div>

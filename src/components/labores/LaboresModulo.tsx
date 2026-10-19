@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Briefcase, Plus, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { detectarSolapamientoTemporal } from '../../domain/businessRulesEngine';
 import { calcularCumplimientoCantidad, calcularRendimientoTemporal } from '../../domain/rendimientoCalculator';
+import { LABORES_AGRONOMICAS, COLABORADORES_CATALOGO } from '../../domain/catalogoAgronomico';
 
 export interface LaboresModuloProps {
   modoSol: boolean;
@@ -9,30 +10,34 @@ export interface LaboresModuloProps {
 }
 
 export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararToast }) => {
+  const [colaboradorSeleccionado, setColaboradorSeleccionado] = useState(COLABORADORES_CATALOGO[0].id);
+
   const [labores, setLabores] = useState([
-    { id: 'lab-1', labor: 'Cosecha Selección', horaInicio: '06:30', horaFin: '10:00', completado: 120, meta: 100 },
-    { id: 'lab-2', labor: 'Pesaje e Identificación', horaInicio: '10:15', horaFin: '12:00', completado: 80, meta: 80 },
-    { id: 'lab-3', labor: 'Empaque para Transporte', horaInicio: '12:30', horaFin: '15:30', completado: 150, meta: 140 }
+    { id: 'lab-1', labor: 'Arreglo camas', unidad: 'túnel', modelo: 'individual', minEstandar: 420, horaInicio: '06:30', horaFin: '10:30', completado: 1, meta: 1 },
+    { id: 'lab-2', labor: 'Mallas y Lapiceros', unidad: 'túnel', modelo: 'grupal_tiempo', minEstandar: 150, horaInicio: '10:30', horaFin: '13:00', completado: 1, meta: 1 },
+    { id: 'lab-3', labor: 'Erradicar', unidad: 'túnel', modelo: 'grupal_tiempo', minEstandar: 90, horaInicio: '13:30', horaFin: '15:30', completado: 1, meta: 1 }
   ]);
 
   const [nuevaInicio, setNuevaInicio] = useState('15:30');
   const [nuevaFin, setNuevaFin] = useState('16:30');
-  const [nuevaLabor, setNuevaLabor] = useState('Limpieza de Mesa');
-  const [nuevaMeta, setNuevaMeta] = useState(50);
-  const [nuevaComp, setNuevaComp] = useState(50);
+  const [nuevaLabor, setNuevaLabor] = useState(LABORES_AGRONOMICAS[0].nombre);
+  const [nuevaMeta, setNuevaMeta] = useState(1);
+  const [nuevaComp, setNuevaComp] = useState(1);
+
+  const laborActualObj = LABORES_AGRONOMICAS.find(l => l.nombre === nuevaLabor) || LABORES_AGRONOMICAS[0];
 
   const agregarLabor = () => {
     // Validar solapamiento con las labores existentes
     const intervalosExistentes = labores.map(l => ({
       id: l.id,
-      colaboradorId: 'col-1',
+      colaboradorId: colaboradorSeleccionado,
       horaInicio: l.horaInicio,
       horaFin: l.horaFin
     }));
 
     const nuevoIntervalo = {
       id: `lab-${Date.now()}`,
-      colaboradorId: 'col-1',
+      colaboradorId: colaboradorSeleccionado,
       horaInicio: nuevaInicio,
       horaFin: nuevaFin
     };
@@ -45,14 +50,19 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
 
     setLabores([...labores, {
       id: nuevoIntervalo.id,
-      labor: nuevaLabor,
+      labor: laborActualObj.nombre,
+      unidad: laborActualObj.unidadMedida,
+      modelo: laborActualObj.modelo,
+      minEstandar: laborActualObj.min || 60,
       horaInicio: nuevaInicio,
       horaFin: nuevaFin,
       completado: nuevaComp,
       meta: nuevaMeta
     }]);
-    dispararToast('✓ Labor consecutiva agregada sin solapamiento');
+    dispararToast('✓ Labor canónica agregada sin solapamiento temporal');
   };
+
+  const colActual = COLABORADORES_CATALOGO.find(c => c.id === colaboradorSeleccionado) || COLABORADORES_CATALOGO[0];
 
   return (
     <div className="space-y-6">
@@ -73,11 +83,35 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
         </div>
       </div>
 
+      {/* Selector de Colaborador Oficial */}
+      <div className={`p-4 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-3 ${
+        modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/40 border-slate-700/60'
+      }`}>
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <span className="text-xs font-semibold text-slate-300 shrink-0">Colaborador en Campo:</span>
+          <select
+            value={colaboradorSeleccionado}
+            onChange={(e) => setColaboradorSeleccionado(e.target.value)}
+            className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs font-semibold text-emerald-300 font-mono"
+          >
+            {COLABORADORES_CATALOGO.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.codigo} · {c.nombreCompleto} ({c.cuadrilla})
+              </option>
+            ))}
+          </select>
+        </div>
+        <span className="text-[11px] text-slate-400 font-mono self-start sm:self-auto">
+          {colActual.rol} · {colActual.cuadrilla}
+        </span>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Listado de Labores Registradas */}
         <div className="lg:col-span-2 space-y-3">
-          <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400">
-            Labores en Línea de Tiempo del Operario
+          <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center justify-between">
+            <span>Labores en Línea de Tiempo del Operario</span>
+            <span className="text-[10px] text-emerald-400 font-mono">{labores.length} asignadas hoy</span>
           </h3>
           <div className="space-y-2.5">
             {labores.map((lab) => {
@@ -89,17 +123,25 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
                     modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/40 border-slate-700/60'
                   }`}
                 >
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="font-mono text-xs font-bold text-emerald-400">
                         {lab.horaInicio} - {lab.horaFin}
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                      <span className="text-xs font-bold text-slate-100">
                         {lab.labor}
                       </span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-mono uppercase">
+                        {lab.modelo || 'individual'}
+                      </span>
+                      {lab.minEstandar && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 font-mono">
+                          Estándar: {lab.minEstandar}m
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-slate-400">
-                      Ejecutado: <strong className="text-slate-200">{lab.completado}</strong> / Meta: <strong className="text-slate-200">{lab.meta}</strong> u
+                      Ejecutado: <strong className="text-slate-200">{lab.completado} {lab.unidad || 'u'}</strong> / Meta: <strong className="text-slate-200">{lab.meta} {lab.unidad || 'u'}</strong>
                     </div>
                   </div>
 
@@ -126,13 +168,27 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
 
           <div className="space-y-3 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1 font-semibold">Nombre de Labor</label>
-              <input
-                type="text"
+              <label className="block text-slate-400 mb-1 font-semibold">Tipo de Labor Agrícola</label>
+              <select
                 value={nuevaLabor}
-                onChange={(e) => setNuevaLabor(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100"
-              />
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNuevaLabor(val);
+                  const encontrada = LABORES_AGRONOMICAS.find(l => l.nombre === val);
+                  if (encontrada) {
+                    setNuevaMeta(encontrada.metaEstandar);
+                  }
+                }}
+                className={`w-full px-3 py-2 rounded-lg border text-xs font-medium ${
+                  modoSol ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-100'
+                }`}
+              >
+                {LABORES_AGRONOMICAS.map((l) => (
+                  <option key={l.id} value={l.nombre}>
+                    {l.nombre} ({l.unidadMedida} - Meta: {l.metaEstandar})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="grid grid-cols-2 gap-2">

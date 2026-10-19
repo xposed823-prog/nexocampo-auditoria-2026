@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 export interface ColaboradorItem {
   id: string;
   codigo: string;
+  nombreCompleto?: string;
   alias: string;
   rol: string;
   cuadrilla: string;
@@ -49,7 +50,7 @@ export const ConsultaCruzadaModulo: React.FC<ConsultaCruzadaModuloProps> = ({
           >
             {colaboradoresMock.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.codigo} - {c.alias} ({c.rol})
+                {c.codigo} · {c.nombreCompleto || c.alias} ({c.cuadrilla})
               </option>
             ))}
           </select>

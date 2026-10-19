@@ -47,8 +47,8 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   return (
     <nav
-      className={`flex overflow-x-auto px-4 py-1.5 gap-1 border-t text-xs font-semibold no-scrollbar ${
-        modoSol ? 'bg-slate-100 border-slate-200' : 'bg-slate-950/60 border-slate-800'
+      className={`flex overflow-x-auto px-3 sm:px-4 py-2 gap-1.5 border-t text-xs font-semibold no-scrollbar select-none ${
+        modoSol ? 'bg-slate-100/90 border-slate-200' : 'bg-slate-950/80 border-slate-800 backdrop-blur-sm'
       }`}
       aria-label="Navegación de módulos agrícolas"
     >
@@ -59,18 +59,18 @@ export const Navigation: React.FC<NavigationProps> = ({
           <button
             key={item.id}
             onClick={() => setTabActual(item.id)}
-            className={`min-h-[44px] flex items-center gap-1.5 px-3 rounded-lg whitespace-nowrap transition-colors ${
+            className={`min-h-[40px] flex items-center gap-2 px-3 py-1.5 rounded-lg whitespace-nowrap text-xs transition-all duration-150 ${
               activo
                 ? modoSol
-                  ? 'bg-slate-900 text-white font-bold'
-                  : 'bg-emerald-600 text-white font-bold'
+                  ? 'bg-emerald-700 text-white font-bold shadow-sm'
+                  : 'bg-emerald-600 text-white font-bold shadow-sm shadow-emerald-600/30 ring-1 ring-emerald-400/30'
                 : modoSol
-                  ? 'text-slate-700 hover:bg-slate-200'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  ? 'text-slate-700 hover:bg-slate-200 hover:text-slate-900'
+                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-850'
             }`}
           >
-            <Icon className="w-4 h-4 shrink-0" />
-            {item.label}
+            <Icon className={`w-4 h-4 shrink-0 ${activo ? 'text-white' : 'text-slate-400'}`} />
+            <span>{item.label}</span>
           </button>
         );
       })}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Wrench, CheckCircle2, AlertCircle } from 'lucide-react';
 import { calcularOficiosVarios } from '../../domain/businessRulesEngine';
+import { COLABORADORES_CATALOGO, LABORES_AGRONOMICAS } from '../../domain/catalogoAgronomico';
 
 export interface OficiosVariosModuloProps {
   modoSol: boolean;
@@ -8,9 +9,12 @@ export interface OficiosVariosModuloProps {
 }
 
 export const OficiosVariosModulo: React.FC<OficiosVariosModuloProps> = ({ modoSol, dispararToast }) => {
+  const [colaboradorId, setColaboradorId] = useState(COLABORADORES_CATALOGO[0].id);
+  const laboresMaquinaria = LABORES_AGRONOMICAS.filter(l => l.categoria === 'Maquinaria');
+  const [laborMaquinaria, setLaborMaquinaria] = useState(laboresMaquinaria[0]?.nombre || 'Encamadora');
   const [asignadas, setAsignadas] = useState(5);
   const [completadas, setCompletadas] = useState(3);
-  const [observaciones, setObservaciones] = useState('Limpieza profunda de zanjas de desagüe y desyerbe perimetral.');
+  const [observaciones, setObservaciones] = useState('Operación de maquinaria y adecuación de terreno.');
 
   const resultado = calcularOficiosVarios(asignadas, completadas);
 
@@ -39,6 +43,40 @@ export const OficiosVariosModulo: React.FC<OficiosVariosModuloProps> = ({ modoSo
           <h3 className="font-bold text-xs uppercase tracking-wider text-slate-300">
             Registro de Tareas de Mantenimiento
           </h3>
+
+          <div className="space-y-3 text-xs">
+            <div>
+              <label className="block text-slate-400 mb-1 font-semibold">Operario Asignado</label>
+              <select
+                value={colaboradorId}
+                onChange={(e) => setColaboradorId(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono"
+              >
+                {COLABORADORES_CATALOGO.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.codigo} · {c.nombreCompleto} ({c.cuadrilla})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-slate-400 mb-1 font-semibold">Labor de Maquinaria / Oficio</label>
+              <select
+                value={laborMaquinaria}
+                onChange={(e) => setLaborMaquinaria(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100"
+              >
+                {laboresMaquinaria.map((l) => (
+                  <option key={l.id} value={l.nombre}>
+                    🚜 {l.nombre} ({l.unidadMedida} - {l.modelo})
+                  </option>
+                ))}
+                <option value="Limpieza perimetral">Limpieza y mantenimiento perimetral</option>
+                <option value="Drenajes y zanjas">Adecuación de drenajes generales</option>
+              </select>
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
