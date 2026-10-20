@@ -176,7 +176,7 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
                   setNuevaLabor(val);
                   const encontrada = LABORES_AGRONOMICAS.find(l => l.nombre === val);
                   if (encontrada) {
-                    setNuevaMeta(encontrada.metaEstandar);
+                    setNuevaMeta(encontrada.min ? Math.max(1, Math.round(475 / encontrada.min)) : 1);
                   }
                 }}
                 className={`w-full px-3 py-2 rounded-lg border text-xs font-medium ${
@@ -185,7 +185,7 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
               >
                 {LABORES_AGRONOMICAS.map((l) => (
                   <option key={l.id} value={l.nombre}>
-                    {l.nombre} ({l.unidadMedida} - Meta: {l.metaEstandar})
+                    {l.nombre} ({l.unidadMedida} · {l.min ? `${l.min} min` : 'por tiempo'})
                   </option>
                 ))}
               </select>

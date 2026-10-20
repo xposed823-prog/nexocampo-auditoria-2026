@@ -40,6 +40,7 @@ import { RespaldosModulo } from './components/respaldos/RespaldosModulo';
 import { LaboratorioModulo } from './components/laboratorio/LaboratorioModulo';
 import { DocumentosModulo } from './components/documentos/DocumentosModulo';
 import { PwaSyncModulo } from './components/pwa/PwaSyncModulo';
+import { AdminModulo } from './components/admin/AdminModulo';
 
 // Documentos técnicos generados para Tarea 3
 const DOCUMENTOS_TAREA_3 = [
@@ -70,7 +71,9 @@ const COLABORADORES_MOCK = COLABORADORES_CATALOGO;
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 export default function App() {
-  const [tabActual, setTabActual] = useState<string>('resumen');
+  const [tabActual, setTabActual] = useState<string>('inicio');
+  const [subTabRegistrar, setSubTabRegistrar] = useState<'labores' | 'polisombra' | 'oficios' | 'jornadas' | 'incidentes'>('labores');
+  const [subTabReportes, setSubTabReportes] = useState<'rendimiento' | 'consulta'>('rendimiento');
   const [modoSol, setModoSol] = useState(false);
   const [docAbierto, setDocAbierto] = useState<string>('08');
 
@@ -304,62 +307,74 @@ export default function App() {
   );
 
   return (
-    <div className={`min-h-screen transition-colors duration-150 ${modoSol ? 'bg-white text-slate-900 font-sans' : 'bg-slate-900 text-slate-100 font-sans'}`}>
-      
-      {/* 1. ENCABEZADO MODULAR */}
-      <Header
-        modoSol={modoSol}
-        setModoSol={setModoSol}
-        isOnline={isOnline}
-        isInstallable={isInstallable}
-        isInstalled={isInstalled}
-        isIOS={isIOS}
-        install={install}
-        setShowIOSPrompt={setShowIOSPrompt}
-        totalPendientesLocal={totalPendientesLocal}
-        setTabActual={setTabActual}
-      />
+    <div className={`min-h-screen transition-colors duration-150 ${modoSol ? 'bg-[#f1f5f9] text-[#334155]' : 'bg-slate-950 text-slate-100'} font-sans`}>
+      <div className={`app-shell max-w-[28rem] w-full mx-auto min-h-screen flex flex-col relative shadow-2xl ${modoSol ? 'bg-[#f8fafc]' : 'bg-slate-900'} pb-16`}>
+        
+        {/* 1. ENCABEZADO CANÓNICO */}
+        <Header
+          modoSol={modoSol}
+          setModoSol={setModoSol}
+          isOnline={isOnline}
+          isInstallable={isInstallable}
+          isInstalled={isInstalled}
+          isIOS={isIOS}
+          install={install}
+          setShowIOSPrompt={setShowIOSPrompt}
+          totalPendientesLocal={totalPendientesLocal}
+          setTabActual={setTabActual}
+        />
 
-      {/* Modal Guía iOS */}
-      {showIOSPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-slate-900 border border-slate-700 p-5 text-slate-100 space-y-3">
-            <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
-              <Smartphone className="w-4 h-4" /> Instalar en iPhone / iPad
-            </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              1. Toca el botón <strong>Compartir</strong> en Safari.<br />
-              2. Selecciona <strong>«Añadir a la pantalla de inicio»</strong>.<br />
-              3. Abre NexoCampo desde tu pantalla de inicio en modo autónomo.
-            </p>
-            <button
-              onClick={() => setShowIOSPrompt(false)}
-              className="w-full min-h-[44px] py-2 rounded-lg bg-emerald-600 text-white text-xs font-bold"
-            >
-              Entendido
-            </button>
+        {/* Modal Guía iOS */}
+        {showIOSPrompt && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="w-full max-w-sm rounded-xl bg-slate-900 border border-slate-700 p-5 text-slate-100 space-y-3">
+              <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
+                <Smartphone className="w-4 h-4" /> Instalar en iPhone / iPad
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                1. Toca el botón <strong>Compartir</strong> en Safari.<br />
+                2. Selecciona <strong>«Añadir a la pantalla de inicio»</strong>.<br />
+                3. Abre NexoCampo desde tu pantalla de inicio en modo autónomo.
+              </p>
+              <button
+                onClick={() => setShowIOSPrompt(false)}
+                className="w-full min-h-[44px] py-2 rounded-lg bg-emerald-600 text-white text-xs font-bold"
+              >
+                Entendido
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* 2. BARRA DE NAVEGACIÓN MODULAR */}
-      <Navigation
-        tabActual={tabActual}
-        setTabActual={setTabActual}
-        modoSol={modoSol}
-      />
+        {/* Botón Flotante Canónico de Notificaciones / Alertas */}
+        <button
+          type="button"
+          onClick={() => setTabActual('admin')}
+          className={`fixed right-4 bottom-16 z-40 w-11 h-11 rounded-full border shadow-xl flex items-center justify-center text-lg active:scale-95 transition-transform ${
+            modoSol ? 'bg-white border-slate-200 text-slate-700' : 'bg-slate-800 border-slate-700 text-slate-200'
+          }`}
+          aria-label="Notificaciones y Administración"
+          title="Notificaciones y Administración"
+        >
+          🔔
+          {totalPendientesLocal > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white">
+              {totalPendientesLocal}
+            </span>
+          )}
+        </button>
 
-      {/* Feedback Toast */}
-      {toastMensaje && (
-        <div className="fixed bottom-4 right-4 z-50 bg-emerald-700 text-white px-4 py-2.5 rounded-lg shadow-lg text-xs font-semibold flex items-center gap-2 animate-bounce">
-          <CheckCircle2 className="w-4 h-4" />
-          {toastMensaje}
-        </div>
-      )}
+        {/* Feedback Toast */}
+        {toastMensaje && (
+          <div className="fixed bottom-16 left-4 right-4 max-w-xs mx-auto z-50 bg-emerald-700 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-semibold flex items-center gap-2 animate-bounce">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span className="truncate">{toastMensaje}</span>
+          </div>
+        )}
 
-      {/* ÁREA DE CONTENIDO PRINCIPAL POR MÓDULOS */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        {tabActual === 'resumen' && (
+        {/* ÁREA DE CONTENIDO PRINCIPAL POR VISTAS CANÓNICAS */}
+        <main className="flex-1 w-full px-3 py-3 space-y-4">
+        {(tabActual === 'resumen' || tabActual === 'inicio') && (
           <ResumenModulo
             modoSol={modoSol}
             setTabActual={setTabActual}
@@ -367,7 +382,7 @@ export default function App() {
           />
         )}
 
-        {tabActual === 'jornadas' && (
+        {(tabActual === 'jornadas' || tabActual === 'registrar') && (
           <JornadasModulo
             modoSol={modoSol}
             dispararToast={dispararToast}
@@ -537,6 +552,14 @@ export default function App() {
           />
         )}
 
+        {tabActual === 'admin' && (
+          <AdminModulo
+            modoSol={modoSol}
+            dispararToast={dispararToast}
+            setTabActual={setTabActual}
+          />
+        )}
+
         {/* Footer Barra de Estado NexoCampo PRO */}
         <footer className={`mt-8 mb-4 py-3 px-4 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] ${
           modoSol ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-slate-900/60 border-slate-800 text-slate-400'
@@ -654,6 +677,14 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Barra de Navegación Inferior Canónica */}
+      <Navigation
+        tabActual={tabActual}
+        setTabActual={setTabActual}
+        modoSol={modoSol}
+      />
+      </div>
     </div>
   );
 }
