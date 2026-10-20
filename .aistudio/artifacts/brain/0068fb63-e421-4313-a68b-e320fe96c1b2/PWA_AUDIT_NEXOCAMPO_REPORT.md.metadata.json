@@ -1,0 +1,5 @@
+{
+  "summary":  "Informe exhaustivo de Auditoría PWA y Resiliencia Offline-First de NexoCampo PRO v18.1.9: Evaluación del Manifiesto Web, ciclo de vida del Service Worker, estrategias de caché, Background Sync API, notificaciones automáticas al usuario, fallback offline.html y prompts de instalación en Android e iOS.",
+  "updatedAt":  "2026-10-20T22:59:42.199283377Z",
+  "userFacing":  true
+}
