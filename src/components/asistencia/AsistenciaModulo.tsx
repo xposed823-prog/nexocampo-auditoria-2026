@@ -18,6 +18,7 @@ export interface AsistenciaModuloProps {
   rotarAsistencia: (colId: string, diaIdx: number) => void;
   setMatrizAsistencia: React.Dispatch<React.SetStateAction<Record<string, 'sin_registrar' | 'presente' | 'retardo' | 'ausencia'>>>;
   dispararToast: (msg: string) => void;
+  onMarcarTodosPresentes?: () => Promise<void> | void;
 }
 
 export const AsistenciaModulo: React.FC<AsistenciaModuloProps> = ({
@@ -27,7 +28,8 @@ export const AsistenciaModulo: React.FC<AsistenciaModuloProps> = ({
   matrizAsistencia,
   rotarAsistencia,
   setMatrizAsistencia,
-  dispararToast
+  dispararToast,
+  onMarcarTodosPresentes
 }) => {
   const [filtroBusqueda, setFiltroBusqueda] = React.useState('');
 
@@ -52,19 +54,23 @@ export const AsistenciaModulo: React.FC<AsistenciaModuloProps> = ({
               Matriz Semanal de Asistencia de Cuadrilla
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Estado inicial normativo: <code className="text-slate-300">— (sin registrar)</code>. La ausencia de registro no significa falta. Toque en celda para rotar: Sin registrar &rarr; Presente &rarr; Retardo &rarr; Ausencia.
+              Persistencia atómica en IndexedDB (`store: asistencia`). Estado inicial normativo: <code className="text-slate-300">— (sin registrar)</code>. Toque en celda para rotar: Sin registrar &rarr; Presente &rarr; Retardo &rarr; Ausencia.
             </p>
           </div>
           <button
-            onClick={() => {
-              const actualizada = { ...matrizAsistencia };
-              colaboradoresMock.forEach(c => {
-                actualizada[`${c.id}-0`] = 'presente';
-              });
-              setMatrizAsistencia(actualizada);
-              dispararToast('Pase de lista matutino completado para hoy');
+            onClick={async () => {
+              if (onMarcarTodosPresentes) {
+                await onMarcarTodosPresentes();
+              } else {
+                const actualizada = { ...matrizAsistencia };
+                colaboradoresMock.forEach(c => {
+                  actualizada[`${c.id}-0`] = 'presente';
+                });
+                setMatrizAsistencia(actualizada);
+                dispararToast('Pase de lista matutino completado para hoy');
+              }
             }}
-            className="min-h-[44px] px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs"
+            className="min-h-[44px] px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs active:scale-95 transition-all"
           >
             Marcar Todos Presentes (Hoy)
           </button>

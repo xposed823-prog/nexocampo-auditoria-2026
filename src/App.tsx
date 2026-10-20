@@ -22,6 +22,14 @@ import {
   EstadoVisualNegocio
 } from './domain/formValidators';
 import { COLABORADORES_CATALOGO, AREAS_AGRONOMICAS, LABORES_AGRONOMICAS } from './domain/catalogoAgronomico';
+import {
+  abrirDB,
+  dbGetAll,
+  guardarAsistenciaAtomica,
+  guardarLoteAsistencia,
+  cargarMatrizAsistenciaSemana,
+  JornadaRegistro
+} from './domain/nexocampoDB';
 
 // Componentes Modulares Desacoplados
 import { Header } from './components/layout/Header';
@@ -99,7 +107,7 @@ export default function App() {
   const [notaSupervisorJustificacion, setNotaSupervisorJustificacion] = useState('Ráfagas de viento a las 10:45 impidieron tensar la malla con seguridad.');
   const [justificacionConfirmada, setJustificacionConfirmada] = useState(true);
 
-  // Estado interactivo de Asistencia Semanal
+  // Estado interactivo de Asistencia Semanal con persistencia real IndexedDB
   const [matrizAsistencia, setMatrizAsistencia] = useState<Record<string, 'sin_registrar' | 'presente' | 'retardo' | 'ausencia'>>({
     'col_1-0': 'presente',
     'col_1-1': 'presente',
@@ -109,6 +117,29 @@ export default function App() {
     'col_3-0': 'presente',
     'col_3-1': 'ausencia',
   });
+  const [jornadasTotales, setJornadasTotales] = useState<JornadaRegistro[]>([]);
+  const [dbCargada, setDbCargada] = useState(false);
+
+  // Fase 2: Hidratación inicial reactiva desde IndexedDB
+  const hidratarDatosDesdeIndexedDB = async () => {
+    try {
+      await abrirDB();
+      const matrizGuardada = await cargarMatrizAsistenciaSemana('2026-10-19');
+      if (Object.keys(matrizGuardada).length > 0) {
+        setMatrizAsistencia(prev => ({ ...prev, ...matrizGuardada }));
+      }
+      const listaJornadas = await dbGetAll<JornadaRegistro>('jornadas');
+      setJornadasTotales(listaJornadas || []);
+      setDbCargada(true);
+    } catch (e) {
+      console.warn('[NexoCampo] Advertencia al hidratar desde IndexedDB:', e);
+      setDbCargada(true);
+    }
+  };
+
+  useEffect(() => {
+    hidratarDatosDesdeIndexedDB();
+  }, []);
 
   // Estado del filtro de Consulta Cruzada
   const [consultaColaborador, setConsultaColaborador] = useState<string>('col_1');
@@ -276,7 +307,7 @@ export default function App() {
     }
   };
 
-  const rotarAsistencia = (colId: string, diaIdx: number) => {
+  const rotarAsistencia = async (colId: string, diaIdx: number) => {
     const key = `${colId}-${diaIdx}`;
     const estadoActual = matrizAsistencia[key] || 'sin_registrar';
     let siguiente: 'sin_registrar' | 'presente' | 'retardo' | 'ausencia' = 'presente';
@@ -285,8 +316,37 @@ export default function App() {
     else if (estadoActual === 'retardo') siguiente = 'ausencia';
     else if (estadoActual === 'ausencia') siguiente = 'sin_registrar';
 
+    // 1. Actualización reactiva instantánea en memoria
     setMatrizAsistencia(prev => ({ ...prev, [key]: siguiente }));
-    dispararToast(`Asistencia actualizada para ${colId}: ${siguiente}`);
+
+    // 2. Persistencia atómica en IndexedDB (store: asistencia)
+    try {
+      const fechaCalculada = `2026-10-${19 + diaIdx}`;
+      await guardarAsistenciaAtomica(colId, fechaCalculada, siguiente);
+      dispararToast(`✓ Asistencia en IndexedDB (${colId} día ${DIAS_SEMANA[diaIdx]}): ${siguiente}`);
+    } catch (e) {
+      dispararToast(`Asistencia en memoria (${colId}): ${siguiente}`);
+    }
+  };
+
+  const marcarTodosPresentesHoy = async () => {
+    const actualizada = { ...matrizAsistencia };
+    const lote: Array<{ colaborador_id: string; fecha: string; estado: 'presente' }> = [];
+    const fechaHoy = '2026-10-19';
+
+    COLABORADORES_MOCK.forEach(c => {
+      actualizada[`${c.id}-0`] = 'presente';
+      lote.push({ colaborador_id: c.id, fecha: fechaHoy, estado: 'presente' });
+    });
+
+    setMatrizAsistencia(actualizada);
+
+    try {
+      await guardarLoteAsistencia(lote);
+      dispararToast('✓ Pase de lista matutino persistido en IndexedDB (store: asistencia)');
+    } catch (e) {
+      dispararToast('Pase de lista matutino completado para hoy');
+    }
   };
 
   const validacionPolisombra = validarPlasticoPolisombra(
@@ -386,6 +446,7 @@ export default function App() {
           <JornadasModulo
             modoSol={modoSol}
             dispararToast={dispararToast}
+            onJornadaGuardada={hidratarDatosDesdeIndexedDB}
           />
         )}
 
@@ -448,6 +509,7 @@ export default function App() {
             rotarAsistencia={rotarAsistencia}
             setMatrizAsistencia={setMatrizAsistencia}
             dispararToast={dispararToast}
+            onMarcarTodosPresentes={marcarTodosPresentesHoy}
           />
         )}
 
@@ -557,6 +619,7 @@ export default function App() {
             modoSol={modoSol}
             dispararToast={dispararToast}
             setTabActual={setTabActual}
+            onRestauracionExitosa={hidratarDatosDesdeIndexedDB}
           />
         )}
 

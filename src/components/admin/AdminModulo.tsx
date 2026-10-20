@@ -36,11 +36,13 @@ export interface AdminModuloProps {
   modoSol: boolean;
   dispararToast: (msg: string) => void;
   setTabActual: (tab: string) => void;
+  onRestauracionExitosa?: () => void;
 }
 
 export const AdminModulo: React.FC<AdminModuloProps> = ({
   modoSol,
-  dispararToast
+  dispararToast,
+  onRestauracionExitosa
 }) => {
   const [adminTab, setAdminTab] = useState<'col' | 'lab' | 'area' | 'backup' | 'casos'>('col');
   const [filtroTexto, setFiltroTexto] = useState('');
@@ -91,6 +93,7 @@ export const AdminModulo: React.FC<AdminModuloProps> = ({
         const res = await restaurarBackupCanónicoJSON(text);
         if (res.exito) {
           dispararToast('✓ Respaldo restaurado con éxito en los 6 almacenes');
+          if (onRestauracionExitosa) onRestauracionExitosa();
         } else {
           dispararToast(`Fallo: ${res.mensaje}`);
         }

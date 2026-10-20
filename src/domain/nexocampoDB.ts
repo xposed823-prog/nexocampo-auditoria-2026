@@ -282,15 +282,74 @@ export async function exportarBackupCanónicoJSON(): Promise<string> {
   return JSON.stringify(payload, null, 2);
 }
 
+export interface DatabaseSnapshot {
+  colaboradores: Colaborador[];
+  labores: LaborAgricola[];
+  areas: AreaAgricola[];
+  ausencias: AusenciaRegistro[];
+  jornadas: JornadaRegistro[];
+  asistencia: AsistenciaRegistro[];
+}
+
+/**
+ * Captura un snapshot completo en memoria de los 6 almacenes
+ */
+export async function capturarSnapshotMemoria(): Promise<DatabaseSnapshot> {
+  const [colaboradores, labores, areas, ausencias, jornadas, asistencia] = await Promise.all([
+    dbGetAll<Colaborador>('colaboradores'),
+    dbGetAll<LaborAgricola>('labores'),
+    dbGetAll<AreaAgricola>('areas'),
+    dbGetAll<AusenciaRegistro>('ausencias'),
+    dbGetAll<JornadaRegistro>('jornadas'),
+    dbGetAll<AsistenciaRegistro>('asistencia')
+  ]);
+  return { colaboradores, labores, areas, ausencias, jornadas, asistencia };
+}
+
+/**
+ * Valida minuciosamente la estructura del JSON antes de alterar la base de datos
+ */
+export function validarEstructuraBackupJSON(data: any): { valido: boolean; error?: string } {
+  if (!data || typeof data !== 'object') {
+    return { valido: false, error: 'El archivo de respaldo no es un objeto JSON válido.' };
+  }
+  if (!data.stores || typeof data.stores !== 'object' || Array.isArray(data.stores)) {
+    return { valido: false, error: 'La propiedad "stores" no existe o no tiene un formato válido.' };
+  }
+  const requeridos = ['colaboradores', 'labores', 'areas', 'ausencias', 'jornadas', 'asistencia'] as const;
+  for (const s of requeridos) {
+    if (data.stores[s] !== undefined && !Array.isArray(data.stores[s])) {
+      return { valido: false, error: `El almacén "${s}" debe ser un arreglo de elementos.` };
+    }
+  }
+  for (const s of requeridos) {
+    const list = data.stores[s];
+    if (Array.isArray(list)) {
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i];
+        if (!item || typeof item !== 'object' || !item.id) {
+          return { valido: false, error: `Elemento en almacén "${s}" índice ${i} no contiene un id válido.` };
+        }
+      }
+    }
+  }
+  return { valido: true };
+}
+
 /**
  * Restaura los 6 almacenes canónicos desde un archivo de respaldo JSON
+ * con validación previa en memoria y snapshot de seguridad con rollback automático
  */
 export async function restaurarBackupCanónicoJSON(jsonString: string): Promise<{ exito: boolean; mensaje: string }> {
   try {
     const data = JSON.parse(jsonString);
-    if (!data.stores || typeof data.stores !== 'object') {
-      return { exito: false, mensaje: 'El archivo no contiene la estructura canónica de almacenes de NexoCampo.' };
+    const validacion = validarEstructuraBackupJSON(data);
+    if (!validacion.valido) {
+      return { exito: false, mensaje: validacion.error || 'Estructura inválida' };
     }
+
+    // 1. Snapshot preventivo en memoria antes de cualquier operación destructiva
+    const snapshot = await capturarSnapshotMemoria();
 
     const { colaboradores, labores, areas, ausencias, jornadas, asistencia } = data.stores;
     const db = await abrirDB();
@@ -305,18 +364,140 @@ export async function restaurarBackupCanónicoJSON(jsonString: string): Promise<
       });
     };
 
-    restaurarColeccion('colaboradores', colaboradores);
-    restaurarColeccion('labores', labores);
-    restaurarColeccion('areas', areas);
-    restaurarColeccion('ausencias', ausencias);
-    restaurarColeccion('jornadas', jornadas);
-    restaurarColeccion('asistencia', asistencia);
+    try {
+      restaurarColeccion('colaboradores', colaboradores);
+      restaurarColeccion('labores', labores);
+      restaurarColeccion('areas', areas);
+      restaurarColeccion('ausencias', ausencias);
+      restaurarColeccion('jornadas', jornadas);
+      restaurarColeccion('asistencia', asistencia);
+    } catch (writeErr: any) {
+      // Rollback al snapshot previo si falla la escritura
+      await restaurarSnapshot(snapshot);
+      return { exito: false, mensaje: `Fallo durante escritura, rollback completado: ${writeErr?.message}` };
+    }
 
     return new Promise((resolve) => {
       tx.oncomplete = () => resolve({ exito: true, mensaje: 'Respaldo restaurado con éxito en los 6 almacenes.' });
-      tx.onerror = () => resolve({ exito: false, mensaje: 'Error al escribir los registros en IndexedDB.' });
+      tx.onerror = async () => {
+        await restaurarSnapshot(snapshot);
+        resolve({ exito: false, mensaje: 'Error al escribir en IndexedDB. Se aplicó rollback preventivo.' });
+      };
     });
   } catch (e: any) {
     return { exito: false, mensaje: `Archivo JSON no válido: ${e?.message || 'Error de parseo'}` };
   }
 }
+
+async function restaurarSnapshot(snap: DatabaseSnapshot): Promise<void> {
+  try {
+    const db = await abrirDB();
+    const tx = db.transaction(STORES as any, 'readwrite');
+    for (const store of STORES) {
+      const os = tx.objectStore(store);
+      os.clear();
+      const items = (snap as any)[store] || [];
+      items.forEach((item: any) => os.put(item));
+    }
+  } catch (err) {
+    console.error('[NexoCampo] Error crítico en rollback de snapshot:', err);
+  }
+}
+
+/**
+ * Persistencia atómica de asistencia individual
+ */
+export async function guardarAsistenciaAtomica(
+  colaborador_id: string,
+  fecha: string,
+  estado: 'sin_registrar' | 'presente' | 'retardo' | 'ausencia',
+  hora_entrada?: string
+): Promise<AsistenciaRegistro> {
+  const id = `${colaborador_id}_${fecha}`;
+  const registro: AsistenciaRegistro = {
+    id,
+    colaborador_id,
+    fecha,
+    estado,
+    ...(hora_entrada ? { hora_entrada } : {})
+  };
+  await dbPut('asistencia', registro);
+  return registro;
+}
+
+/**
+ * Persistencia atómica de lote de asistencia (ej. pase de lista matutino)
+ */
+export async function guardarLoteAsistencia(
+  registros: Array<{
+    colaborador_id: string;
+    fecha: string;
+    estado: 'sin_registrar' | 'presente' | 'retardo' | 'ausencia';
+    hora_entrada?: string;
+  }>
+): Promise<void> {
+  const db = await abrirDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('asistencia', 'readwrite');
+    const os = tx.objectStore('asistencia');
+    registros.forEach((r) => {
+      os.put({
+        id: `${r.colaborador_id}_${r.fecha}`,
+        colaborador_id: r.colaborador_id,
+        fecha: r.fecha,
+        estado: r.estado,
+        ...(r.hora_entrada ? { hora_entrada: r.hora_entrada } : {})
+      });
+    });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error('Error al guardar lote de asistencia'));
+  });
+}
+
+/**
+ * Hidratación de la matriz semanal de asistencia desde IndexedDB
+ */
+export async function cargarMatrizAsistenciaSemana(
+  fechaInicioLunes: string = '2026-10-19'
+): Promise<Record<string, 'sin_registrar' | 'presente' | 'retardo' | 'ausencia'>> {
+  const registros = await dbGetAll<AsistenciaRegistro>('asistencia');
+  const matriz: Record<string, 'sin_registrar' | 'presente' | 'retardo' | 'ausencia'> = {};
+
+  const fechasSemana: string[] = [];
+  const baseDate = new Date(`${fechaInicioLunes}T12:00:00Z`);
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(baseDate);
+    d.setDate(baseDate.getDate() + i);
+    fechasSemana.push(d.toISOString().split('T')[0]);
+  }
+
+  registros.forEach((reg) => {
+    // Si la clave tiene formato directo col_X-idx
+    if (reg.id && reg.id.includes('-') && !reg.id.includes('_')) {
+      matriz[reg.id] = reg.estado;
+    }
+    // Si la clave tiene formato normativo col_X_YYYY-MM-DD
+    const diaIdx = fechasSemana.indexOf(reg.fecha);
+    if (diaIdx !== -1) {
+      matriz[`${reg.colaborador_id}-${diaIdx}`] = reg.estado;
+    }
+  });
+
+  return matriz;
+}
+
+/**
+ * Guarda o actualiza un registro completo de jornada en IndexedDB
+ */
+export async function guardarJornadaRegistro(jornada: JornadaRegistro): Promise<JornadaRegistro> {
+  return await dbPut<JornadaRegistro>('jornadas', jornada);
+}
+
+/**
+ * Obtiene todas las jornadas registradas para una fecha dada
+ */
+export async function obtenerJornadasPorFecha(fecha: string): Promise<JornadaRegistro[]> {
+  const todas = await dbGetAll<JornadaRegistro>('jornadas');
+  return todas.filter(j => j.fecha === fecha);
+}
+
