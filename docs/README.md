@@ -23,6 +23,8 @@ Este directorio reúne y preserva todos los informes técnicos, auditorías de f
 | `/traceability` | `docs/TRACEABILITY_NEXOCAMPO_REPORT.md` | Matriz RTM, linaje del dato de campo a nómina y versionado de fórmulas. | **Certificado** |
 | `/release-check`| `docs/RELEASE_CHECK_NEXOCAMPO_REPORT.md` | Lista de chequeo pre-lanzamiento con 10 compuertas de calidad superadas al 100%. | **Certificado** |
 | `Fase 2` | `docs/FASE_2_PERSISTENCIA_INDEXEDDB_REPORT.md` | Consolidación de persistencia real en IndexedDB, hidratación reactiva y snapshot rollback. | **Consolidado** |
+| `Fase 3` | `docs/FASE_3_VINCULACION_DATOS_VIVOS_REPORT.md` | Vinculación de vistas y datos vivos (Consulta Cruzada y Reportes), bus de eventos y 14 pruebas. | **Certificado** |
+| `nexocampo-commands` | `docs/COMANDOS_OPERATIVOS_NEXOCAMPO.md` | Protocolo y catálogo maestro de comandos operativos (18 comandos, combinaciones y control de permisos). | **Certificado** |
 
 ---
 
@@ -48,31 +50,38 @@ Este directorio reúne y preserva todos los informes técnicos, auditorías de f
 - Exclusión estricta de Oficios Varios (evaluación por conteo de tareas, no por tiempo).
 - Certificación del banco de 16 casos de prueba matemáticos canónicos.
 
-### 2.4. Integridad de Datos y Persistencia (`DATA_INTEGRITY_NEXOCAMPO_REPORT.md`)
+### 2.4. Integridad de Datos y Persistencia (`DATA_INTEGRITY_NEXOCAMPO_REPORT.md` y `FASE_2_PERSISTENCIA_INDEXEDDB_REPORT.md`)
 - Especificación de la base de datos `nexocampo` v4 en IndexedDB.
 - Esquema de los 6 almacenes: `colaboradores`, `labores`, `areas`, `jornadas`, `asistencia`, `ausencias`.
 - Claves compuestas para asistencia: `${colaborador_id}_${fecha}`.
-- Protocolo de respaldo y restauración atómica en formato JSON.
+- Protocolo de respaldo y restauración atómica en formato JSON con snapshot rollback.
 
-### 2.5. Resiliencia PWA y Modo Offline (`PWA_AUDIT_NEXOCAMPO_REPORT.md`)
+### 2.5. Vinculación de Vistas y Datos Vivos (`FASE_3_VINCULACION_DATOS_VIVOS_REPORT.md`)
+- Servicio de dominio compartido `consultarColaboradorFecha` y `consultarReportePeriodo`.
+- Sustitución de valores estáticos en Consulta Cruzada y Reportes por datos vivos reales.
+- Bus de eventos reactivo `nexocampo:db-mutated` tras confirmación de transacciones en IndexedDB.
+- Conteo riguroso de jornadas únicas sin duplicidades por tramos múltiples.
+- 14 pruebas unitarias de integración de dominio superadas al 100%.
+
+### 2.6. Resiliencia PWA y Modo Offline (`PWA_AUDIT_NEXOCAMPO_REPORT.md`)
 - Manifiesto W3C con iconos adaptativos y orientación portrait.
 - Service Worker con caché dual (Cache-First para estáticos, Network-First para navegación).
 - Sincronización en segundo plano (Background Sync API) y notificación automática de éxito.
 - Experiencia de instalación nativa en Android e instrucciones guiadas para Safari en iOS.
 
-### 2.6. Seguridad y Privacidad Jurídica (`SECURITY_AUDIT_NEXOCAMPO_REPORT.md`)
+### 2.7. Seguridad y Privacidad Jurídica (`SECURITY_AUDIT_NEXOCAMPO_REPORT.md`)
 - Cumplimiento de la Ley Estatutaria 1581 de 2012 (Hábeas Data / Colombia).
 - Política de minimización de datos: sin almacenamiento de cédulas, salarios ni cuentas bancarias en campo.
 - Registro preventivo de incidentes SG-SST sin emisión de juicios clínicos de responsabilidad.
 - Mitigación de riesgos OWASP Top 10.
 
-### 2.7. Trazabilidad y Linaje (`TRACEABILITY_NEXOCAMPO_REPORT.md`)
+### 2.8. Trazabilidad y Linaje (`TRACEABILITY_NEXOCAMPO_REPORT.md`)
 - Matriz de Trazabilidad de Requisitos (RTM) completa.
 - Linaje del dato: Captura $\to$ Persistencia $\to$ Cálculo $\to$ Consulta $\to$ Liquidación.
 - Versionado inmutable de fórmulas: `FORMULA_RENDIMIENTO_V1_2026`.
 
-### 2.8. No-Regresión y Lista de Chequeo (`REGRESSION_AUDIT_NEXOCAMPO_REPORT.md` y `RELEASE_CHECK_NEXOCAMPO_REPORT.md`)
-- 55 de 55 pruebas unitarias y de estrés aprobadas (100% de éxito).
+### 2.9. No-Regresión y Lista de Chequeo (`REGRESSION_AUDIT_NEXOCAMPO_REPORT.md` y `RELEASE_CHECK_NEXOCAMPO_REPORT.md`)
+- 80 de 80 pruebas unitarias y de integración aprobadas (100% de éxito).
 - Cero errores de compilación con Vite y cero advertencias de tipado con TypeScript.
 - 10 de 10 compuertas de calidad pre-lanzamiento aprobadas.
 
@@ -91,8 +100,9 @@ Banco Agronómico Oficial (Casos 1 a 17) src/domain/auditSuite.test.ts        17
 Persistencia Real e Integridad Fase 2   src/domain/persistencePhase2.test.ts  5   PASS
 Cola de Sincronización PWA              src/domain/pwaQueue.test.ts          12   PASS
 Pruebas de Estrés y Fuzzing Red Team    src/domain/redteam.test.ts           15   PASS
+Consulta Cruzada y Reportes Fase 3      src/domain/consultaDominio.test.ts   14   PASS
 ------------------------------------------------------------------------------------
-TOTAL CONSOLIDADO EN REPOSITORIO:                                            66   PASS (100%)
+TOTAL CONSOLIDADO EN REPOSITORIO:                                            80   PASS (100%)
 ====================================================================================
 ```
 

@@ -1,0 +1,5 @@
+{
+  "summary":  "Informe de auditoría técnica y cierre de la Fase 3: Vinculación de Vistas y Datos Vivos en NexoCampo PRO. Contiene diagnóstico, arquitectura del servicio de consulta compartido, fórmulas matemáticas utilizadas, bus reactivo de eventos, resultados reales de 80 pruebas unitarias y protocolo de validación Android.",
+  "updatedAt":  "2026-10-21T22:39:17.237959040Z",
+  "userFacing":  true
+}

@@ -1,0 +1,5 @@
+{
+  "summary":  "Especificación formal del protocolo y catálogo de comandos operativos de NexoCampo Auditoría 2026 (skill nexocampo-commands complementaria a nexocampo-pwa-expert), definiendo reglas de autorización, matriz de comandos (/audit, /code, /test, /review, /refactor, /optimize, /responsive-movil, /redteam, etc.), combinaciones y la estructura obligatoria de reporte de 8 puntos.",
+  "updatedAt":  "2026-10-21T22:51:50.409902434Z",
+  "userFacing":  true
+}

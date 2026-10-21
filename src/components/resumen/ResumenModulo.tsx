@@ -24,27 +24,36 @@ export const ResumenModulo: React.FC<ResumenModuloProps> = ({
         </p>
       </div>
 
-      {/* Tarjetas de Métricas Clave */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className={`p-4 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold">Jornada Activa</span>
-          <p className="text-xl font-bold font-mono text-emerald-500 mt-1">06:30 - 15:30</p>
-          <span className="text-[10px] text-slate-400">475 min netos estimados</span>
+      {/* Tarjetas de Métricas Clave (Grilla 2x2 Ergonómica) */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
+          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Jornada Activa</span>
+          <p className="text-lg font-bold font-mono text-emerald-400 mt-1">06:30 - 15:30</p>
+          <span className="text-[10px] text-slate-400 block mt-0.5">475 min netos estimados</span>
         </div>
-        <div className={`p-4 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold">Cuadrilla Presente</span>
-          <p className="text-xl font-bold font-mono text-sky-400 mt-1">5 / 6 operarios</p>
-          <span className="text-[10px] text-slate-400">1 retardo registrado</span>
+        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
+          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Cuadrilla Presente</span>
+          <div className="flex items-baseline gap-1 mt-1">
+            <span className="text-xl font-bold font-mono text-sky-400">5 / 6</span>
+            <span className="text-xs text-slate-300 font-sans">operarios</span>
+          </div>
+          <span className="text-[10px] text-slate-400 block mt-0.5">1 retardo registrado</span>
         </div>
-        <div className={`p-4 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold">Cubiertas (Plástico)</span>
-          <p className="text-xl font-bold font-mono text-amber-400 mt-1">75% avance</p>
-          <span className="text-[10px] text-amber-500 font-semibold">Saldo pendiente justificado</span>
+        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
+          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Cubiertas (Plástico)</span>
+          <div className="flex items-baseline gap-1 mt-1">
+            <span className="text-xl font-bold font-mono text-amber-400">75%</span>
+            <span className="text-xs text-slate-300 font-sans">avance</span>
+          </div>
+          <span className="text-[10px] text-amber-400 font-semibold block mt-0.5">Saldo justificado</span>
         </div>
-        <div className={`p-4 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold">Incidentes SST</span>
-          <p className="text-xl font-bold font-mono text-slate-200 mt-1">1 reportado</p>
-          <span className="text-[10px] text-slate-400">Severidad leve · Atendido</span>
+        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
+          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Incidentes SST</span>
+          <div className="flex items-baseline gap-1 mt-1">
+            <span className="text-xl font-bold font-mono text-slate-200">1</span>
+            <span className="text-xs text-slate-300 font-sans">reporte</span>
+          </div>
+          <span className="text-[10px] text-slate-400 block mt-0.5">Severidad leve · Atendido</span>
         </div>
       </div>
 

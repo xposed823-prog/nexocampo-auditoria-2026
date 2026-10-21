@@ -1,0 +1,5 @@
+{
+  "summary":  "Informe formal de auditoría técnica post-implementación de la Fase 3, que verifica exhaustivamente la consistencia entre ConsultaCruzadaModulo y ReportesModulo al consumir el servicio de dominio compartido e IndexedDB. Evalúa 8 dimensiones críticas: no-mutación durante consultas, paridad de fórmulas matemáticas, conteo de jornadas únicas sin duplicidad, aislamiento de producción pendiente, neutralización de labores sin estándar temporal, desacoplamiento de asistencia y rendimiento, matriz de 4 estados de integridad y bus reactivo sin desfases.",
+  "updatedAt":  "2026-10-21T22:56:12.030036905Z",
+  "userFacing":  true
+}

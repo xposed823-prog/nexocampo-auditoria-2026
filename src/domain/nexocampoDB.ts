@@ -21,6 +21,7 @@ import {
   LaborAgricola,
   AreaAgricola
 } from './catalogoAgronomico';
+import { notificarMutacionDatos } from './eventBus';
 
 export const DB_NAME = 'nexocampo';
 export const DB_VERSION = 4;
@@ -422,6 +423,7 @@ export async function guardarAsistenciaAtomica(
     ...(hora_entrada ? { hora_entrada } : {})
   };
   await dbPut('asistencia', registro);
+  notificarMutacionDatos('asistencia', 'put', id);
   return registro;
 }
 
@@ -449,7 +451,10 @@ export async function guardarLoteAsistencia(
         ...(r.hora_entrada ? { hora_entrada: r.hora_entrada } : {})
       });
     });
-    tx.oncomplete = () => resolve();
+    tx.oncomplete = () => {
+      notificarMutacionDatos('asistencia', 'batch');
+      resolve();
+    };
     tx.onerror = () => reject(tx.error || new Error('Error al guardar lote de asistencia'));
   });
 }
@@ -490,7 +495,18 @@ export async function cargarMatrizAsistenciaSemana(
  * Guarda o actualiza un registro completo de jornada en IndexedDB
  */
 export async function guardarJornadaRegistro(jornada: JornadaRegistro): Promise<JornadaRegistro> {
-  return await dbPut<JornadaRegistro>('jornadas', jornada);
+  const item = await dbPut<JornadaRegistro>('jornadas', jornada);
+  notificarMutacionDatos('jornadas', 'put', jornada.id);
+  return item;
+}
+
+/**
+ * Guarda o actualiza un registro formal de ausencia en IndexedDB
+ */
+export async function guardarAusenciaRegistro(ausencia: AusenciaRegistro): Promise<AusenciaRegistro> {
+  const item = await dbPut<AusenciaRegistro>('ausencias', ausencia);
+  notificarMutacionDatos('ausencias', 'put', ausencia.id);
+  return item;
 }
 
 /**
@@ -500,4 +516,5 @@ export async function obtenerJornadasPorFecha(fecha: string): Promise<JornadaReg
   const todas = await dbGetAll<JornadaRegistro>('jornadas');
   return todas.filter(j => j.fecha === fecha);
 }
+
 

@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Smartphone, AlertTriangle, Check, X } from 'lucide-react';
+import { CheckCircle2, Smartphone, AlertTriangle, Check, X, Search, FileBarChart } from 'lucide-react';
 import { usePWAInstall, useOnlineStatus } from './domain/usePWAInstall';
 import {
   guardarRegistroPendiente,
@@ -368,7 +368,7 @@ export default function App() {
 
   return (
     <div className={`min-h-screen transition-colors duration-150 ${modoSol ? 'bg-[#f1f5f9] text-[#334155]' : 'bg-slate-950 text-slate-100'} font-sans`}>
-      <div className={`app-shell max-w-[28rem] w-full mx-auto min-h-screen flex flex-col relative shadow-2xl ${modoSol ? 'bg-[#f8fafc]' : 'bg-slate-900'} pb-16`}>
+      <div className={`app-shell max-w-[28rem] w-full mx-auto min-h-screen flex flex-col relative shadow-2xl ${modoSol ? 'bg-[#f8fafc]' : 'bg-slate-900'} pb-32`}>
         
         {/* 1. ENCABEZADO CANÓNICO */}
         <Header
@@ -410,7 +410,7 @@ export default function App() {
         <button
           type="button"
           onClick={() => setTabActual('admin')}
-          className={`fixed right-4 bottom-16 z-40 w-11 h-11 rounded-full border shadow-xl flex items-center justify-center text-lg active:scale-95 transition-transform ${
+          className={`fixed right-4 bottom-20 z-40 w-11 h-11 rounded-full border shadow-xl flex items-center justify-center text-lg active:scale-95 transition-transform ${
             modoSol ? 'bg-white border-slate-200 text-slate-700' : 'bg-slate-800 border-slate-700 text-slate-200'
           }`}
           aria-label="Notificaciones y Administración"
@@ -520,22 +520,51 @@ export default function App() {
           />
         )}
 
-        {tabActual === 'consulta' && (
-          <ConsultaCruzadaModulo
-            modoSol={modoSol}
-            colaboradoresMock={COLABORADORES_MOCK}
-            consultaColaborador={consultaColaborador}
-            setConsultaColaborador={setConsultaColaborador}
-            consultaFecha={consultaFecha}
-            setConsultaFecha={setConsultaFecha}
-          />
-        )}
+        {(tabActual === 'reportes' || tabActual === 'consulta') && (
+          <div className="space-y-4">
+            <div className={`flex rounded-xl p-1 border ${modoSol ? 'bg-slate-200 border-slate-300' : 'bg-slate-800/80 border-slate-700/60'}`}>
+              <button
+                type="button"
+                onClick={() => { setTabActual('reportes'); setSubTabReportes('rendimiento'); }}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all min-h-[44px] flex items-center justify-center gap-1.5 ${
+                  tabActual === 'reportes' && subTabReportes === 'rendimiento'
+                    ? 'bg-emerald-600 text-white shadow'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <FileBarChart className="w-3.5 h-3.5" />
+                <span>Reportes Consolidados</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setTabActual('reportes'); setSubTabReportes('consulta'); }}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all min-h-[44px] flex items-center justify-center gap-1.5 ${
+                  tabActual === 'consulta' || (tabActual === 'reportes' && subTabReportes === 'consulta')
+                    ? 'bg-sky-600 text-white shadow'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>Consulta Cruzada</span>
+              </button>
+            </div>
 
-        {tabActual === 'reportes' && (
-          <ReportesModulo
-            modoSol={modoSol}
-            dispararToast={dispararToast}
-          />
+            {(tabActual === 'consulta' || (tabActual === 'reportes' && subTabReportes === 'consulta')) ? (
+              <ConsultaCruzadaModulo
+                modoSol={modoSol}
+                colaboradoresMock={COLABORADORES_MOCK}
+                consultaColaborador={consultaColaborador}
+                setConsultaColaborador={setConsultaColaborador}
+                consultaFecha={consultaFecha}
+                setConsultaFecha={setConsultaFecha}
+              />
+            ) : (
+              <ReportesModulo
+                modoSol={modoSol}
+                dispararToast={dispararToast}
+              />
+            )}
+          </div>
         )}
 
         {tabActual === 'incidentes' && (
@@ -624,21 +653,23 @@ export default function App() {
         )}
 
         {/* Footer Barra de Estado NexoCampo PRO */}
-        <footer className={`mt-8 mb-4 py-3 px-4 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] ${
+        <footer className={`mt-6 mb-4 p-3 rounded-xl border text-xs space-y-2 ${
           modoSol ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-slate-900/60 border-slate-800 text-slate-400'
         }`}>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span className="font-semibold text-slate-200">NexoCampo PRO v18.1.9</span>
-            <span>·</span>
-            <span>Motor Offline-First (IndexedDB & Background Sync)</span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>NexoCampo PRO v18.1.9</span>
+            </div>
+            <span className="text-[10px] text-emerald-400 font-mono font-medium">Motor Offline-First</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-400 pt-1.5 border-t border-slate-800/40">
             <span>Áreas: Jamaica · Piloto · Púrpura · Naranja</span>
-            <span>·</span>
-            <span className="font-mono font-medium text-emerald-400">36 Colaboradores</span>
-            <span>·</span>
-            <span className="font-mono font-medium text-emerald-400">23 Labores</span>
+            <div className="flex items-center gap-2 font-mono font-medium text-emerald-400">
+              <span>36 Colaboradores</span>
+              <span>·</span>
+              <span>23 Labores</span>
+            </div>
           </div>
         </footer>
       </main>
