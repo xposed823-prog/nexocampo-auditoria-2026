@@ -108,6 +108,8 @@ export interface ResultadoConsultaCruzada {
   };
   jornada: {
     registrado: boolean;
+    conteoJornadasDia: number;
+    jornadaIds: string[];
     jornadaId?: string;
     horaApertura?: string;
     horaCierre?: string;
@@ -170,7 +172,7 @@ export async function consultarColaboradorFecha(
       colaborador: null,
       fechaConsultada: fecha,
       asistencia: { registrado: false, estado: null, detalleTexto: 'Error al consultar IndexedDB' },
-      jornada: { registrado: false, minutosBrutos: 0, minutosEfectivosNetos: 0, tramos: [] },
+      jornada: { registrado: false, conteoJornadasDia: 0, jornadaIds: [], minutosBrutos: 0, minutosEfectivosNetos: 0, tramos: [] },
       metricasConsolidadas: {
         totalTramos: 0,
         minutosEfectivosLaborales: 0,
@@ -253,13 +255,15 @@ export async function consultarColaboradorFecha(
       };
     }
 
-    // 3. Jornadas y tramos del colaborador en la fecha consultada
+    // 3. Jornadas y tramos del colaborador en la fecha consultada (soporte multi-jornada)
     const jornadasDia = jornadas.filter(
       j => j.fecha === fecha && (j.colaboradores_ids.includes(colaboradorId) || j.colaboradores_ids.length === 0)
     );
 
     let jornadaResultado: ResultadoConsultaCruzada['jornada'] = {
       registrado: false,
+      conteoJornadasDia: 0,
+      jornadaIds: [],
       minutosBrutos: 0,
       minutosEfectivosNetos: 0,
       tramos: []
@@ -274,119 +278,121 @@ export async function consultarColaboradorFecha(
     let totalMinutosEfectivos = 0;
 
     if (jornadasDia.length > 0) {
-      // Tomamos la jornada principal del día
-      const jPrincipal = jornadasDia[0];
       let minApertura = Infinity;
       let maxCierre = -Infinity;
+      const tramosProcesados: TramoDetalleConsulta[] = [];
 
-      const tramosProcesados: TramoDetalleConsulta[] = (jPrincipal.tramos || []).map((t) => {
-        let minTramo = 0;
-        try {
-          if (t.hora_inicio && t.hora_fin) {
-            const ini = timeStringToMinutes(t.hora_inicio);
-            const fin = timeStringToMinutes(t.hora_fin);
-            if (fin > ini) {
-              minTramo = fin - ini;
-              if (ini < minApertura) minApertura = ini;
-              if (fin > maxCierre) maxCierre = fin;
+      // Procesar TODOS los tramos de TODAS las jornadas del colaborador en el día
+      for (const j of jornadasDia) {
+        for (const t of j.tramos || []) {
+          let minTramo = 0;
+          try {
+            if (t.hora_inicio && t.hora_fin) {
+              const ini = timeStringToMinutes(t.hora_inicio);
+              const fin = timeStringToMinutes(t.hora_fin);
+              if (fin > ini) {
+                minTramo = fin - ini;
+                if (ini < minApertura) minApertura = ini;
+                if (fin > maxCierre) maxCierre = fin;
+              }
+            }
+          } catch (_) {
+            minTramo = 0;
+          }
+
+          // Si es incidente
+          if (t.tipo === 'incidente') {
+            incidentesDetectados.push({
+              id: t.id,
+              hora: t.hora_inicio || '00:00',
+              severidad: t.severidad || 'leve',
+              descripcion: t.observaciones || t.titulo || 'Incidente registrado en jornada',
+              area: t.area ? `${t.area}${t.bloque ? ` - ${t.bloque}` : ''}` : undefined,
+              primerosAuxilios: !!t.primeros_auxilios
+            });
+          }
+
+          // Obtener labor del catálogo
+          const laborInfo = laboresCatalogo.find(l => l.id === t.labor_id || l.nombre === t.labor_nombre) ||
+            LABORES_AGRONOMICAS.find(l => l.id === t.labor_id || l.nombre === t.labor_nombre);
+
+          const estandarMin = t.estandar_min !== undefined
+            ? t.estandar_min
+            : ((laborInfo as any)?.estandar_min !== undefined ? (laborInfo as any).estandar_min : (laborInfo?.min ?? null));
+          const unidadMedida = laborInfo?.unidadMedida || (laborInfo as any)?.unidad || t.unidad || 'unidad';
+
+          // Evaluar cumplimiento de meta
+          let cumplimientoMetaPct: number | null = null;
+          const metaValida = typeof t.meta === 'number' && t.meta > 0;
+          const completadosValidos = typeof t.completados === 'number' && t.completados >= 0;
+
+          if (metaValida && completadosValidos) {
+            try {
+              const evalCumpl = calcularCumplimientoCantidad(t.completados!, t.meta!);
+              cumplimientoMetaPct = evalCumpl.cumplimientoCantidadPct;
+              sumaMetasPct += cumplimientoMetaPct;
+              conteoMetasValidas++;
+            } catch (_) {
+              cumplimientoMetaPct = null;
             }
           }
-        } catch (_) {
-          minTramo = 0;
-        }
 
-        // Si es incidente
-        if (t.tipo === 'incidente') {
-          incidentesDetectados.push({
-            id: t.id,
-            hora: t.hora_inicio || '00:00',
-            severidad: t.severidad || 'leve',
-            descripcion: t.observaciones || t.titulo || 'Incidente registrado en jornada',
-            area: t.area ? `${t.area}${t.bloque ? ` - ${t.bloque}` : ''}` : undefined,
-            primerosAuxilios: !!t.primeros_auxilios
-          });
-        }
-
-        // Obtener labor del catálogo
-        const laborInfo = laboresCatalogo.find(l => l.id === t.labor_id || l.nombre === t.labor_nombre) ||
-          LABORES_AGRONOMICAS.find(l => l.id === t.labor_id || l.nombre === t.labor_nombre);
-
-        const estandarMin = t.estandar_min !== undefined
-          ? t.estandar_min
-          : ((laborInfo as any)?.estandar_min !== undefined ? (laborInfo as any).estandar_min : (laborInfo?.min ?? null));
-        const unidadMedida = laborInfo?.unidadMedida || (laborInfo as any)?.unidad || t.unidad || 'unidad';
-
-        // Evaluar cumplimiento de meta
-        let cumplimientoMetaPct: number | null = null;
-        const metaValida = typeof t.meta === 'number' && t.meta > 0;
-        const completadosValidos = typeof t.completados === 'number' && t.completados >= 0;
-
-        if (metaValida && completadosValidos) {
-          try {
-            const evalCumpl = calcularCumplimientoCantidad(t.completados!, t.meta!);
-            cumplimientoMetaPct = evalCumpl.cumplimientoCantidadPct;
-            sumaMetasPct += cumplimientoMetaPct;
-            conteoMetasValidas++;
-          } catch (_) {
-            cumplimientoMetaPct = null;
+          // Tratamiento estricto de estado "pendiente"
+          if (t.estado === 'pendiente') {
+            produccionPendiente += (t.completados || t.unidades || 0);
+          } else if (completadosValidos) {
+            produccionCompletadaValida += t.completados!;
+          } else if (typeof t.unidades === 'number' && t.unidades > 0) {
+            produccionCompletadaValida += t.unidades;
           }
-        }
 
-        // Tratamiento estricto de estado "pendiente"
-        if (t.estado === 'pendiente') {
-          produccionPendiente += (t.completados || t.unidades || 0);
-        } else if (completadosValidos) {
-          produccionCompletadaValida += t.completados!;
-        } else if (typeof t.unidades === 'number' && t.unidades > 0) {
-          produccionCompletadaValida += t.unidades;
-        }
+          // Rendimiento temporal estricto (solo si estandar !== null y > 0)
+          let rendimientoTemporalPct: number | null = null;
+          let estadoCalculo: TramoDetalleConsulta['estadoCalculoRendimiento'] = 'NO_APLICA';
+          let mensajeAuditoria = 'No aplica cálculo de rendimiento temporal.';
 
-        // Rendimiento temporal estricto (solo si estandar !== null y > 0)
-        let rendimientoTemporalPct: number | null = null;
-        let estadoCalculo: TramoDetalleConsulta['estadoCalculoRendimiento'] = 'NO_APLICA';
-        let mensajeAuditoria = 'No aplica cálculo de rendimiento temporal.';
+          if (t.tipo === 'labor') {
+            totalMinutosEfectivos += minTramo;
+            const unidadesParaRendimiento = completadosValidos ? t.completados! : (t.unidades || 0);
+            const evalRend = calcularRendimientoTemporal(estandarMin, unidadesParaRendimiento, minTramo);
+            
+            rendimientoTemporalPct = evalRend.rendimientoTemporalPct;
+            estadoCalculo = evalRend.estadoCalculo;
+            mensajeAuditoria = evalRend.mensajeAuditoria;
 
-        if (t.tipo === 'labor') {
-          totalMinutosEfectivos += minTramo;
-          const unidadesParaRendimiento = completadosValidos ? t.completados! : (t.unidades || 0);
-          const evalRend = calcularRendimientoTemporal(estandarMin, unidadesParaRendimiento, minTramo);
-          
-          rendimientoTemporalPct = evalRend.rendimientoTemporalPct;
-          estadoCalculo = evalRend.estadoCalculo;
-          mensajeAuditoria = evalRend.mensajeAuditoria;
+            evaluacionesRendimiento.push({
+              tiempoEfectivoMinutos: minTramo,
+              tiempoEstandarTotalMinutos: evalRend.tiempoEstandarTotalMinutos
+            });
+          }
 
-          evaluacionesRendimiento.push({
-            tiempoEfectivoMinutos: minTramo,
-            tiempoEstandarTotalMinutos: evalRend.tiempoEstandarTotalMinutos
+          tramosProcesados.push({
+            id: t.id,
+            tipo: t.tipo,
+            titulo: t.titulo,
+            laborId: t.labor_id,
+            laborNombre: t.labor_nombre || laborInfo?.nombre,
+            horaInicio: t.hora_inicio,
+            horaFin: t.hora_fin,
+            minutosCalculados: minTramo,
+            area: t.area,
+            bloque: t.bloque,
+            tunel: t.tunel,
+            unidadesCompletadas: t.completados ?? t.unidades,
+            unidadMedida,
+            meta: t.meta,
+            cumplimientoMetaPct,
+            estandarMin,
+            rendimientoTemporalPct,
+            estadoCalculoRendimiento: estadoCalculo,
+            mensajeAuditoriaRendimiento: mensajeAuditoria,
+            estadoLabor: t.estado || 'cumple',
+            observaciones: t.observaciones,
+            severidadIncidente: t.severidad,
+            primerosAuxilios: t.primeros_auxilios
           });
         }
-
-        return {
-          id: t.id,
-          tipo: t.tipo,
-          titulo: t.titulo,
-          laborId: t.labor_id,
-          laborNombre: t.labor_nombre || laborInfo?.nombre,
-          horaInicio: t.hora_inicio,
-          horaFin: t.hora_fin,
-          minutosCalculados: minTramo,
-          area: t.area,
-          bloque: t.bloque,
-          tunel: t.tunel,
-          unidadesCompletadas: t.completados ?? t.unidades,
-          unidadMedida,
-          meta: t.meta,
-          cumplimientoMetaPct,
-          estandarMin,
-          rendimientoTemporalPct,
-          estadoCalculoRendimiento: estadoCalculo,
-          mensajeAuditoriaRendimiento: mensajeAuditoria,
-          estadoLabor: t.estado || 'cumple',
-          observaciones: t.observaciones,
-          severidadIncidente: t.severidad,
-          primerosAuxilios: t.primeros_auxilios
-        };
-      });
+      }
 
       const horaAperturaStr = minApertura !== Infinity ? `${String(Math.floor(minApertura / 60)).padStart(2, '0')}:${String(minApertura % 60).padStart(2, '0')}` : undefined;
       const horaCierreStr = maxCierre !== -Infinity ? `${String(Math.floor(maxCierre / 60)).padStart(2, '0')}:${String(maxCierre % 60).padStart(2, '0')}` : undefined;
@@ -394,7 +400,9 @@ export async function consultarColaboradorFecha(
 
       jornadaResultado = {
         registrado: true,
-        jornadaId: jPrincipal.id,
+        conteoJornadasDia: jornadasDia.length,
+        jornadaIds: jornadasDia.map(j => j.id),
+        jornadaId: jornadasDia.map(j => j.id).join(', '),
         horaApertura: horaAperturaStr,
         horaCierre: horaCierreStr,
         minutosBrutos: minutosBrutosTotales,
@@ -489,7 +497,7 @@ export async function consultarColaboradorFecha(
       colaborador: null,
       fechaConsultada: fecha,
       asistencia: { registrado: false, estado: null, detalleTexto: 'Error de lectura' },
-      jornada: { registrado: false, minutosBrutos: 0, minutosEfectivosNetos: 0, tramos: [] },
+      jornada: { registrado: false, conteoJornadasDia: 0, jornadaIds: [], minutosBrutos: 0, minutosEfectivosNetos: 0, tramos: [] },
       metricasConsolidadas: {
         totalTramos: 0,
         minutosEfectivosLaborales: 0,

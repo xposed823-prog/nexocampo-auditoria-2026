@@ -189,38 +189,55 @@ async function _dbRequest<T>(
   });
 }
 
+export class IndexedDBError extends Error {
+  public store: StoreName;
+  public override cause?: unknown;
+
+  constructor(store: StoreName, mensaje: string, cause?: unknown) {
+    super(`[IndexedDB:${store}] ${mensaje}`);
+    this.name = 'IndexedDBError';
+    this.store = store;
+    this.cause = cause;
+  }
+}
+
 export async function dbGetAll<T>(store: StoreName): Promise<T[]> {
   try {
     const res = await _dbRequest<T[]>(store, 'readonly', (os) => os.getAll());
     return res || [];
-  } catch (e) {
+  } catch (e: any) {
     console.error(`[NexoCampo IDB] Error en dbGetAll(${store}):`, e);
-    return [];
+    throw new IndexedDBError(store, e?.message || 'Error al consultar almacén en IndexedDB', e);
   }
 }
 
 export async function dbGet<T>(store: StoreName, id: string): Promise<T | null> {
   try {
     const res = await _dbRequest<T>(store, 'readonly', (os) => os.get(id));
-    return res || null;
-  } catch (e) {
+    return res !== undefined ? res : null;
+  } catch (e: any) {
     console.error(`[NexoCampo IDB] Error en dbGet(${store}, ${id}):`, e);
-    return null;
+    throw new IndexedDBError(store, e?.message || `Error al obtener registro con ID ${id}`, e);
   }
 }
 
 export async function dbPut<T extends { id: string }>(store: StoreName, item: T): Promise<T> {
-  await _dbRequest(store, 'readwrite', (os) => os.put(item));
-  return item;
+  try {
+    await _dbRequest(store, 'readwrite', (os) => os.put(item));
+    return item;
+  } catch (e: any) {
+    console.error(`[NexoCampo IDB] Error en dbPut(${store}, ${item.id}):`, e);
+    throw new IndexedDBError(store, e?.message || `Error al guardar registro ${item.id}`, e);
+  }
 }
 
 export async function dbDelete(store: StoreName, id: string): Promise<boolean> {
   try {
     await _dbRequest(store, 'readwrite', (os) => os.delete(id));
     return true;
-  } catch (e) {
+  } catch (e: any) {
     console.error(`[NexoCampo IDB] Error en dbDelete(${store}, ${id}):`, e);
-    return false;
+    throw new IndexedDBError(store, e?.message || `Error al eliminar registro ${id}`, e);
   }
 }
 

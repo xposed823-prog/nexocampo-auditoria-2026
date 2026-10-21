@@ -252,6 +252,16 @@ export const ConsultaCruzadaModulo: React.FC<ConsultaCruzadaModuloProps> = ({
                   </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-700/40">
+                  <span className="text-slate-400">Jornadas en Fecha:</span>
+                  <span className={`font-semibold ${
+                    resultado.jornada.conteoJornadasDia > 1 ? 'text-sky-400 font-bold' : 'text-slate-200'
+                  }`}>
+                    {resultado.jornada.conteoJornadasDia > 1
+                      ? `${resultado.jornada.conteoJornadasDia} jornadas consolidadas`
+                      : (resultado.jornada.registrado ? '1 jornada' : 'Sin registro')}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-700/40">
                   <span className="text-slate-400">Horario Jornada:</span>
                   <span className="font-mono">
                     {resultado.jornada.horaApertura && resultado.jornada.horaCierre

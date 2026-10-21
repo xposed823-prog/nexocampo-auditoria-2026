@@ -19,7 +19,7 @@ import {
   EVENTO_MUTACION_DATOS,
   type MutacionDatosEvento
 } from './eventBus';
-import { JornadaRegistro, AsistenciaRegistro, AusenciaRegistro } from './nexocampoDB';
+import { JornadaRegistro, AsistenciaRegistro, AusenciaRegistro, IndexedDBError } from './nexocampoDB';
 import { COLABORADORES_CATALOGO, LABORES_AGRONOMICAS } from './catalogoAgronomico';
 
 // ========================================================
@@ -514,3 +514,113 @@ test('FASE 3 [TC-14]: Distinción formal entre base vacía (SIN_REGISTROS) y fal
   assert.equal(resError.estadoIntegridad, 'ERROR_LECTURA');
   assert.notEqual(resError.estadoIntegridad, 'SIN_REGISTROS');
 });
+
+// ========================================================
+// CASO 15: Manejo explícito de IndexedDBError sin enmascarar errores como colecciones vacías
+// ========================================================
+test('FASE 3 [TC-15]: IndexedDBError propaga causa y evita que errores de almacenamiento se confundan con base vacía', () => {
+  const err = new IndexedDBError('jornadas', 'Transacción abortada por fallo de I/O');
+  assert.equal(err.name, 'IndexedDBError');
+  assert.equal(err.store, 'jornadas');
+  assert.match(err.message, /\[IndexedDB:jornadas\] Transacción abortada/);
+  assert.ok(err instanceof Error);
+});
+
+// ========================================================
+// CASO 16: Tratamiento y consolidación de múltiples jornadas en la misma fecha
+// ========================================================
+test('FASE 3 [TC-16]: Tratamiento exhaustivo de múltiples jornadas para un colaborador en la misma fecha', async () => {
+  // Dos jornadas en la misma fecha para col_1: Turno 1 (mañana) y Turno 2 (tarde)
+  const jornada1: JornadaRegistro = {
+    id: 'jornada_2026-10-19_manana',
+    fecha: '2026-10-19',
+    colaboradores_ids: ['col_1'],
+    tramos: [
+      {
+        id: 't_m1',
+        tipo: 'labor',
+        titulo: 'Poda Matutina',
+        labor_id: 'lab_1', // estandar_min: 6
+        hora_inicio: '06:30',
+        hora_fin: '10:30', // 240 min
+        unidades: 30,
+        completados: 30,
+        meta: 30,
+        estado: 'cumple'
+      }
+    ],
+    creadoEn: '2026-10-19T06:30:00Z',
+    actualizadoEn: '2026-10-19T10:30:00Z',
+    sincronizado: true
+  };
+
+  const jornada2: JornadaRegistro = {
+    id: 'jornada_2026-10-19_tarde',
+    fecha: '2026-10-19',
+    colaboradores_ids: ['col_1'],
+    tramos: [
+      {
+        id: 't_t1',
+        tipo: 'labor',
+        titulo: 'Tutorado Vespertino',
+        labor_id: 'lab_2', // estandar_min: 4
+        hora_inicio: '12:30',
+        hora_fin: '15:30', // 180 min
+        unidades: 45,
+        completados: 45,
+        meta: 45,
+        estado: 'cumple'
+      }
+    ],
+    creadoEn: '2026-10-19T12:30:00Z',
+    actualizadoEn: '2026-10-19T15:30:00Z',
+    sincronizado: true
+  };
+
+  const asistencia: AsistenciaRegistro = {
+    id: 'col_1_2026-10-19',
+    colaborador_id: 'col_1',
+    fecha: '2026-10-19',
+    estado: 'presente',
+    hora_entrada: '06:20'
+  };
+
+  // 1. Consulta individual del colaborador en esa fecha
+  const resCruzada = await consultarColaboradorFecha('col_1', '2026-10-19', {
+    mockDatos: {
+      jornadas: [jornada1, jornada2],
+      asistencia: [asistencia]
+    }
+  });
+
+  // Debe consolidar AMBAS jornadas
+  assert.equal(resCruzada.estadoIntegridad, 'EXITO_COMPLETO');
+  assert.equal(resCruzada.jornada.registrado, true);
+  assert.equal(resCruzada.jornada.conteoJornadasDia, 2);
+  assert.equal(resCruzada.jornada.jornadaIds.length, 2);
+  assert.equal(resCruzada.jornada.tramos.length, 2);
+  // Minutos efectivos: 240 + 180 = 420 min
+  assert.equal(resCruzada.jornada.minutosEfectivosNetos, 420);
+  assert.equal(resCruzada.metricasConsolidadas.minutosEfectivosLaborales, 420);
+  // Producción total: 30 + 45 = 75 unidades
+  assert.equal(resCruzada.metricasConsolidadas.produccionCompletadaValida, 75);
+  // Apertura menor y cierre mayor
+  assert.equal(resCruzada.jornada.horaApertura, '06:30');
+  assert.equal(resCruzada.jornada.horaCierre, '15:30');
+
+  // 2. Consulta de Reporte en el mismo rango de fecha
+  const resReporte = await consultarReportePeriodo('2026-10-19', '2026-10-19', {
+    mockDatos: {
+      jornadas: [jornada1, jornada2]
+    }
+  });
+
+  // Verificación de consistencia cruzada perfecta
+  assert.equal(resReporte.conteoJornadasUnicas, 2);
+  assert.equal(resReporte.conteoTramosTotales, 2);
+  assert.equal(resReporte.minutosTotalesEfectivos, resCruzada.jornada.minutosEfectivosNetos);
+  assert.equal(resReporte.totalUnidadesCompletadas, resCruzada.metricasConsolidadas.produccionCompletadaValida);
+  assert.equal(resReporte.eficienciaPonderadaGlobalPct, resCruzada.metricasConsolidadas.rendimientoPonderadoPct);
+  assert.equal(resReporte.cumplimientoMetasGlobalPct, resCruzada.metricasConsolidadas.cumplimientoMetasPct);
+});
+
