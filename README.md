@@ -24,7 +24,7 @@ La aplicación alternativa no debe recibir una copia monolítica de `index.html`
 
 ## Documentación de integración
 
-- [Comparación PWA vs. Auditoría 2026](docs/COMPARACION_PWA_VS_AUDITORIA_2026.md)
+- [Comparación PWA vs. Auditoría 2026](docs/COMPARACION_PWA_VS_AUDITORIA_2026.md)\n- [Inventario funcional por módulo](docs/INVENTARIO_FUNCIONAL_AUDITORIA.md)
 - [Plan de integración y seguimiento](docs/PLAN_INTEGRACION_Y_SEGUIMIENTO.md)
 - [Configuración de Google Drive](docs/GOOGLE_DRIVE_CONFIGURACION.md)
 
