@@ -6,7 +6,7 @@
 |---|---|---|---|
 | `JornadasModulo.tsx` | Sí, usa `guardarJornadaRegistro` y lee `jornadas` | Guarda una jornada, pero inicia con fecha fija y asigna un grupo fijo de colaboradores. El formulario principal no sustituye aún el registro completo de varias labores consecutivas de la PWA. | Usar fecha actual/seleccionable, selección real de colaboradores y segmentos; probar que jornada y tramos no se solapen indebidamente. |
 | `LaboresModulo.tsx` | No encontrada en el módulo | La línea de tiempo comienza con tres tramos precargados en estado React; añadir una labor solo actualiza la vista y calcula resultados. | Conectar el flujo con el modelo canónico de jornadas/labores o dejar explícito que es un simulador; no presentar el toast como persistencia. |
-| `OficiosVariosModulo.tsx` | No encontrada en el módulo | Valores iniciales 5/3; el botón de guardar solo muestra “Registro guardado”, sin escritura de IndexedDB. | Guardar como registro canónico con tareas asignadas/completadas, sin estándar temporal ni rendimiento técnico; volver a leer y mostrar registros guardados. |
+| `OficiosVariosModulo.tsx` + `oficiosVariosService.ts` | Implementada en esta rama, pendiente de prueba | Ahora usa el almacén `labores` para los tres tipos iniciales y permite crear/editar/desactivar tipos; guarda los registros en `jornadas` con `modelo: oficios_varios`, muestra el historial local y separa cumplimiento de tareas del rendimiento técnico. | Ejecutar pruebas; comprobar CRUD, persistencia tras recarga, Consulta Cruzada y Reportes en Android. |
 | `PlasticoModulo.tsx` | No encontrada en el componente | El botón “Guardar Registro en IndexedDB” solo muestra un toast de éxito. La información vive en estado de React y algunos valores iniciales son de demostración. | Conectar con `guardarJornadaRegistro`, registrar integrantes/ubicación/cantidad/completados/condiciones y subtareas con horario heredado; solo confirmar éxito tras transacción. |
 | `AsistenciaModulo.tsx` + `App.tsx` | Sí, usa `guardarAsistenciaAtomica` y `guardarLoteAsistencia` | La matriz contiene datos iniciales de ejemplo y usa fechas codificadas en octubre de 2026; el cálculo de fechas no está basado en la semana seleccionada. | Empezar con celdas sin registro, calcular lunes-domingo/seis días según regla acordada y generar fechas ISO reales; no afectar rendimiento. |
 | `AusenciasModulo.tsx` | Sí, usa `dbGetAll` y `guardarAusenciaRegistro` | Tiene persistencia, pero el formulario usa fechas iniciales fijas; hay que validar recarga y rangos. | Reemplazar defaults fijos, probar siete códigos, intervalos y refresco tras restauración. |
@@ -30,7 +30,7 @@
 ## Orden recomendado para la siguiente fase
 
 1. Ejecutar `npm test`, `npm run lint` y `npm run build`; corregir errores de compilación primero.
-2. Conectar Plástico/Polisombra y Oficios Varios a persistencia canónica.
+2. Conectar Plástico/Polisombra a persistencia canónica; Oficios Varios ya tiene una primera implementación que requiere pruebas.
 3. Eliminar falsos éxitos y persistir incidentes.
 4. Corregir fechas y matriz de asistencia.
 5. Habilitar CRUD persistente de catálogos.
