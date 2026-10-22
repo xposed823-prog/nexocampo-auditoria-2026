@@ -18,7 +18,7 @@ export interface Colaborador {
   cuadrilla: string;
 }
 
-export type ModeloLabor = 'individual' | 'grupal_tiempo' | 'grupal_meta' | 'tiempo';
+export type ModeloLabor = 'individual' | 'grupal_tiempo' | 'grupal_meta' | 'tiempo' | 'oficios_varios';
 
 export interface LaborAgricola {
   id: string;
@@ -27,9 +27,14 @@ export interface LaborAgricola {
   unidadMedida: string;
   min: number | null;
   personalReferencia: number;
-  categoria: 'Adecuaciones' | 'Maquinaria';
+  categoria: 'Adecuaciones' | 'Maquinaria' | 'Oficios Varios';
   modelo: ModeloLabor;
   esPlasticoPolisombra?: boolean;
+  medicion?: 'tiempo' | 'cantidad' | 'oficios_varios';
+  tipo_registro?: 'oficio_vario';
+  activa?: boolean;
+  creado?: string;
+  actualizado?: string;
 }
 
 export interface BloqueAgricola {
@@ -224,3 +229,50 @@ export function obtenerTunelesDisponibles(nombreArea: string, nombreBloque: stri
   const bloque = obtenerBloque(nombreArea, nombreBloque);
   return bloque ? bloque.tuneles : ['Túnel 1', 'Túnel 2', 'Túnel 3', 'Túnel 4', 'Túnel 5', 'Túnel 6'];
 }
+
+/**
+ * Tareas iniciales de Oficios Varios.
+ * No tienen tiempo estándar y no deben generar rendimiento técnico temporal.
+ * Se guardan en el almacén existente "labores"; no requieren un store ni DB_VERSION nuevos.
+ */
+export const OFICIOS_VARIOS_INICIALES: LaborAgricola[] = [
+  {
+    id: 'oficio_limpieza_laterales',
+    codigo: 'OFV-001',
+    nombre: 'Limpieza de laterales',
+    unidadMedida: 'tarea',
+    min: null,
+    personalReferencia: 1,
+    categoria: 'Oficios Varios',
+    modelo: 'oficios_varios',
+    medicion: 'oficios_varios',
+    tipo_registro: 'oficio_vario',
+    activa: true
+  },
+  {
+    id: 'oficio_recoleccion_residuos',
+    codigo: 'OFV-002',
+    nombre: 'Recolección y retiro de residuos',
+    unidadMedida: 'tarea',
+    min: null,
+    personalReferencia: 1,
+    categoria: 'Oficios Varios',
+    modelo: 'oficios_varios',
+    medicion: 'oficios_varios',
+    tipo_registro: 'oficio_vario',
+    activa: true
+  },
+  {
+    id: 'oficio_correcciones_adecuaciones',
+    codigo: 'OFV-003',
+    nombre: 'Correcciones y adecuaciones menores',
+    unidadMedida: 'tarea',
+    min: null,
+    personalReferencia: 1,
+    categoria: 'Oficios Varios',
+    modelo: 'oficios_varios',
+    medicion: 'oficios_varios',
+    tipo_registro: 'oficio_vario',
+    activa: true
+  }
+];
