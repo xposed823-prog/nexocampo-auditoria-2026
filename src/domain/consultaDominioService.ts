@@ -65,7 +65,7 @@ export type { MutacionDatosEvento };
 
 export interface TramoDetalleConsulta {
   id: string;
-  tipo: 'labor' | 'auxiliar' | 'interrupcion' | 'incidente';
+  tipo: 'labor' | 'auxiliar' | 'interrupcion' | 'incidente' | 'jornada_base';
   titulo: string;
   laborId?: string;
   laborNombre?: string;
