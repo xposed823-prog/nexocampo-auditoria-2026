@@ -73,6 +73,16 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
       return;
     }
 
+    const existentes = await dbGetAll<JornadaRegistro>('jornadas');
+    const colaboradoresConJornada = existentes.find((jornada) =>
+      jornada.fecha === fecha &&
+      (jornada.tramos || []).some((tramo) => tramo.tipo === 'jornada_base') &&
+      jornada.colaboradores_ids.some((id) => colaboradoresSeleccionados.includes(id))
+    );
+    if (colaboradoresConJornada) {
+      throw new Error('Uno o más colaboradores ya tienen una jornada base en esta fecha. No se guardó una jornada duplicada.');
+    }
+
     const ahora = new Date().toISOString();
     const marca = Date.now();
     const jornadaId = `jornada_base_${fecha}_${marca}`;
