@@ -345,7 +345,7 @@ export async function consultarColaboradorFecha(
           if (typeof t.unidades === 'number' && t.unidades > 0 && completadosValidos) {
             cumplimientoCantidadPct = Number(((t.completados! / t.unidades) * 100).toFixed(2));
           }
-          const metaValida = typeof t.meta === 'number' && t.meta > 0;
+          const metaValida = !esSubtareaCobertura && typeof t.meta === 'number' && t.meta > 0;
           const completadosValidos = typeof t.completados === 'number' && t.completados >= 0;
 
           if (esOficioVario) {
@@ -765,7 +765,9 @@ export async function consultarReportePeriodo(
 
         // Incidentes, interrupciones y auxiliares no se suman como minutos técnicos de labor.
         if (t.tipo !== 'labor') continue;
-        minutosTotalesEfectivos += duracionMin;
+        const esMetaGrupal = t.modelo === 'grupal_meta';
+        const esSubtareaCobertura = t.es_subtarea === true;
+        if (!esMetaGrupal && !esSubtareaCobertura) minutosTotalesEfectivos += duracionMin;
 
         const claveLabor = laborInfo?.id || t.labor_id || t.labor_nombre || t.titulo;
         const nombreLabor = laborInfo?.nombre || t.labor_nombre || t.titulo;
@@ -773,7 +775,7 @@ export async function consultarReportePeriodo(
         const estandarMin = t.estandar_min !== undefined
           ? t.estandar_min
           : ((laborInfo as any)?.estandar_min !== undefined ? (laborInfo as any).estandar_min : (laborInfo?.min ?? null));
-        const tieneEstandar = typeof estandarMin === 'number' && estandarMin > 0;
+        const tieneEstandar = !esMetaGrupal && !esSubtareaCobertura && typeof estandarMin === 'number' && estandarMin > 0;
 
         let accum = mapaLabores.get(claveLabor);
         if (!accum) {
@@ -793,7 +795,7 @@ export async function consultarReportePeriodo(
           mapaLabores.set(claveLabor, accum);
         }
 
-        accum.minutosEfectivos += duracionMin;
+        if (!esMetaGrupal && !esSubtareaCobertura) accum.minutosEfectivos += duracionMin;
 
         // Meta física
         const metaValida = typeof t.meta === 'number' && t.meta > 0;
@@ -811,7 +813,8 @@ export async function consultarReportePeriodo(
 
         // Estado pendiente vs completado
         if (t.estado === 'pendiente') {
-          const qty = t.completados || t.unidades || 0;
+          const cantidadAsignada = metaValida ? t.meta! : (typeof t.unidades === 'number' ? t.unidades : 0);
+          const qty = Math.max(0, cantidadAsignada - (compValidos ? t.completados! : 0));
           accum.pendientes += qty;
           totalUnidadesPendientes += qty;
         } else {
