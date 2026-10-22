@@ -109,6 +109,7 @@ function App() {
   // Modal de Justificación de Saldo Pendiente (ahora manejado en PlasticoModulo)
   const [motivosJustificacion, setMotivosJustificacion] = useState<string[]>(['vientos_fuertes']);
   const [justificacionConfirmada, setJustificacionConfirmada] = useState(true);
+  const [notaSupervisorJustificacion, setNotaSupervisorJustificacion] = useState('');
 
   // Estado interactivo de Asistencia Semanal con persistencia real IndexedDB
   const [matrizAsistencia, setMatrizAsistencia] = useState<Record<string, 'sin_registrar' | 'presente' | 'retardo' | 'ausencia'>>({
