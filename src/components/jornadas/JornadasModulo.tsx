@@ -89,6 +89,7 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
     const nuevaJornada: JornadaRegistro = {
       id: jornadaId,
       fecha,
+      jornada_base_id: jornadaId,
       colaboradores_ids: [...colaboradoresSeleccionados],
       tramos: [tramoBase],
       creadoEn: ahora,
