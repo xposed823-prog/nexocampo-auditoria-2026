@@ -80,7 +80,8 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
       jornada.colaboradores_ids.some((id) => colaboradoresSeleccionados.includes(id))
     );
     if (colaboradoresConJornada) {
-      throw new Error('Uno o más colaboradores ya tienen una jornada base en esta fecha. No se guardó una jornada duplicada.');
+      dispararToast('Uno o más colaboradores ya tienen una jornada base en esta fecha. No se guardó una jornada duplicada.');
+      return;
     }
 
     const ahora = new Date().toISOString();
