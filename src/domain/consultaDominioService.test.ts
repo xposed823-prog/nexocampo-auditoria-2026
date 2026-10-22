@@ -82,4 +82,59 @@ describe('separación matemática de Oficios Varios', () => {
     assert.equal(result.totalUnidadesCompletadas, 0);
     assert.equal(result.cumplimientoMetasGlobalPct, null);
   });
+
+  it('no cuenta el tiempo heredado de una subtarea de cobertura como tiempo técnico adicional', async () => {
+    const jornada: JornadaRegistro = {
+      ...jornadaOficios,
+      id: 'jornada_test_cobertura_001',
+      tramos: [
+        {
+          id: 'tramo_plastico_test',
+          tipo: 'labor',
+          titulo: 'Instalar plásticos',
+          labor_nombre: 'Instalar plásticos',
+          unidad: 'túnel',
+          estandar_min: null,
+          modelo: 'grupal_meta',
+          especial: 'plastico_polisombra',
+          hora_inicio: '06:30',
+          hora_fin: '11:30',
+          unidades: 100,
+          meta: 100,
+          completados: 75,
+          estado: 'pendiente'
+        },
+        {
+          id: 'tramo_polisombra_test',
+          tipo: 'labor',
+          titulo: 'Instalar sombras',
+          labor_nombre: 'Instalar sombras',
+          unidad: 'túnel',
+          estandar_min: null,
+          modelo: 'grupal_meta',
+          especial: 'plastico_polisombra',
+          es_subtarea: true,
+          tipo_polisombra: '30%',
+          hora_inicio: '06:30',
+          hora_fin: '11:30',
+          unidades: 40,
+          completados: 30,
+          estado: 'pendiente'
+        }
+      ]
+    };
+    const datosCobertura = { ...mockDatos, jornadas: [jornada] };
+
+    const consulta = await consultarColaboradorFecha(colaborador.id, FECHA, { mockDatos: datosCobertura });
+    assert.equal(consulta.metricasConsolidadas.minutosEfectivosLaborales, 0);
+    assert.equal(consulta.metricasConsolidadas.rendimientoPonderadoPct, null);
+    assert.equal(consulta.jornada.tramos[0].cumplimientoMetaPct, 75);
+    assert.equal(consulta.jornada.tramos[1].esSubtarea, true);
+    assert.equal(consulta.jornada.tramos[1].cumplimientoCantidadPct, 75);
+
+    const reporte = await consultarReportePeriodo(FECHA, FECHA, { mockDatos: datosCobertura });
+    assert.equal(reporte.minutosTotalesEfectivos, 0);
+    assert.equal(reporte.eficienciaPonderadaGlobalPct, null);
+    assert.equal(reporte.cumplimientoMetasGlobalPct, 75);
+  });
 });
