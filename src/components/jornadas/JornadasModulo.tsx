@@ -43,6 +43,12 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
       setCierre('15:30');
       setPausaComida(60);
       setPausaActiva(5);
+    } else {
+      // Domingo: no hay jornada ordinaria configurada.
+      setApertura('06:30');
+      setCierre('06:30');
+      setPausaComida(0);
+      setPausaActiva(0);
     }
   }, [fecha]);
 
