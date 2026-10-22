@@ -9,7 +9,8 @@ import {
   Users,
   CheckCircle2,
   Clock,
-  Info
+  Info,
+  Download
 } from 'lucide-react';
 import {
   consultarReportePeriodo,
@@ -22,9 +23,16 @@ export interface ReportesModuloProps {
   dispararToast: (msg: string) => void;
 }
 
+function fechaLocalDesplazada(dias: number): string {
+  const fecha = new Date();
+  fecha.setDate(fecha.getDate() + dias);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())}`;
+}
+
 export const ReportesModulo: React.FC<ReportesModuloProps> = ({ modoSol, dispararToast }) => {
-  const [fechaInicio, setFechaInicio] = useState('2026-10-19');
-  const [fechaFin, setFechaFin] = useState('2026-10-24');
+  const [fechaInicio, setFechaInicio] = useState(() => fechaLocalDesplazada(-6));
+  const [fechaFin, setFechaFin] = useState(() => fechaLocalDesplazada(0));
   const [cuadrilla, setCuadrilla] = useState('todas');
   const [reporte, setReporte] = useState<ResultadoReporteConsolidado | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -64,6 +72,58 @@ export const ReportesModulo: React.FC<ReportesModuloProps> = ({ modoSol, dispara
     };
   }, [cargarReporte]);
 
+  const exportarCSV = () => {
+    if (!reporte) {
+      dispararToast('Primero genera el reporte del periodo seleccionado.');
+      return;
+    }
+    const filas: Array<Array<string | number | null | undefined>> = [
+      ['Sección', 'Indicador', 'Valor'],
+      ['Periodo', 'Fecha inicial', reporte.periodo.fechaInicio],
+      ['Periodo', 'Fecha final', reporte.periodo.fechaFin],
+      ['Resumen', 'Estado de integridad', reporte.estadoIntegridad],
+      ['Resumen', 'Jornadas únicas', reporte.conteoJornadasUnicas],
+      ['Resumen', 'Tramos registrados', reporte.conteoTramosTotales],
+      ['Resumen', 'Minutos técnicos computables', reporte.minutosTotalesEfectivos],
+      ['Resumen', 'Horas técnicas computables', reporte.horasTotalesEfectivas],
+      ['Resumen', 'Rendimiento técnico ponderado (%)', reporte.eficienciaPonderadaGlobalPct],
+      ['Resumen', 'Cumplimiento de metas (%)', reporte.cumplimientoMetasGlobalPct],
+      ['Resumen', 'Unidades completadas', reporte.totalUnidadesCompletadas],
+      ['Resumen', 'Unidades pendientes', reporte.totalUnidadesPendientes],
+      ['Resumen', 'Ausencias', reporte.totalAusenciasPeriodo],
+      ['Resumen', 'Incidentes', reporte.totalIncidentesPeriodo]
+    ];
+    if (reporte.oficiosVariosResumen) {
+      filas.push(['Oficios Varios', 'Registros', reporte.oficiosVariosResumen.registros]);
+      filas.push(['Oficios Varios', 'Tareas asignadas', reporte.oficiosVariosResumen.tareasAsignadas]);
+      filas.push(['Oficios Varios', 'Tareas completadas', reporte.oficiosVariosResumen.tareasCompletadas]);
+      filas.push(['Oficios Varios', 'Cumplimiento operativo (%)', reporte.oficiosVariosResumen.cumplimientoPct]);
+    }
+    filas.push([]);
+    filas.push(['Detalle de labores', 'Labor', 'Unidad', 'Completadas', 'Pendientes', 'Minutos efectivos', 'Tiempo estándar (min)', 'Cumplimiento meta (%)', 'Rendimiento ponderado (%)']);
+    reporte.laboresDesglose.forEach((item) => {
+      filas.push([
+        'Detalle de labores', item.laborNombre, item.unidad, item.cantidadCompletada,
+        item.cantidadPendiente, item.minutosEfectivosTotales, item.tiempoEstandarTotalMinutos,
+        item.cumplimientoMetaPct, item.rendimientoPonderadoPct
+      ]);
+    });
+
+    const escapar = (valor: string | number | null | undefined) =>
+      `"${String(valor ?? '').replace(/"/g, '""')}"`;
+    const csv = filas.map((fila) => fila.map(escapar).join(';')).join('\r\n');
+    const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nexocampo-reporte-${fechaInicio}-${fechaFin}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    dispararToast('Reporte CSV descargado.');
+  };
+
   return (
     <div className="space-y-6">
       {/* Encabezado */}
@@ -87,6 +147,15 @@ export const ReportesModulo: React.FC<ReportesModuloProps> = ({ modoSol, dispara
             >
               <RefreshCw className={`w-3.5 h-3.5 text-sky-400 ${cargando ? 'animate-spin' : ''}`} />
               <span>Actualizar</span>
+            </button>
+            <button
+              onClick={exportarCSV}
+              disabled={!reporte || cargando}
+              className="min-h-[40px] px-3 py-1.5 rounded-lg bg-sky-700 hover:bg-sky-600 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              aria-label="Exportar reporte a CSV"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Exportar CSV</span>
             </button>
             <button
               onClick={() => window.print()}
