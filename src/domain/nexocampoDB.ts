@@ -450,7 +450,7 @@ export async function restaurarBackupCanónicoJSON(jsonString: string): Promise<
       }
 
       tx.oncomplete = () => {
-        STORES.forEach((store) => notificarMutacionDatos(store, 'restore'));
+        STORES.forEach((store) => notificarMutacionDatos(store, 'batch'));
         finalizar({ exito: true, mensaje: 'Respaldo validado y restaurado en los 6 almacenes.' });
       };
 
@@ -476,9 +476,6 @@ export async function restaurarBackupCanónicoJSON(jsonString: string): Promise<
       } catch (error: any) {
         txError = error?.message || 'Error al preparar los registros';
         try { tx.abort(); } catch { /* La transacción pudo haber terminado. */ }
-        if (!finalizado && tx.readyState === 'done') {
-          finalizar({ exito: false, mensaje: `No se pudo preparar la restauración: ${txError}. No se confirmó ningún cambio.` });
-        }
       }
     });
   } catch (error: any) {
