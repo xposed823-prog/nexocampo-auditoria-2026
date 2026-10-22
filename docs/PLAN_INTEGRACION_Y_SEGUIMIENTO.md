@@ -25,7 +25,7 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 ### Etapa 1 — Contrato de datos y reglas de negocio (P0)
 - [ ] Comparar los tipos y serialización de colaboradores, labores, áreas, ausencias, jornadas y asistencia.
 - [ ] Documentar diferencias entre PWA y destino; definir mapeadores solo donde sean necesarios.
-- [x] Conectar `LaboresModulo` a IndexedDB y validar solapamientos reales antes de guardar.\n- [ ] Probar jornadas con varias labores consecutivas contiguas sin solapamiento real.
+- [x] Separar jornada base de los tramos productivos y vincularlos por `jornada_base_id`.\n- [x] Conectar `LaboresModulo` a IndexedDB y validar solapamientos reales antes de guardar.\n- [ ] Probar jornadas con varias labores consecutivas contiguas sin solapamiento real.
 - [ ] Probar jornada base independiente de los segmentos y descansos.
 - [ ] Probar Cumple, No cumple, Pendiente y estados de calidad.
 - [x] Implementar primera persistencia de Oficios Varios con tareas asignadas/completadas y sin estándar temporal.\n- [x] Separar su porcentaje operativo del rendimiento técnico en Consulta Cruzada y Reportes.\n- [ ] Probar CRUD, persistencia tras recarga y métricas con casos sintéticos.
@@ -87,7 +87,7 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 
 | ID | Módulo | Caso / riesgo | Estado | Evidencia | Próximo paso |
 |---|---|---|---|---|---|
-| NC-001 | Jornada | Varias labores consecutivas y jornada base | En curso | `LaboresModulo` persiste tramos y valida solapamientos; sin prueba ejecutada | Probar tramos contiguos/solapados y revisar `JornadasModulo` |
+| NC-001 | Jornada | Varias labores consecutivas y jornada base | En curso | Jornada base y tramos vinculados por ID; validación de solapamiento implementada; sin pruebas ejecutadas | Probar tramos contiguos/solapados, minutos efectivos y consolidación en Consulta Cruzada |
 | NC-002 | Rendimiento | Pendientes excluidos de rendimiento técnico | Pendiente | Regla documentada; falta corrida | Añadir/ejecutar pruebas de dominio |
 | NC-003 | Oficios Varios | 3 tareas completadas de 5 = 60%, sin minutos estándar | En curso | Servicio, catálogo y separación de métricas implementados; sin pruebas ejecutadas | Ejecutar pruebas y validar recarga/consulta/reporte |
 | NC-004 | Plástico/Polisombra | Subtarea hereda horario sin doble conteo | En curso | Escritura canónica y separación temporal implementadas; sin pruebas ejecutadas | Ejecutar pruebas de guardado, consulta y reporte |
