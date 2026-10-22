@@ -544,7 +544,7 @@ export async function consultarColaboradorFecha(
       asistencia: asistenciaResultado,
       jornada: jornadaResultado,
       metricasConsolidadas: {
-        totalTramos: jornadaResultado.tramos.length,
+        totalTramos: jornadaResultado.tramos.filter((tramo) => tramo.tipo === 'labor').length,
         minutosEfectivosLaborales: totalMinutosEfectivos,
         rendimientoPonderadoPct,
         cumplimientoMetasPct,
