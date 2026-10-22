@@ -82,7 +82,7 @@ export const OficiosVariosModulo: React.FC<OficiosVariosModuloProps> = ({ modoSo
 
   const resultado = useMemo(() => {
     if (!Number.isInteger(tareasAsignadas) || tareasAsignadas < 1 ||
-        !Number.isInteger(tareasCompletadas) || tareasCompletadas < 0) return null;
+        !Number.isInteger(tareasCompletadas) || tareasCompletadas < 0 || tareasCompletadas > tareasAsignadas) return null;
     try {
       return calcularOficiosVarios(tareasAsignadas, tareasCompletadas);
     } catch {
@@ -223,11 +223,14 @@ export const OficiosVariosModulo: React.FC<OficiosVariosModuloProps> = ({ modoSo
             {resultado ? `${resultado.cumplimientoTareasPct}%` : '—'}
           </p>
         </div>
+        {tareasCompletadas > tareasAsignadas && (
+          <p className="text-xs text-rose-400">Las tareas completadas no pueden superar las asignadas.</p>
+        )}
 
         <button
           type="button"
           onClick={guardarRegistro}
-          disabled={guardando || catalogo.length === 0}
+          disabled={guardando || catalogo.length === 0 || !resultado}
           className="w-full min-h-[46px] rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2"
         >
           <CheckCircle2 className="w-4 h-4" />
