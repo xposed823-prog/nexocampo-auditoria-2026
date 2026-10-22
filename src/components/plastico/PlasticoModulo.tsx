@@ -22,9 +22,14 @@ export interface ColaboradorItem {
 export interface SubtareaItem {
   id: string;
   nombre: string;
+  tipoPolisombra: '30%' | '65%';
   cant: number;
+  completados: number;
   unidad: string;
-  estado: string;
+  area: string;
+  bloque: string;
+  tunel: string;
+  estado: 'completa' | 'pendiente_saldo';
 }
 
 export interface PlasticoModuloProps {
@@ -61,6 +66,7 @@ export interface PlasticoModuloProps {
   esValido: boolean;
   notaSupervisorJustificacion: string;
   setNotaSupervisorJustificacion: (val: string) => void;
+  onGuardarRegistro: () => Promise<void>;
 }
 
 export const PlasticoModulo: React.FC<PlasticoModuloProps> = ({
@@ -95,10 +101,40 @@ export const PlasticoModulo: React.FC<PlasticoModuloProps> = ({
   dispararToast,
   esValido,
   notaSupervisorJustificacion,
-  setNotaSupervisorJustificacion
+  setNotaSupervisorJustificacion,
+  onGuardarRegistro
 }) => {
-  // Estado local del modal de justificación
+  // Estado local del modal de justificación y del guardado real
   const [modalJustificacionAbierto, setModalJustificacionAbierto] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+
+  const guardarRegistro = async () => {
+    if (!esValido) {
+      dispararToast('Corrija los campos señalados');
+      return;
+    }
+    const subtareasInvalidas = subtareasCobertura.some((st) =>
+      !st.nombre.trim() || !st.tipoPolisombra || st.cant < 1 || st.completados < 0 || st.completados > st.cant ||
+      !st.area.trim() || !st.bloque.trim() || !st.tunel.trim()
+    );
+    if (subtareasInvalidas) {
+      dispararToast('Revise las subtareas: tipo 30%/65%, ubicación y cantidades válidas son obligatorios.');
+      return;
+    }
+    const hayPendiente = polisombraCantComp < polisombraCantTotal || subtareasCobertura.some((st) => st.completados < st.cant);
+    if (hayPendiente && (!justificacionConfirmada || motivosJustificacion.length === 0)) {
+      setModalJustificacionAbierto(true);
+      return;
+    }
+    setGuardando(true);
+    try {
+      await onGuardarRegistro();
+    } catch (error: any) {
+      dispararToast(`No se pudo guardar Plástico/Polisombra: ${error?.message || 'error de persistencia'}`);
+    } finally {
+      setGuardando(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -394,20 +430,11 @@ export const PlasticoModulo: React.FC<PlasticoModuloProps> = ({
           <div className="pt-3">
             <button
               type="button"
-              onClick={() => {
-                if (!esValido) {
-                  dispararToast('Corrija los campos señalados');
-                  return;
-                }
-                if (polisombraCantComp < polisombraCantTotal && !justificacionConfirmada) {
-                  setModalJustificacionAbierto(true);
-                  return;
-                }
-                dispararToast('Registro de Plástico y Polisombra guardado localmente');
-              }}
-              className="w-full min-h-[48px] py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md"
+              onClick={guardarRegistro}
+              disabled={guardando}
+              className="w-full min-h-[48px] py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-sm shadow-md"
             >
-              Guardar Registro en IndexedDB
+              {guardando ? 'Guardando…' : 'Guardar Registro en IndexedDB'}
             </button>
           </div>
         </div>
@@ -525,37 +552,78 @@ export const PlasticoModulo: React.FC<PlasticoModuloProps> = ({
             Las subtareas no generan nuevos intervalos temporales; comparten la jornada de la labor principal.
           </p>
 
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {subtareasCobertura.map((st) => (
-              <div key={st.id} className="p-3 rounded-lg bg-slate-900 border border-slate-700/60 space-y-1.5">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-slate-200">{st.nombre}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                    st.estado === 'completa' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
-                  }`}>
-                    {st.estado === 'completa' ? 'Completa' : 'Saldo Pendiente'}
-                  </span>
+              <div key={st.id} className="p-3 rounded-lg bg-slate-900 border border-slate-700/60 space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="text-[10px] text-slate-400">Labor / subtarea</span>
+                    <input value={st.nombre} onChange={(e) => setSubtareasCobertura(subtareasCobertura.map((item) => item.id === st.id ? { ...item, nombre: e.target.value } : item))} className="w-full min-h-[40px] px-2 rounded bg-slate-950 border border-slate-700 text-slate-100 text-xs" />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] text-slate-400">Tipo de polisombra</span>
+                    <select value={st.tipoPolisombra} onChange={(e) => setSubtareasCobertura(subtareasCobertura.map((item) => item.id === st.id ? { ...item, tipoPolisombra: e.target.value as '30%' | '65%' } : item))} className="w-full min-h-[40px] px-2 rounded bg-slate-950 border border-slate-700 text-slate-100 text-xs">
+                      <option value="30%">Polisombra 30%</option>
+                      <option value="65%">Polisombra 65%</option>
+                    </select>
+                  </label>
                 </div>
-                <div className="flex justify-between text-[11px] text-slate-400 font-mono">
-                  <span>Cantidad: {st.cant} {st.unidad}</span>
-                  <span>Horario: {polisombraInicio} - {polisombraFin}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <label className="block">
+                    <span className="text-[10px] text-slate-400">Área</span>
+                    <select value={st.area} onChange={(e) => setSubtareasCobertura(subtareasCobertura.map((item) => item.id === st.id ? { ...item, area: e.target.value } : item))} className="w-full min-h-[40px] px-2 rounded bg-slate-950 border border-slate-700 text-slate-100 text-xs">
+                      <option value="">Seleccionar</option>
+                      {AREAS_AGRONOMICAS.map((a) => <option key={a.id} value={a.nombre}>{a.nombre}</option>)}
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] text-slate-400">Bloque</span>
+                    <input value={st.bloque} onChange={(e) => setSubtareasCobertura(subtareasCobertura.map((item) => item.id === st.id ? { ...item, bloque: e.target.value } : item))} className="w-full min-h-[40px] px-2 rounded bg-slate-950 border border-slate-700 text-slate-100 text-xs" />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] text-slate-400">Túnel</span>
+                    <input value={st.tunel} onChange={(e) => setSubtareasCobertura(subtareasCobertura.map((item) => item.id === st.id ? { ...item, tunel: e.target.value } : item))} className="w-full min-h-[40px] px-2 rounded bg-slate-950 border border-slate-700 text-slate-100 text-xs" />
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="text-[10px] text-slate-400">Cantidad</span>
+                    <input type="number" min="1" value={st.cant} onChange={(e) => setSubtareasCobertura(subtareasCobertura.map((item) => item.id === st.id ? { ...item, cant: Number(e.target.value), estado: Number(item.completados) >= Number(e.target.value) ? 'completa' : 'pendiente_saldo' } : item))} className="w-full min-h-[40px] px-2 rounded bg-slate-950 border border-slate-700 text-slate-100 text-xs" />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] text-slate-400">Completados</span>
+                    <input type="number" min="0" value={st.completados} onChange={(e) => setSubtareasCobertura(subtareasCobertura.map((item) => item.id === st.id ? { ...item, completados: Number(e.target.value), estado: Number(e.target.value) >= Number(item.cant) ? 'completa' : 'pendiente_saldo' } : item))} className="w-full min-h-[40px] px-2 rounded bg-slate-950 border border-slate-700 text-slate-100 text-xs" />
+                  </label>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${st.estado === 'completa' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                    {st.estado === 'completa' ? 'Completa' : 'Saldo pendiente'}
+                  </span>
+                  <span className="text-[10px] text-slate-400">Horario heredado: {polisombraInicio || '—'} - {polisombraFin || '—'}</span>
+                  <button type="button" onClick={() => setSubtareasCobertura(subtareasCobertura.filter((item) => item.id !== st.id))} aria-label="Eliminar subtarea" className="min-w-[40px] min-h-[40px] rounded bg-rose-900 text-rose-200"><X className="w-4 h-4 mx-auto" /></button>
                 </div>
               </div>
             ))}
+            {subtareasCobertura.length === 0 && <p className="text-[11px] text-slate-500">No hay subtareas añadidas. Puedes guardar solo la labor principal.</p>}
           </div>
 
           <button
             type="button"
             onClick={() => {
-              const nueva = {
+              const nueva: SubtareaItem = {
                 id: `st_${Date.now()}`,
-                nombre: 'Ajuste de templadores laterales',
-                cant: 25,
-                unidad: 'naves',
-                estado: 'completa'
+                nombre: 'Nueva subtarea',
+                tipoPolisombra: '30%',
+                cant: 1,
+                completados: 0,
+                unidad: 'túnel',
+                area: polisombraArea,
+                bloque: polisombraBloque,
+                tunel: polisombraTunel,
+                estado: 'pendiente_saldo'
               };
               setSubtareasCobertura([...subtareasCobertura, nueva]);
-              dispararToast('Subtarea agregada');
+              dispararToast('Subtarea añadida; completa su tipo, ubicación y cantidades antes de guardar.');
             }}
             className="w-full min-h-[44px] py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5"
           >
