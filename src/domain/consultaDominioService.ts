@@ -353,7 +353,7 @@ export async function consultarColaboradorFecha(
                 typeof tareasCompletadas === 'number' && tareasCompletadas >= 0) {
               cumplimientoTareasPct = Number(((tareasCompletadas / tareasAsignadas) * 100).toFixed(2));
             }
-          } else if (metaValida && completadosValidos) {
+          } else if (metaValida && completadosValidos && t.estado !== 'no_cumple') {
             try {
               const evalCumpl = calcularCumplimientoCantidad(t.completados!, t.meta!);
               cumplimientoMetaPct = evalCumpl.cumplimientoCantidadPct;
