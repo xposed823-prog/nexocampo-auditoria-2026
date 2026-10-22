@@ -73,7 +73,13 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
       return;
     }
 
-    const existentes = await dbGetAll<JornadaRegistro>('jornadas');
+    let existentes: JornadaRegistro[];
+    try {
+      existentes = await dbGetAll<JornadaRegistro>('jornadas');
+    } catch (error: any) {
+      dispararToast(`No se pudo comprobar si ya existe una jornada base: ${error?.message || 'error de IndexedDB'}`);
+      return;
+    }
     const colaboradoresConJornada = existentes.find((jornada) =>
       jornada.fecha === fecha &&
       (jornada.tramos || []).some((tramo) => tramo.tipo === 'jornada_base') &&
