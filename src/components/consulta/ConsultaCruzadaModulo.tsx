@@ -403,11 +403,13 @@ export const ConsultaCruzadaModulo: React.FC<ConsultaCruzadaModuloProps> = ({
                       </div>
                       <p className="text-[11px] text-slate-400 mt-0.5">
                         {tramo.horaInicio} - {tramo.horaFin}
-                        {tramo.esOficioVario
-                          ? ` · ${tramo.tareasCompletadas ?? 0} de ${tramo.tareasAsignadas ?? 0} tareas completadas`
-                          : tramo.esSubtarea
-                            ? ` · Polisombra ${tramo.tipoPolisombra || ''} · ${tramo.unidadesCompletadas ?? 0} de ${tramo.unidadesAsignadas ?? 0} completadas`
-                            : ` (${tramo.minutosCalculados} min) · ${tramo.unidadesCompletadas || 0} ${tramo.unidadMedida}${tramo.meta ? ` (Meta: ${tramo.meta})` : ''}`}
+                        {tramo.esJornadaBase
+                          ? ` · ${tramo.minutosCalculados} min brutos de jornada`
+                          : tramo.esOficioVario
+                            ? ` · ${tramo.tareasCompletadas ?? 0} de ${tramo.tareasAsignadas ?? 0} tareas completadas`
+                            : tramo.esSubtarea
+                              ? ` · Polisombra ${tramo.tipoPolisombra || ''} · ${tramo.unidadesCompletadas ?? 0} de ${tramo.unidadesAsignadas ?? 0} completadas`
+                              : ` (${tramo.minutosCalculados} min) · ${tramo.unidadesCompletadas || 0} ${tramo.unidadMedida}${tramo.meta ? ` (Meta: ${tramo.meta})` : ''}`}
                       </p>
                       {tramo.mensajeAuditoriaRendimiento && (
                         <p className="text-[10px] text-slate-500 italic mt-0.5">
@@ -417,27 +419,32 @@ export const ConsultaCruzadaModulo: React.FC<ConsultaCruzadaModuloProps> = ({
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-slate-400 block">
-                        {tramo.esOficioVario
-                          ? 'Cumplimiento de tareas'
-                          : tramo.esMetaGrupal
-                            ? tramo.esSubtarea ? 'Avance de subtarea' : 'Cumplimiento de meta'
-                            : 'Rendimiento Técnico'}
+                        {tramo.esJornadaBase
+                          ? 'Tiempo efectivo de jornada'
+                          : tramo.esOficioVario
+                            ? 'Cumplimiento de tareas'
+                            : tramo.esMetaGrupal
+                              ? tramo.esSubtarea ? 'Avance de subtarea' : 'Cumplimiento de meta'
+                              : 'Rendimiento Técnico'}
                       </span>
                       <span className={`font-mono text-xs font-bold ${
+                        tramo.esJornadaBase ? 'text-emerald-400' :
                         tramo.esOficioVario || tramo.esMetaGrupal
                           ? 'text-violet-400'
                           : tramo.rendimientoTemporalPct !== null ? 'text-emerald-400' : 'text-slate-500'
                       }`}>
-                        {tramo.esOficioVario
-                          ? tramo.cumplimientoTareasPct !== null && tramo.cumplimientoTareasPct !== undefined
-                            ? `${tramo.cumplimientoTareasPct}%`
-                            : 'Sin datos de tareas'
-                          : tramo.esMetaGrupal
-                            ? (tramo.esSubtarea ? tramo.cumplimientoCantidadPct : tramo.cumplimientoMetaPct) !== null &&
-                              (tramo.esSubtarea ? tramo.cumplimientoCantidadPct : tramo.cumplimientoMetaPct) !== undefined
-                              ? `${tramo.esSubtarea ? tramo.cumplimientoCantidadPct : tramo.cumplimientoMetaPct}%`
-                              : 'Sin meta/cantidad'
-                            : tramo.rendimientoTemporalPct !== null ? `${tramo.rendimientoTemporalPct}%` : 'No calculable'}
+                        {tramo.esJornadaBase
+                          ? `${tramo.minutosJornadaEfectivos ?? 0} min`
+                          : tramo.esOficioVario
+                            ? tramo.cumplimientoTareasPct !== null && tramo.cumplimientoTareasPct !== undefined
+                              ? `${tramo.cumplimientoTareasPct}%`
+                              : 'Sin datos de tareas'
+                            : tramo.esMetaGrupal
+                              ? (tramo.esSubtarea ? tramo.cumplimientoCantidadPct : tramo.cumplimientoMetaPct) !== null &&
+                                (tramo.esSubtarea ? tramo.cumplimientoCantidadPct : tramo.cumplimientoMetaPct) !== undefined
+                                ? `${tramo.esSubtarea ? tramo.cumplimientoCantidadPct : tramo.cumplimientoMetaPct}%`
+                                : 'Sin meta/cantidad'
+                              : tramo.rendimientoTemporalPct !== null ? `${tramo.rendimientoTemporalPct}%` : 'No calculable'}
                       </span>
                     </div>
                   </div>
