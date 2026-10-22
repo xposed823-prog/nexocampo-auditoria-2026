@@ -33,7 +33,7 @@ Estados:
 | Función | Referencia PWA | Auditoría 2026 | Prioridad/acción |
 |---|---|---|---|
 | Catálogos de colaboradores, labores y áreas | Presente | Catálogos tipados disponibles; Admin filtra arrays estáticos y no se localizaron escrituras CRUD a IndexedDB | P1: portar altas/edición/desactivación conservando IDs e historial |
-| Registro de jornadas individuales/grupales | Presente; tramos de varias labores | El módulo de jornadas guarda una jornada, pero usa fecha y colaboradores fijos; aún no equivale al flujo completo de labores consecutivas | P0: hacer dinámica la selección y completar segmentos con pruebas |
+| Registro de jornadas individuales/grupales | Presente; tramos de varias labores | `LaboresModulo` ahora carga/guarda tramos reales y detecta solapamientos; `JornadasModulo` aún conserva fecha/colaboradores fijos y requiere completar el flujo principal | P0: probar segmentos contiguos y completar el formulario de jornadas |
 | Jornada general independiente de sus tramos | Regla funcional documentada en historial y arquitectura | Tipos de jornada/tramo disponibles; falta demostrar equivalencia completa | P0: casos horarios y anti-solapamiento real |
 | Fórmulas de rendimiento técnico | Motor existente en PWA | Servicios/reglas y documentos matemáticos en destino | P0: pruebas comparativas con casos idénticos y resultados exactos |
 | Estados Cumple/No cumple/Pendiente y exclusiones | Documentados y aplicados en PWA | Taxonomía y reglas documentadas; integración requiere pruebas | P0: asegurar que pendientes no inflen ni reduzcan rendimiento |
