@@ -34,11 +34,11 @@ export const RespaldosModulo: React.FC<RespaldosModuloProps> = ({ modoSol, dispa
               Módulo de Respaldos y Recuperación Local
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Exportación completa de IndexedDB a formato JSON estructurado con validación de integridad para contingencia.
+              Exportación de los almacenes locales a un archivo JSON. La restauración valida la estructura antes de escribir.
             </p>
           </div>
           <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-bold">
-            JSON Cifrado Local
+            Respaldo JSON local
           </span>
         </div>
       </div>
@@ -46,10 +46,10 @@ export const RespaldosModulo: React.FC<RespaldosModuloProps> = ({ modoSol, dispa
       <div className={`p-5 rounded-xl border space-y-4 ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/50 border-slate-700/60'}`}>
         <div className="flex items-center justify-between text-xs">
           <span className="font-semibold text-slate-200">Exportación de Base de Datos Local</span>
-          <span className="font-mono text-[11px] text-emerald-400">Hash SHA-256 Activo</span>
+          <span className="font-mono text-[11px] text-emerald-400">Validación estructural</span>
         </div>
         <p className="text-xs text-slate-400">
-          Genera un archivo JSON con los almacenes de IndexedDB y metadatos de exportación para verificación pre-restauración en caso de contingencia en campo.
+          Genera un JSON con los seis almacenes de IndexedDB. En esta versión, el archivo no se cifra ni incorpora un hash criptográfico; no debe tratarse como un respaldo cifrado.
         </p>
         <div className="flex gap-2">
           <button
