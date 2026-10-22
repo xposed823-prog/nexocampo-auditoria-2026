@@ -55,6 +55,10 @@ export interface TramoJornada {
   observaciones?: string;
   severidad?: 'leve' | 'moderado' | 'grave';
   primeros_auxilios?: boolean;
+  tipo_registro?: 'oficio_vario';
+  tareas_asignadas?: number;
+  tareas_completadas?: number;
+  cumplimiento_tareas_pct?: number;
 }
 
 export interface JornadaRegistro {
