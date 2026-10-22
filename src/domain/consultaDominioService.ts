@@ -465,7 +465,7 @@ export async function consultarColaboradorFecha(
         horaApertura: horaAperturaStr,
         horaCierre: horaCierreStr,
         minutosBrutos: minutosBrutosTotales,
-        minutosEfectivosNetos: tramosDia.find((t) => t.tipo === 'jornada_base')?.minutos_efectivos_jornada ?? 0,
+        minutosEfectivosNetos: jornadasDia.flatMap((j) => j.tramos || []).find((t) => t.tipo === 'jornada_base')?.minutos_efectivos_jornada ?? 0,
         tramos: tramosProcesados
       };
     }
