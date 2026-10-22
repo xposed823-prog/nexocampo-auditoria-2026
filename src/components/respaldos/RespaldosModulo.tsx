@@ -1,11 +1,18 @@
-import React, { useRef, useState } from 'react';
-import { Database, Download, Upload, History, AlertTriangle, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Database, Download, Upload, History, AlertTriangle, Cloud } from 'lucide-react';
 import {
   exportarBackupCanónicoJSON,
   restaurarBackupCanónicoJSON
 } from '../../domain/nexocampoDB';
+import {
+  getGoogleDriveBackupState,
+  isGoogleDriveConfigured,
+  guardarRespaldoEnGoogleDrive,
+  preloadGoogleIdentityServices,
+  type GoogleDriveBackupState
+} from '../../domain/googleDriveBackupService';
 
-type TipoEventoBackup = 'exportación' | 'restauración';
+type TipoEventoBackup = 'exportación' | 'restauración' | 'Google Drive';
 type EstadoEventoBackup = 'correcto' | 'fallido';
 
 interface EventoHistorialBackup {
@@ -45,7 +52,17 @@ export const RespaldosModulo: React.FC<RespaldosModuloProps> = ({
 }) => {
   const [cargando, setCargando] = useState(false);
   const [historial, setHistorial] = useState<EventoHistorialBackup[]>(leerHistorialBackup);
+  const [estadoDrive, setEstadoDrive] = useState<GoogleDriveBackupState>(getGoogleDriveBackupState);
+  const driveConfigurado = isGoogleDriveConfigured();
   const inputArchivoRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setEstadoDrive(getGoogleDriveBackupState());
+    if (isGoogleDriveConfigured()) {
+      // Precarga el cliente OAuth para reducir el riesgo de bloquear la ventana de autorización.
+      preloadGoogleIdentityServices().catch(() => undefined);
+    }
+  }, []);
 
   const registrarHistorial = (evento: Omit<EventoHistorialBackup, 'id' | 'fecha'>) => {
     const registro: EventoHistorialBackup = {
@@ -100,6 +117,35 @@ export const RespaldosModulo: React.FC<RespaldosModuloProps> = ({
         detalle: error?.message || 'No fue posible generar el respaldo.'
       });
       dispararToast(`No se pudo generar el respaldo: ${error?.message || 'error desconocido'}`);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const guardarEnDrive = async () => {
+    const nombreFallback = `nexocampo-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    setCargando(true);
+    try {
+      const json = await exportarBackupCanónicoJSON();
+      const result = await guardarRespaldoEnGoogleDrive(json);
+      setEstadoDrive(getGoogleDriveBackupState());
+      registrarHistorial({
+        tipo: 'Google Drive',
+        estado: 'correcto',
+        archivo: result.name || nombreFallback,
+        detalle: 'Copia guardada en Mi unidad/NexoCampo/Respaldos/Global.'
+      });
+      dispararToast('Respaldo guardado en Google Drive.');
+    } catch (error: any) {
+      setEstadoDrive(getGoogleDriveBackupState());
+      const detalle = error?.message || 'No fue posible guardar el respaldo en Google Drive.';
+      registrarHistorial({
+        tipo: 'Google Drive',
+        estado: 'fallido',
+        archivo: nombreFallback,
+        detalle
+      });
+      dispararToast(`Google Drive: ${detalle}`);
     } finally {
       setCargando(false);
     }
@@ -174,6 +220,35 @@ export const RespaldosModulo: React.FC<RespaldosModuloProps> = ({
       </section>
 
       <section className={`p-4 rounded-xl border space-y-3 ${panel}`}>
+        <div className="flex items-center gap-2">
+          <Cloud className="w-4 h-4 text-sky-500" />
+          <h3 className={`text-xs font-bold ${textoPrincipal}`}>Copia manual en Google Drive</h3>
+        </div>
+        <p className={`text-xs leading-relaxed ${textoSecundario}`}>
+          {estadoDrive.connected
+            ? `Cuenta autorizada en este dispositivo. Último respaldo: ${estadoDrive.lastSync ? new Date(estadoDrive.lastSync).toLocaleString() : 'sin registro'}.`
+            : 'La autorización se solicita al guardar. No se almacenan tokens OAuth en localStorage.'}
+        </p>
+        {!driveConfigurado && (
+          <p className="text-xs text-amber-500">
+            Falta configurar VITE_GOOGLE_DRIVE_CLIENT_ID en las variables de compilación y autorizar el dominio en Google Cloud.
+          </p>
+        )}
+        {estadoDrive.lastError && (
+          <p className="text-xs text-rose-500">Último error: {estadoDrive.lastError}</p>
+        )}
+        <button
+          type="button"
+          onClick={guardarEnDrive}
+          disabled={cargando || !driveConfigurado}
+          className="w-full min-h-[46px] px-4 py-3 rounded-lg bg-sky-700 hover:bg-sky-600 disabled:opacity-50 text-white font-semibold text-sm flex items-center justify-center gap-2"
+        >
+          <Cloud className="w-4 h-4" />
+          {cargando ? 'Procesando…' : estadoDrive.connected ? 'Guardar copia en Google Drive' : 'Autorizar y guardar en Google Drive'}
+        </button>
+      </section>
+
+      <section className={`p-4 rounded-xl border space-y-3 ${panel}`}>
         <h3 className={`text-xs font-bold ${textoPrincipal}`}>Crear o restaurar respaldo</h3>
         <button
           type="button"
@@ -220,7 +295,7 @@ export const RespaldosModulo: React.FC<RespaldosModuloProps> = ({
               <article key={item.id} className={`rounded-lg border p-3 ${modoSol ? 'border-slate-200 bg-slate-50' : 'border-slate-700 bg-slate-900/60'}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className={`text-xs font-semibold ${textoPrincipal}`}>{item.tipo === 'exportación' ? 'Exportación' : 'Restauración'}</p>
+                    <p className={`text-xs font-semibold ${textoPrincipal}`}>{item.tipo === 'Google Drive' ? 'Google Drive' : item.tipo === 'exportación' ? 'Exportación' : 'Restauración'}</p>
                     <p className={`text-[11px] break-all mt-0.5 ${textoSecundario}`}>{item.archivo}</p>
                   </div>
                   <span className={`shrink-0 text-[10px] font-bold rounded px-2 py-1 ${item.estado === 'correcto' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-rose-500/15 text-rose-500'}`}>
