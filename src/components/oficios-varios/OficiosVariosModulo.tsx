@@ -1,7 +1,25 @@
-import React, { useState } from 'react';
-import { Wrench, CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Wrench, CheckCircle2, AlertCircle, Plus, Pencil, Ban, Save, X, ClipboardList } from 'lucide-react';
+import { COLABORADORES_CATALOGO, AREAS_AGRONOMICAS, type LaborAgricola } from '../../domain/catalogoAgronomico';
+import { dbGetAll, type JornadaRegistro } from '../../domain/nexocampoDB';
 import { calcularOficiosVarios } from '../../domain/businessRulesEngine';
-import { COLABORADORES_CATALOGO, LABORES_AGRONOMICAS } from '../../domain/catalogoAgronomico';
+import {
+  actualizarTipoOficioVario,
+  cargarCatalogoOficiosVarios,
+  crearTipoOficioVario,
+  desactivarTipoOficioVario,
+  guardarRegistroOficioVario
+} from '../../domain/oficiosVariosService';
+
+function fechaLocalHoy(): string {
+  const hoy = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
+}
+
+function esTramoOficio(t: JornadaRegistro['tramos'][number]): boolean {
+  return t.modelo === 'oficios_varios' || t.tipo_registro === 'oficio_vario';
+}
 
 export interface OficiosVariosModuloProps {
   modoSol: boolean;
@@ -9,140 +27,280 @@ export interface OficiosVariosModuloProps {
 }
 
 export const OficiosVariosModulo: React.FC<OficiosVariosModuloProps> = ({ modoSol, dispararToast }) => {
-  const [colaboradorId, setColaboradorId] = useState(COLABORADORES_CATALOGO[0].id);
-  const laboresMaquinaria = LABORES_AGRONOMICAS.filter(l => l.categoria === 'Maquinaria');
-  const [laborMaquinaria, setLaborMaquinaria] = useState(laboresMaquinaria[0]?.nombre || 'Encamadora');
-  const [asignadas, setAsignadas] = useState(5);
-  const [completadas, setCompletadas] = useState(3);
-  const [observaciones, setObservaciones] = useState('Operación de maquinaria y adecuación de terreno.');
+  const [catalogo, setCatalogo] = useState<LaborAgricola[]>([]);
+  const [jornadas, setJornadas] = useState<JornadaRegistro[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
 
-  const resultado = calcularOficiosVarios(asignadas, completadas);
+  const [colaboradorId, setColaboradorId] = useState(COLABORADORES_CATALOGO[0]?.id || '');
+  const [fecha, setFecha] = useState(fechaLocalHoy);
+  const [tareaId, setTareaId] = useState('');
+  const [horaInicio, setHoraInicio] = useState('');
+  const [horaFin, setHoraFin] = useState('');
+  const [area, setArea] = useState('');
+  const [tareasAsignadas, setTareasAsignadas] = useState(1);
+  const [tareasCompletadas, setTareasCompletadas] = useState(0);
+  const [observaciones, setObservaciones] = useState('');
+
+  const [nuevaTarea, setNuevaTarea] = useState('');
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [nombreEdicion, setNombreEdicion] = useState('');
+
+  const panel = modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/60';
+  const texto = modoSol ? 'text-slate-900' : 'text-slate-100';
+  const secundario = modoSol ? 'text-slate-600' : 'text-slate-400';
+
+  const cargarDatos = async () => {
+    setCargando(true);
+    try {
+      const [tipos, todasJornadas] = await Promise.all([
+        cargarCatalogoOficiosVarios(),
+        dbGetAll<JornadaRegistro>('jornadas')
+      ]);
+      setCatalogo(tipos);
+      setJornadas(
+        todasJornadas
+          .filter((j) => (j.tramos || []).some(esTramoOficio))
+          .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.creadoEn.localeCompare(a.creadoEn))
+      );
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarDatos().catch((error: any) => {
+      dispararToast(`No se pudo cargar Oficios Varios: ${error?.message || 'error de IndexedDB'}`);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (catalogo.length > 0 && !catalogo.some((tarea) => tarea.id === tareaId)) {
+      setTareaId(catalogo[0].id);
+    }
+  }, [catalogo, tareaId]);
+
+  const resultado = useMemo(() => {
+    if (!Number.isInteger(tareasAsignadas) || tareasAsignadas < 1 ||
+        !Number.isInteger(tareasCompletadas) || tareasCompletadas < 0) return null;
+    try {
+      return calcularOficiosVarios(tareasAsignadas, tareasCompletadas);
+    } catch {
+      return null;
+    }
+  }, [tareasAsignadas, tareasCompletadas]);
+
+  const guardarRegistro = async () => {
+    try {
+      setGuardando(true);
+      await guardarRegistroOficioVario({
+        fecha,
+        colaboradorId,
+        tareaId,
+        horaInicio,
+        horaFin,
+        tareasAsignadas,
+        tareasCompletadas,
+        ...(area ? { area } : {}),
+        observaciones
+      });
+      await cargarDatos();
+      setObservaciones('');
+      dispararToast('Registro de Oficios Varios guardado en IndexedDB.');
+    } catch (error: any) {
+      dispararToast(`No se guardó Oficios Varios: ${error?.message || 'error de persistencia'}`);
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const agregarTipo = async () => {
+    try {
+      const creado = await crearTipoOficioVario(nuevaTarea);
+      await cargarDatos();
+      setTareaId(creado.id);
+      setNuevaTarea('');
+      dispararToast('Tipo de tarea agregado al catálogo de Oficios Varios.');
+    } catch (error: any) {
+      dispararToast(error?.message || 'No se pudo agregar el tipo de tarea.');
+    }
+  };
+
+  const guardarEdicion = async (id: string) => {
+    try {
+      await actualizarTipoOficioVario(id, nombreEdicion);
+      await cargarDatos();
+      setEditandoId(null);
+      setNombreEdicion('');
+      dispararToast('Tipo de tarea actualizado.');
+    } catch (error: any) {
+      dispararToast(error?.message || 'No se pudo editar el tipo de tarea.');
+    }
+  };
+
+  const desactivarTipo = async (tarea: LaborAgricola) => {
+    if (!window.confirm(`¿Desactivar "${tarea.nombre}"? Los registros históricos se conservarán.`)) return;
+    try {
+      await desactivarTipoOficioVario(tarea.id);
+      await cargarDatos();
+      if (tareaId === tarea.id) setTareaId('');
+      dispararToast('Tipo de tarea desactivado; el historial se conserva.');
+    } catch (error: any) {
+      dispararToast(error?.message || 'No se pudo desactivar el tipo de tarea.');
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <div className={`p-4 rounded-xl border ${modoSol ? 'bg-slate-50 border-slate-300' : 'bg-slate-800/40 border-slate-700/60'}`}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="text-sm font-bold flex items-center gap-2">
-              <Wrench className="w-4 h-4 text-emerald-500" />
-              Módulo de Oficios Varios
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Cómputo de tareas asignadas vs. completadas. Sin estándares cronometrados ni rendimientos porcentuales inventados.
-            </p>
-          </div>
-          <span className="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-mono font-bold">
-            Regla de Integridad Técnica
-          </span>
+    <div className="space-y-5">
+      <section className={`p-4 rounded-xl border ${panel}`}>
+        <div className="flex items-center gap-2">
+          <Wrench className="w-5 h-5 text-emerald-500" />
+          <h2 className={`text-sm font-bold ${texto}`}>Oficios Varios</h2>
         </div>
-      </div>
+        <p className={`text-xs mt-2 leading-relaxed ${secundario}`}>
+          Registro por tareas asignadas y completadas. No utiliza minutos estándar ni aporta porcentajes al rendimiento técnico.
+          Los registros se guardan en IndexedDB y se incluyen en Consulta Cruzada.
+        </p>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Formulario */}
-        <div className={`p-5 rounded-xl border space-y-4 ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/50 border-slate-700/60'}`}>
-          <h3 className="font-bold text-xs uppercase tracking-wider text-slate-300">
-            Registro de Tareas de Mantenimiento
-          </h3>
-
-          <div className="space-y-3 text-xs">
-            <div>
-              <label className="block text-slate-400 mb-1 font-semibold">Operario Asignado</label>
-              <select
-                value={colaboradorId}
-                onChange={(e) => setColaboradorId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono"
-              >
-                {COLABORADORES_CATALOGO.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.codigo} · {c.nombreCompleto} ({c.cuadrilla})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-slate-400 mb-1 font-semibold">Labor de Maquinaria / Oficio</label>
-              <select
-                value={laborMaquinaria}
-                onChange={(e) => setLaborMaquinaria(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100"
-              >
-                {laboresMaquinaria.map((l) => (
-                  <option key={l.id} value={l.nombre}>
-                    🚜 {l.nombre} ({l.unidadMedida} - {l.modelo})
-                  </option>
-                ))}
-                <option value="Limpieza perimetral">Limpieza y mantenimiento perimetral</option>
-                <option value="Drenajes y zanjas">Adecuación de drenajes generales</option>
-              </select>
-            </div>
+      <section className={`p-4 rounded-xl border space-y-4 ${panel}`}>
+        <h3 className={`text-xs font-bold ${texto}`}>Nuevo registro operativo</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label className="space-y-1 block">
+            <span className={`text-[11px] font-semibold ${secundario}`}>Colaborador</span>
+            <select value={colaboradorId} onChange={(e) => setColaboradorId(e.target.value)} className="w-full min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs">
+              {COLABORADORES_CATALOGO.map((c) => <option key={c.id} value={c.id}>{c.nombreCompleto}</option>)}
+            </select>
+          </label>
+          <label className="space-y-1 block">
+            <span className={`text-[11px] font-semibold ${secundario}`}>Fecha</span>
+            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="w-full min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs" />
+          </label>
+          <label className="space-y-1 block sm:col-span-2">
+            <span className={`text-[11px] font-semibold ${secundario}`}>Tipo de tarea</span>
+            <select value={tareaId} onChange={(e) => setTareaId(e.target.value)} className="w-full min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs" disabled={catalogo.length === 0}>
+              {catalogo.map((tarea) => <option key={tarea.id} value={tarea.id}>{tarea.nombre}</option>)}
+            </select>
+          </label>
+          <label className="space-y-1 block">
+            <span className={`text-[11px] font-semibold ${secundario}`}>Hora de inicio</span>
+            <input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} className="w-full min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs" required />
+          </label>
+          <label className="space-y-1 block">
+            <span className={`text-[11px] font-semibold ${secundario}`}>Hora de finalización</span>
+            <input type="time" value={horaFin} onChange={(e) => setHoraFin(e.target.value)} className="w-full min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs" required />
+          </label>
+          <label className="space-y-1 block">
+            <span className={`text-[11px] font-semibold ${secundario}`}>Área (opcional)</span>
+            <select value={area} onChange={(e) => setArea(e.target.value)} className="w-full min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs">
+              <option value="">Sin área específica</option>
+              {AREAS_AGRONOMICAS.map((a) => <option key={a.id} value={a.nombre}>{a.nombre}</option>)}
+            </select>
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="space-y-1 block">
+              <span className={`text-[11px] font-semibold ${secundario}`}>Tareas asignadas</span>
+              <input type="number" min="1" step="1" value={tareasAsignadas} onChange={(e) => setTareasAsignadas(Number(e.target.value))} className="w-full min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs" />
+            </label>
+            <label className="space-y-1 block">
+              <span className={`text-[11px] font-semibold ${secundario}`}>Tareas completadas</span>
+              <input type="number" min="0" step="1" value={tareasCompletadas} onChange={(e) => setTareasCompletadas(Number(e.target.value))} className="w-full min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs" />
+            </label>
           </div>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <label className="block text-slate-400 mb-1 font-semibold">Tareas Asignadas</label>
-              <input
-                type="number"
-                value={asignadas}
-                onChange={(e) => setAsignadas(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-400 mb-1 font-semibold">Tareas Completadas</label>
-              <input
-                type="number"
-                value={completadas}
-                onChange={(e) => setCompletadas(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono text-emerald-400"
-              />
-            </div>
-          </div>
+        <label className="space-y-1 block">
+          <span className={`text-[11px] font-semibold ${secundario}`}>Observación (opcional)</span>
+          <textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} rows={2} className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs" placeholder="Nota operativa, si hace falta." />
+        </label>
 
+        <div className={`rounded-lg border p-3 flex items-center justify-between gap-3 ${modoSol ? 'bg-violet-50 border-violet-200' : 'bg-violet-950/20 border-violet-500/30'}`}>
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Observaciones Operativas</label>
-            <textarea
-              rows={3}
-              value={observaciones}
-              onChange={(e) => setObservaciones(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-200"
-            />
+            <p className={`text-[11px] font-semibold ${texto}`}>Cumplimiento de tareas</p>
+            <p className={`text-[10px] mt-0.5 ${secundario}`}>Indicador operativo independiente del rendimiento técnico.</p>
           </div>
+          <p className="text-lg font-bold font-mono text-violet-400">
+            {resultado ? `${resultado.cumplimientoTareasPct}%` : '—'}
+          </p>
+        </div>
 
-          <button
-            onClick={() => dispararToast('Registro de Oficios Varios guardado')}
-            className="w-full min-h-[44px] py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Guardar Registro de Oficios Varios</span>
+        <button
+          type="button"
+          onClick={guardarRegistro}
+          disabled={guardando || catalogo.length === 0}
+          className="w-full min-h-[46px] rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2"
+        >
+          <CheckCircle2 className="w-4 h-4" />
+          {guardando ? 'Guardando…' : 'Guardar registro en IndexedDB'}
+        </button>
+      </section>
+
+      <section className={`p-4 rounded-xl border space-y-3 ${panel}`}>
+        <div className="flex items-center gap-2">
+          <ClipboardList className="w-4 h-4 text-emerald-500" />
+          <h3 className={`text-xs font-bold ${texto}`}>Catálogo de tipos de tarea</h3>
+        </div>
+        <div className="flex gap-2">
+          <input value={nuevaTarea} onChange={(e) => setNuevaTarea(e.target.value)} maxLength={100} placeholder="Crear tipo de tarea" className="flex-1 min-w-0 min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs" />
+          <button type="button" onClick={agregarTipo} className="min-h-[44px] px-3 rounded-lg bg-emerald-700 text-white text-xs font-bold flex items-center gap-1">
+            <Plus className="w-4 h-4" /> Añadir
           </button>
         </div>
-
-        {/* Diagnóstico de Dominio */}
-        <div className={`p-5 rounded-xl border space-y-4 ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/50 border-slate-700/60'}`}>
-          <h3 className="font-bold text-xs uppercase tracking-wider text-slate-300">
-            Diagnóstico de Cumplimiento
-          </h3>
-
-          <div className="p-4 rounded-lg bg-slate-900 border border-slate-800 space-y-3">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400">Porcentaje de Tareas:</span>
-              <span className="font-mono font-bold text-emerald-400 text-lg">{resultado.cumplimientoTareasPct}%</span>
+        <div className="space-y-2 max-h-72 overflow-y-auto">
+          {catalogo.map((tarea) => (
+            <div key={tarea.id} className={`p-3 rounded-lg border flex items-center gap-2 ${modoSol ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/50 border-slate-700'}`}>
+              {editandoId === tarea.id ? (
+                <>
+                  <input value={nombreEdicion} onChange={(e) => setNombreEdicion(e.target.value)} maxLength={100} className="flex-1 min-w-0 min-h-[40px] px-2 rounded bg-slate-900 border border-slate-700 text-slate-100 text-xs" />
+                  <button type="button" onClick={() => guardarEdicion(tarea.id)} aria-label="Guardar nombre" className="min-w-[40px] min-h-[40px] rounded bg-emerald-700 text-white"><Save className="w-4 h-4 mx-auto" /></button>
+                  <button type="button" onClick={() => { setEditandoId(null); setNombreEdicion(''); }} aria-label="Cancelar edición" className="min-w-[40px] min-h-[40px] rounded bg-slate-700 text-white"><X className="w-4 h-4 mx-auto" /></button>
+                </>
+              ) : (
+                <>
+                  <span className={`flex-1 text-xs font-semibold ${texto}`}>{tarea.nombre}</span>
+                  <button type="button" onClick={() => { setEditandoId(tarea.id); setNombreEdicion(tarea.nombre); }} aria-label={`Editar ${tarea.nombre}`} className="min-w-[40px] min-h-[40px] rounded bg-slate-700 text-white"><Pencil className="w-4 h-4 mx-auto" /></button>
+                  <button type="button" onClick={() => desactivarTipo(tarea)} aria-label={`Desactivar ${tarea.nombre}`} className="min-w-[40px] min-h-[40px] rounded bg-rose-900 text-rose-200"><Ban className="w-4 h-4 mx-auto" /></button>
+                </>
+              )}
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400">Estado de la Asignación:</span>
-              <span className="uppercase text-[11px] font-bold text-amber-400">{resultado.estado}</span>
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs text-slate-400 space-y-1">
-            <p className="font-bold text-slate-200">Protección de Datos:</p>
-            <p>
-              En oficios varios no se emite "rendimiento temporal" porcentual porque las tareas no tienen estándar cronometrado. Se computan las horas efectivas y el conteo discreto de tareas completadas.
-            </p>
-          </div>
+          ))}
+          {catalogo.length === 0 && <p className={`text-xs ${secundario}`}>No hay tipos de tarea activos. Crea uno para comenzar.</p>}
         </div>
-      </div>
+      </section>
+
+      <section className={`p-4 rounded-xl border space-y-3 ${panel}`}>
+        <h3 className={`text-xs font-bold ${texto}`}>Registros guardados</h3>
+        {cargando ? (
+          <p className={`text-xs ${secundario}`}>Consultando IndexedDB…</p>
+        ) : jornadas.length === 0 ? (
+          <p className={`text-xs ${secundario}`}>No hay registros de Oficios Varios guardados.</p>
+        ) : (
+          <div className="max-h-80 overflow-y-auto space-y-2">
+            {jornadas.slice(0, 20).map((jornada) => {
+              const tramo = (jornada.tramos || []).find(esTramoOficio);
+              if (!tramo) return null;
+              const asignadas = tramo.tareas_asignadas ?? tramo.meta ?? 0;
+              const completadas = tramo.tareas_completadas ?? tramo.completados ?? 0;
+              const pct = tramo.cumplimiento_tareas_pct ?? (asignadas > 0 ? Number(((completadas / asignadas) * 100).toFixed(2)) : null);
+              const colaborador = COLABORADORES_CATALOGO.find((c) => jornada.colaboradores_ids.includes(c.id));
+              return (
+                <article key={jornada.id} className={`rounded-lg border p-3 ${modoSol ? 'bg-slate-50 border-slate-200' : 'bg-slate-900/50 border-slate-700'}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className={`text-xs font-semibold ${texto}`}>{tramo.labor_nombre || tramo.titulo}</p>
+                      <p className={`text-[11px] mt-1 ${secundario}`}>{colaborador?.nombreCompleto || 'Colaborador'} · {jornada.fecha}</p>
+                      <p className={`text-[11px] mt-1 ${secundario}`}>{tramo.hora_inicio}–{tramo.hora_fin}{tramo.area ? ` · ${tramo.area}` : ''}</p>
+                    </div>
+                    <span className="text-xs font-bold font-mono text-violet-400">{pct !== null ? `${pct}%` : 'N/C'}</span>
+                  </div>
+                  <p className={`text-[11px] mt-2 ${secundario}`}>{completadas} / {asignadas} tareas completadas</p>
+                  {tramo.observaciones && <p className={`text-[11px] mt-1 ${secundario}`}>{tramo.observaciones}</p>}
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 };
