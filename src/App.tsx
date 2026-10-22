@@ -396,6 +396,45 @@ function App() {
       throw new Error('Confirma la justificación de las subtareas pendientes.');
     }
 
+    const jornadasExistentes = await dbGetAll<JornadaRegistro>('jornadas');
+    const jornadaBase = jornadasExistentes.find((jornada) =>
+      jornada.fecha === polisombraFecha &&
+      (jornada.tramos || []).some((tramo) => tramo.tipo === 'jornada_base') &&
+      polisombraIntegrantes.every((id) => jornada.colaboradores_ids.includes(id))
+    );
+    const tramoBase = jornadaBase?.tramos.find((tramo) => tramo.tipo === 'jornada_base');
+    if (!jornadaBase || !tramoBase) {
+      throw new Error('Registra primero una jornada base que incluya a los seis integrantes seleccionados.');
+    }
+    if (polisombraInicio < tramoBase.hora_inicio || polisombraFin > tramoBase.hora_fin) {
+      throw new Error(`El horario debe quedar dentro de la jornada base ${tramoBase.hora_inicio}–${tramoBase.hora_fin}.`);
+    }
+
+    for (const colaboradorId of polisombraIntegrantes) {
+      const delDia = jornadasExistentes.filter((jornada) =>
+        jornada.fecha === polisombraFecha && jornada.colaboradores_ids.includes(colaboradorId)
+      );
+      const intervalos = delDia.flatMap((jornada) => (jornada.tramos || [])
+        .filter((tramo) => tramo.tipo === 'labor' && !tramo.es_subtarea && tramo.estado !== 'no_cumple' &&
+          Boolean(tramo.hora_inicio) && Boolean(tramo.hora_fin))
+        .map((tramo) => ({
+          id: tramo.id,
+          colaboradorId,
+          horaInicio: tramo.hora_inicio,
+          horaFin: tramo.hora_fin
+        })));
+      const conflicto = detectarSolapamientoTemporal(intervalos, {
+        id: `validar_plastico_${colaboradorId}_${Date.now()}`,
+        colaboradorId,
+        horaInicio: polisombraInicio,
+        horaFin: polisombraFin
+      });
+      if (conflicto.haySolapamiento) {
+        const nombre = COLABORADORES_CATALOGO.find((c) => c.id === colaboradorId)?.nombreCompleto || colaboradorId;
+        throw new Error(`${nombre}: ${conflicto.mensajeError || 'el horario se solapa con otra labor'}`);
+      }
+    }
+
     const ahora = new Date().toISOString();
     const marca = Date.now();
     const jornadaId = `jornada_plastico_${polisombraFecha}_${marca}`;
@@ -477,6 +516,7 @@ function App() {
     const jornada: JornadaRegistro = {
       id: jornadaId,
       fecha: polisombraFecha,
+      jornada_base_id: jornadaBase.jornada_base_id || jornadaBase.id,
       colaboradores_ids: [...polisombraIntegrantes],
       tramos: [tramoPrincipal, ...tramosSubtareas],
       creadoEn: ahora,
