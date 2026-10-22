@@ -37,7 +37,12 @@ function validarNombreTarea(nombre: string): string {
 export async function cargarCatalogoOficiosVarios(): Promise<LaborAgricola[]> {
   const existentes = await dbGetAll<LaborAgricola>('labores');
   const ids = new Set(existentes.map((item) => item.id));
-  const faltantes = OFICIOS_VARIOS_INICIALES.filter((item) => !ids.has(item.id));
+  const nombresExistentes = new Set(existentes
+    .filter((item) => item.categoria === 'Oficios Varios' || item.tipo_registro === 'oficio_vario' || item.modelo === 'oficios_varios')
+    .map((item) => item.nombre.trim().toLocaleLowerCase('es')));
+  const faltantes = OFICIOS_VARIOS_INICIALES.filter((item) =>
+    !ids.has(item.id) && !nombresExistentes.has(item.nombre.trim().toLocaleLowerCase('es'))
+  );
 
   // Los tres tipos iniciales se agregan al almacén existente; no se cambia el esquema de IndexedDB.
   for (const item of faltantes) {
@@ -122,6 +127,9 @@ export async function guardarRegistroOficioVario(input: RegistroOficioVarioInput
   }
   if (!Number.isInteger(input.tareasCompletadas) || input.tareasCompletadas < 0) {
     throw new Error('Las tareas completadas no pueden ser negativas.');
+  }
+  if (input.tareasCompletadas > input.tareasAsignadas) {
+    throw new Error('Las tareas completadas no pueden superar las tareas asignadas.');
   }
 
   const labor = await dbGet<LaborAgricola>('labores', input.tareaId);
