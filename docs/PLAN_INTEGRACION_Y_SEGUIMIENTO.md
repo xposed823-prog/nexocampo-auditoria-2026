@@ -52,7 +52,7 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 - [ ] Adaptar selección de carpeta cuando el navegador soporte File System Access API.
 - [ ] Mantener Descargas como fallback; no prometer una ruta arbitraria en Android.
 - [x] Registrar historial local de hasta 10 operaciones (fecha, destino/archivo, resultado y detalle), sin duplicar los datos respaldados.\n- [ ] Probar persistencia del historial y fallback cuando localStorage no esté disponible.
-- [ ] Inventariar y completar CSV para los informes que existen en PWA.
+- [x] Agregar exportación CSV al reporte consolidado de Auditoría 2026.\n- [ ] Inventariar y completar CSV por cada informe/módulo que exista en PWA.
 - [ ] Implementar PDF mediante impresión/Guardar como PDF o una generación explícita; explicar las limitaciones del navegador.
 - [ ] Confirmar si Excel requiere XLSX real o si CSV satisface el flujo de trabajo; no llamar Excel a un CSV sin aclaración.
 
@@ -98,7 +98,7 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 | NC-009 | Cifrado | Backup realmente cifrado y clave recuperable | Pendiente | UI corregida: se informa que el JSON no está cifrado | Definir modelo de clave/recuperación antes de implementar |
 | NC-010 | Google Drive | OAuth y subida desde el destino | En curso | Servicio y botón manual agregados; sin prueba real | Configurar Client ID y validar origen OAuth/carpeta/subida |
 | NC-011 | Local | Carpeta elegida y fallback a Descargas | Pendiente | No localizado en módulo de backup | Adaptar y probar navegador |
-| NC-012 | Reportes | CSV/PDF/XLSX por módulo | Pendiente | Impresión localizada; formatos incompletos/no verificados | Inventario de salidas |
+| NC-012 | Reportes | CSV/PDF/XLSX por módulo | En curso | CSV consolidado agregado; impresión disponible; XLSX real no implementado | Probar CSV y completar salidas faltantes |
 | NC-013 | PWA/offline | Instalar, recargar, modo avión, reconectar | Pendiente | Archivos PWA presentes | Ejecutar en Android |
 
 ## Regla de estado
