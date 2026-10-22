@@ -81,7 +81,7 @@ export function preloadGoogleIdentityServices(): Promise<void> {
   if (window.google?.accounts?.oauth2) return Promise.resolve();
   if (identityScriptPromise) return identityScriptPromise;
 
-  identityScriptPromise = new Promise((resolve, reject) => {
+  identityScriptPromise = new Promise<void>((resolve, reject) => {
     let script = document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_IDENTITY_SCRIPT}"]`);
     if (!script) {
       script = document.createElement('script');
@@ -117,7 +117,7 @@ async function requestAccessToken(prompt: string): Promise<string> {
   const oauth = window.google?.accounts?.oauth2;
   if (!oauth) throw new Error('Google Identity Services no está disponible.');
 
-  return await new Promise((resolve, reject) => {
+  return await new Promise<string>((resolve, reject) => {
     try {
       const client = oauth.initTokenClient({
         client_id: clientId,
