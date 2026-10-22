@@ -28,6 +28,24 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
   const [guardando, setGuardando] = useState(false);
   const [cargando, setCargando] = useState(true);
 
+  useEffect(() => {
+    if (!fecha) return;
+    const diaSemana = new Date(`${fecha}T12:00:00`).getDay();
+    if (diaSemana === 6) {
+      // Sábado: 6:30–13:00, solo desayuno (30 min), sin pausa activa adicional.
+      setApertura('06:30');
+      setCierre('13:00');
+      setPausaComida(30);
+      setPausaActiva(0);
+    } else if (diaSemana >= 1 && diaSemana <= 5) {
+      // Lunes a viernes: 6:30–15:30, 60 min de alimentación y 5 min de pausa activa.
+      setApertura('06:30');
+      setCierre('15:30');
+      setPausaComida(60);
+      setPausaActiva(5);
+    }
+  }, [fecha]);
+
   const cargarJornadas = async () => {
     try {
       const items = await dbGetAll<JornadaRegistro>('jornadas');
