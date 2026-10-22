@@ -83,6 +83,59 @@ describe('separación matemática de Oficios Varios', () => {
     assert.equal(result.cumplimientoMetasGlobalPct, null);
   });
 
+  it('consolida varios tramos bajo una sola jornada base', async () => {
+    const jornadaBase: JornadaRegistro = {
+      id: 'jornada_base_test_001',
+      jornada_base_id: 'jornada_base_test_001',
+      fecha: FECHA,
+      colaboradores_ids: [colaborador.id],
+      tramos: [{
+        id: 'tramo_base_test_001',
+        tipo: 'jornada_base',
+        titulo: 'Jornada ordinaria',
+        hora_inicio: '06:30',
+        hora_fin: '15:30',
+        minutos_efectivos_jornada: 475
+      }],
+      creadoEn: '2026-10-22T12:00:00.000Z',
+      actualizadoEn: '2026-10-22T12:00:00.000Z',
+      sincronizado: false
+    };
+    const labor: JornadaRegistro = {
+      id: 'jornada_labor_test_001',
+      jornada_base_id: jornadaBase.id,
+      fecha: FECHA,
+      colaboradores_ids: [colaborador.id],
+      tramos: [{
+        id: 'tramo_labor_test_001',
+        tipo: 'labor',
+        titulo: 'Labor temporal de prueba',
+        labor_nombre: 'Labor temporal de prueba',
+        unidad: 'unidad',
+        estandar_min: 10,
+        modelo: 'individual',
+        hora_inicio: '06:30',
+        hora_fin: '07:30',
+        completados: 2,
+        unidades: 2,
+        estado: 'cumple'
+      }],
+      creadoEn: '2026-10-22T12:00:00.000Z',
+      actualizadoEn: '2026-10-22T12:00:00.000Z',
+      sincronizado: false
+    };
+    const datos = { ...mockDatos, jornadas: [jornadaBase, labor] };
+
+    const result = await consultarColaboradorFecha(colaborador.id, FECHA, { mockDatos: datos });
+    assert.equal(result.jornada.conteoJornadasDia, 1);
+    assert.equal(result.jornada.minutosBrutos, 540);
+    assert.equal(result.jornada.minutosEfectivosNetos, 475);
+    assert.equal(result.metricasConsolidadas.totalTramos, 1);
+
+    const reporte = await consultarReportePeriodo(FECHA, FECHA, { mockDatos: datos });
+    assert.equal(reporte.conteoJornadasUnicas, 1);
+  });
+
   it('excluye una labor pendiente del rendimiento técnico del día', async () => {
     const jornada: JornadaRegistro = {
       ...jornadaOficios,
