@@ -707,7 +707,7 @@ export async function consultarReportePeriodo(
     });
 
     // Conteo estricto de jornadas únicas (por ID)
-    const jornadaIdsUnicos = new Set(jornadasEnRango.map(j => j.id));
+    const jornadaIdsUnicos = new Set(jornadasEnRango.map((j) => j.jornada_base_id || j.id));
     const conteoJornadasUnicas = jornadaIdsUnicos.size;
 
     // Conjunto de colaboradores únicos que participaron
