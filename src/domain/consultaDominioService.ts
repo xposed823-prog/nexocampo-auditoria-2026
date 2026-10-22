@@ -79,6 +79,10 @@ export interface TramoDetalleConsulta {
   unidadMedida?: string;
   meta?: number;
   cumplimientoMetaPct: number | null;
+  esOficioVario?: boolean;
+  tareasAsignadas?: number;
+  tareasCompletadas?: number;
+  cumplimientoTareasPct?: number | null;
   estandarMin?: number | null;
   rendimientoTemporalPct: number | null;
   estadoCalculoRendimiento: 'CALCULADO_VALIDO' | 'ESTANDAR_NO_DISPONIBLE' | 'TIEMPO_EFECTIVO_INVALIDO' | 'NO_APLICA';
@@ -320,13 +324,24 @@ export async function consultarColaboradorFecha(
             ? t.estandar_min
             : ((laborInfo as any)?.estandar_min !== undefined ? (laborInfo as any).estandar_min : (laborInfo?.min ?? null));
           const unidadMedida = laborInfo?.unidadMedida || (laborInfo as any)?.unidad || t.unidad || 'unidad';
+          const esOficioVario = t.modelo === 'oficios_varios' ||
+            t.tipo_registro === 'oficio_vario' ||
+            laborInfo?.tipo_registro === 'oficio_vario';
+          const tareasAsignadas = esOficioVario ? (t.tareas_asignadas ?? t.meta) : undefined;
+          const tareasCompletadas = esOficioVario ? (t.tareas_completadas ?? t.completados) : undefined;
 
-          // Evaluar cumplimiento de meta
+          // Los Oficios Varios tienen métrica operativa propia; no se suman al rendimiento técnico.
           let cumplimientoMetaPct: number | null = null;
+          let cumplimientoTareasPct: number | null = null;
           const metaValida = typeof t.meta === 'number' && t.meta > 0;
           const completadosValidos = typeof t.completados === 'number' && t.completados >= 0;
 
-          if (metaValida && completadosValidos) {
+          if (esOficioVario) {
+            if (typeof tareasAsignadas === 'number' && tareasAsignadas > 0 &&
+                typeof tareasCompletadas === 'number' && tareasCompletadas >= 0) {
+              cumplimientoTareasPct = Number(((tareasCompletadas / tareasAsignadas) * 100).toFixed(2));
+            }
+          } else if (metaValida && completadosValidos) {
             try {
               const evalCumpl = calcularCumplimientoCantidad(t.completados!, t.meta!);
               cumplimientoMetaPct = evalCumpl.cumplimientoCantidadPct;
@@ -337,25 +352,29 @@ export async function consultarColaboradorFecha(
             }
           }
 
-          // Tratamiento estricto de estado "pendiente"
-          if (t.estado === 'pendiente') {
-            produccionPendiente += (t.completados || t.unidades || 0);
-          } else if (completadosValidos) {
-            produccionCompletadaValida += t.completados!;
-          } else if (typeof t.unidades === 'number' && t.unidades > 0) {
-            produccionCompletadaValida += t.unidades;
+          // No mezclar cantidades de Oficios Varios con unidades técnicas de producción.
+          if (!esOficioVario) {
+            if (t.estado === 'pendiente') {
+              produccionPendiente += (t.completados || t.unidades || 0);
+            } else if (completadosValidos) {
+              produccionCompletadaValida += t.completados!;
+            } else if (typeof t.unidades === 'number' && t.unidades > 0) {
+              produccionCompletadaValida += t.unidades;
+            }
           }
 
-          // Rendimiento temporal estricto (solo si estandar !== null y > 0)
+          // Rendimiento temporal estricto: Oficios Varios no consume tiempo técnico computable.
           let rendimientoTemporalPct: number | null = null;
           let estadoCalculo: TramoDetalleConsulta['estadoCalculoRendimiento'] = 'NO_APLICA';
-          let mensajeAuditoria = 'No aplica cálculo de rendimiento temporal.';
+          let mensajeAuditoria = esOficioVario
+            ? 'Oficios Varios se mide por tareas asignadas/completadas, no por estándar temporal.'
+            : 'No aplica cálculo de rendimiento temporal.';
 
-          if (t.tipo === 'labor') {
+          if (t.tipo === 'labor' && !esOficioVario) {
             totalMinutosEfectivos += minTramo;
             const unidadesParaRendimiento = completadosValidos ? t.completados! : (t.unidades || 0);
             const evalRend = calcularRendimientoTemporal(estandarMin, unidadesParaRendimiento, minTramo);
-            
+
             rendimientoTemporalPct = evalRend.rendimientoTemporalPct;
             estadoCalculo = evalRend.estadoCalculo;
             mensajeAuditoria = evalRend.mensajeAuditoria;
@@ -382,6 +401,10 @@ export async function consultarColaboradorFecha(
             unidadMedida,
             meta: t.meta,
             cumplimientoMetaPct,
+            esOficioVario,
+            tareasAsignadas,
+            tareasCompletadas,
+            cumplimientoTareasPct,
             estandarMin,
             rendimientoTemporalPct,
             estadoCalculoRendimiento: estadoCalculo,
