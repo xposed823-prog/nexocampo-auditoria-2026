@@ -59,6 +59,18 @@ export interface TramoJornada {
   tareas_asignadas?: number;
   tareas_completadas?: number;
   cumplimiento_tareas_pct?: number;
+  especial?: string;
+  operacion?: string;
+  material_tipo?: string;
+  modalidad?: string;
+  tipo_polisombra?: '30%' | '65%' | string;
+  es_subtarea?: boolean;
+  continuidad_id?: string;
+  ejecucion_id?: string;
+  condiciones?: string[];
+  motivos_pendiente?: string[];
+  avance_pct?: number;
+  ubicaciones?: Array<{ area?: string; bloque?: string; tunel?: string }>;
 }
 
 export interface JornadaRegistro {
