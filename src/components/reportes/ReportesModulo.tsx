@@ -242,6 +242,37 @@ export const ReportesModulo: React.FC<ReportesModuloProps> = ({ modoSol, dispara
 
           </div>
 
+          {reporte.oficiosVariosResumen && reporte.oficiosVariosResumen.registros > 0 && (
+            <section className={`p-4 rounded-xl border space-y-3 ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/40 border-slate-700/60'}`}>
+              <div>
+                <h3 className="text-xs font-bold text-violet-400">Oficios Varios · cumplimiento operativo</h3>
+                <p className="text-[11px] mt-1 text-slate-400">
+                  Se mide por tareas asignadas/completadas y se mantiene separado del rendimiento técnico temporal.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-lg bg-slate-900/50 p-3">
+                  <p className="text-[10px] text-slate-400">Registros</p>
+                  <p className="text-lg font-bold font-mono text-slate-100">{reporte.oficiosVariosResumen.registros}</p>
+                </div>
+                <div className="rounded-lg bg-slate-900/50 p-3">
+                  <p className="text-[10px] text-slate-400">Tareas completadas / asignadas</p>
+                  <p className="text-lg font-bold font-mono text-slate-100">
+                    {reporte.oficiosVariosResumen.tareasCompletadas} / {reporte.oficiosVariosResumen.tareasAsignadas}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-900/50 p-3">
+                  <p className="text-[10px] text-slate-400">Cumplimiento operativo</p>
+                  <p className="text-lg font-bold font-mono text-violet-400">
+                    {reporte.oficiosVariosResumen.cumplimientoPct !== null
+                      ? `${reporte.oficiosVariosResumen.cumplimientoPct}%`
+                      : 'N/C'}
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Detalle de Saldos Pendientes (Invariante de no conteo como completado) */}
           {reporte.totalUnidadesPendientes > 0 && (
             <div className={`p-3.5 rounded-xl border flex items-start gap-2.5 text-xs ${
