@@ -98,7 +98,7 @@ Una función no se marca como terminada solo por existir su componente. Se consi
 - [x] Identificadas las arquitecturas y los almacenes declarados.
 - [x] Localizados los módulos principales de jornadas, asistencia, ausencias, consulta, reportes y respaldos en Auditoría 2026.
 - [x] Detectadas diferencias iniciales en Drive, destino local, exportaciones e historial de respaldos.
-- [ ] Revisión completa función por función de los módulos y servicios.
+- [x] Servicio aislado de copia manual a Google Drive agregado en la rama de integración (pendiente de configuración y prueba real).\n- [ ] Revisión completa función por función de los módulos y servicios.
 - [ ] Ejecución real de `npm test`, `npm run lint` y `npm run build`.
 - [ ] Pruebas comparativas con casos sintéticos.
 - [ ] Aceptación funcional desde Android.
