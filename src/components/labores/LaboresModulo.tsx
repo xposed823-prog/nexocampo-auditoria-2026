@@ -42,7 +42,7 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
   const [nuevaLabor, setNuevaLabor] = useState(LABORES_TECNICAS[0]?.nombre || '');
   const [nuevaMeta, setNuevaMeta] = useState(1);
   const [nuevaComp, setNuevaComp] = useState(0);
-  const [estadoLabor, setEstadoLabor] = useState<'cumple' | 'no_cumple' | 'pendiente'>('cumple');
+  const [estadoLabor, setEstadoLabor] = useState<'cumple' | 'no_cumple' | 'pendiente'>('pendiente');
   const [area, setArea] = useState('');
   const [bloque, setBloque] = useState('');
   const [tunel, setTunel] = useState('');
@@ -96,6 +96,18 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
     }
     if (!Number.isInteger(nuevaMeta) || nuevaMeta < 1 || !Number.isInteger(nuevaComp) || nuevaComp < 0) {
       dispararToast('La meta debe ser al menos 1 y la cantidad completada no puede ser negativa.');
+      return;
+    }
+    if (estadoLabor === 'cumple' && nuevaComp < nuevaMeta) {
+      dispararToast('Para marcar Cumple, la cantidad completada debe alcanzar la meta.');
+      return;
+    }
+    if (estadoLabor === 'pendiente' && nuevaComp >= nuevaMeta) {
+      dispararToast('Una labor completamente terminada debe marcarse como Cumple.');
+      return;
+    }
+    if (estadoLabor === 'no_cumple' && nuevaComp !== 0) {
+      dispararToast('Una labor No cumple debe registrar cero unidades ejecutadas.');
       return;
     }
 
@@ -171,6 +183,7 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
       setNuevaInicio(nuevaFin);
       setNuevaFin('');
       setNuevaComp(0);
+      setEstadoLabor('pendiente');
       setObservaciones('');
       dispararToast('Labor guardada en IndexedDB; la línea de tiempo se actualizó.');
     } catch (error: any) {
