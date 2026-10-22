@@ -33,12 +33,12 @@ Estados:
 | Función | Referencia PWA | Auditoría 2026 | Prioridad/acción |
 |---|---|---|---|
 | Catálogos de colaboradores, labores y áreas | Presente | Catálogos tipados disponibles | Alta: comparar registros y reglas sin exponer datos reales en pruebas |
-| Registro de jornadas individuales/grupales | Presente; tramos de varias labores | Módulo de jornadas y tipos de tramos disponibles | P0: comprobar guardado, edición y varias labores consecutivas |
+| Registro de jornadas individuales/grupales | Presente; tramos de varias labores | El módulo de jornadas guarda una jornada, pero usa fecha y colaboradores fijos; aún no equivale al flujo completo de labores consecutivas | P0: hacer dinámica la selección y completar segmentos con pruebas |
 | Jornada general independiente de sus tramos | Regla funcional documentada en historial y arquitectura | Tipos de jornada/tramo disponibles; falta demostrar equivalencia completa | P0: casos horarios y anti-solapamiento real |
 | Fórmulas de rendimiento técnico | Motor existente en PWA | Servicios/reglas y documentos matemáticos en destino | P0: pruebas comparativas con casos idénticos y resultados exactos |
 | Estados Cumple/No cumple/Pendiente y exclusiones | Documentados y aplicados en PWA | Taxonomía y reglas documentadas; integración requiere pruebas | P0: asegurar que pendientes no inflen ni reduzcan rendimiento |
-| Oficios Varios | Medición por tareas asignadas/completadas, sin estándar temporal | Módulo dedicado presente en imports de App | P1: verificar separación del rendimiento técnico y persistencia |
-| Plástico/Polisombra grupal | Reglas de cuadrilla, herencia horaria y subtareas | Módulo y validador presentes | P0: comprobar herencia de tiempo y ausencia de doble conteo |
+| Oficios Varios | Medición por tareas asignadas/completadas, sin estándar temporal | Módulo visual con valores 5/3; el botón solo muestra toast y no persiste | P0: conectar a jornadas/IndexedDB y probar que no calcula rendimiento temporal |
+| Plástico/Polisombra grupal | Reglas de cuadrilla, herencia horaria y subtareas | El módulo visual tiene datos de estado local; el botón de guardar solo muestra toast, sin escritura canónica confirmada | P0: persistir jornada, integrantes y subtareas con herencia horaria sin doble conteo |
 | Asistencia semanal independiente | Matriz de asistencia y almacén `asistencia` | Módulo y funciones atómicas/de lote presentes | P1: verificar matriz, estados, fechas y que no afecte rendimiento |
 | Ausencias formales | Siete códigos documentados; almacén separado | Módulo y tipo de ausencia presentes | P1: verificar intervalos y separación de asistencia |
 | Consulta cruzada colaborador-fecha | Asistencia + jornada/rendimiento + ausencia | Módulo y servicio de dominio presentes; documentación registra integración | P0: contrastar datos persistidos y casos incompletos |
@@ -62,6 +62,10 @@ Estados:
 5. **No asumir que la presencia de componentes significa que funcionan.** La existencia de archivos no prueba persistencia, integridad, cálculo correcto, comportamiento offline o compatibilidad móvil.
 6. **No migrar datos personales reales a pruebas.** Los casos de aceptación deben usar datos sintéticos.
 7. **No tocar el repositorio PWA de producción.** La integración se realiza en esta rama del repositorio alternativo.
+
+
+
+La revisión más detallada de persistencia por módulo está en [Inventario funcional de Auditoría 2026](INVENTARIO_FUNCIONAL_AUDITORIA.md). Los componentes visuales que solo cambian estado React o muestran un toast no se consideran funcionales.
 
 ## 5. Prioridades propuestas
 
