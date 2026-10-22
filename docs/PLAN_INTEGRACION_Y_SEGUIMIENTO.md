@@ -35,15 +35,15 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 **Criterio de salida:** resultados calculados coinciden con los casos de referencia y no se pierden registros.
 
 ### Etapa 2 — Backup y restauración segura (P0)
-- [ ] Unificar la exportación en un servicio de dominio, evitando dos implementaciones divergentes.
+- [x] Unificar la exportación del módulo Respaldos con el servicio canónico de los seis almacenes.
 - [ ] Definir metadatos explícitos: versión del formato, fecha de creación, versión de app y almacenes incluidos.
-- [ ] Validar estructura y versión antes de restaurar.
+- [x] Validar formato, versión conocida, seis almacenes, IDs válidos y duplicados antes de restaurar.
 - [ ] Probar JSON inválido, almacén ausente, datos malformados, versión no soportada y escritura fallida.
-- [ ] Asegurar copia preventiva y estrategia de recuperación verificable antes de reemplazar datos.
+- [x] Aplicar la restauración en una sola transacción readwrite de los seis almacenes; un aborto de IndexedDB no confirma cambios parciales.\n- [ ] Probar de forma controlada los casos de aborto y recuperación.
 - [ ] Confirmar si la restauración usa una transacción atómica; si no, diseñar protección antes de implementarla.
 - [ ] Implementar SHA-256 real si se necesita integridad; el hash detecta cambios, no cifra.
 - [ ] Si se requiere cifrado real, definir manejo de clave y recuperación; no anunciarlo antes de implementarlo y probarlo.
-- [ ] Crear pruebas de exportar → borrar/limpiar entorno de prueba → restaurar → comparar datos.
+- [ ] Crear pruebas de exportar → limpiar entorno de prueba → restaurar → comparar datos.
 - [ ] Registrar resultados y límites de compatibilidad.
 
 **Criterio de salida:** restauración probada con fallos controlados y sin pérdida silenciosa de datos.
@@ -51,7 +51,7 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 ### Etapa 3 — Destino local, historial y formatos (P1/P2)
 - [ ] Adaptar selección de carpeta cuando el navegador soporte File System Access API.
 - [ ] Mantener Descargas como fallback; no prometer una ruta arbitraria en Android.
-- [ ] Registrar un historial local de metadatos de respaldo (fecha, destino, tamaño, resultado y versión), sin duplicar datos sensibles.
+- [x] Registrar historial local de hasta 10 operaciones (fecha, destino/archivo, resultado y detalle), sin duplicar los datos respaldados.\n- [ ] Probar persistencia del historial y fallback cuando localStorage no esté disponible.
 - [ ] Inventariar y completar CSV para los informes que existen en PWA.
 - [ ] Implementar PDF mediante impresión/Guardar como PDF o una generación explícita; explicar las limitaciones del navegador.
 - [ ] Confirmar si Excel requiere XLSX real o si CSV satisface el flujo de trabajo; no llamar Excel a un CSV sin aclaración.
@@ -93,9 +93,9 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 | NC-004 | Plástico/Polisombra | Subtarea hereda horario sin doble conteo | Pendiente | Módulo y validador localizados | Pruebas de guardado y cálculo |
 | NC-005 | Consulta cruzada | Datos de asistencia, jornada y ausencia coherentes | Pendiente | Servicio localizado | Probar registros completos/incompletos |
 | NC-006 | Backup | Exportación contiene los seis almacenes esperados | Pendiente | Exportaciones localizadas | Comparar payload y stores |
-| NC-007 | Restauración | Archivo inválido/fallo no deja base parcialmente aplicada | Pendiente | Garantía transaccional no demostrada | Inspeccionar implementación y probar |
-| NC-008 | Integridad | Hash SHA-256 calculado y validado | Pendiente | Etiqueta UI sin prueba suficiente | Rastrear/implementar |
-| NC-009 | Cifrado | Backup realmente cifrado y clave recuperable | Pendiente | Etiqueta UI sin prueba suficiente | Definir modelo antes de afirmar |
+| NC-007 | Restauración | Archivo inválido/fallo no deja base parcialmente aplicada | En curso | Validación estricta y transacción única implementadas; sin prueba de ejecución | Probar archivo inválido y aborto de transacción |
+| NC-008 | Integridad | Hash SHA-256 calculado y validado | Pendiente | UI corregida: se informa que no hay hash en esta versión | Decidir si se requiere e implementar con pruebas |
+| NC-009 | Cifrado | Backup realmente cifrado y clave recuperable | Pendiente | UI corregida: se informa que el JSON no está cifrado | Definir modelo de clave/recuperación antes de implementar |
 | NC-010 | Google Drive | OAuth y subida desde el destino | En curso | Servicio y botón manual agregados; sin prueba real | Configurar Client ID y validar origen OAuth/carpeta/subida |
 | NC-011 | Local | Carpeta elegida y fallback a Descargas | Pendiente | No localizado en módulo de backup | Adaptar y probar navegador |
 | NC-012 | Reportes | CSV/PDF/XLSX por módulo | Pendiente | Impresión localizada; formatos incompletos/no verificados | Inventario de salidas |
