@@ -32,7 +32,9 @@ import {
   guardarAsistenciaAtomica,
   guardarLoteAsistencia,
   cargarMatrizAsistenciaSemana,
-  JornadaRegistro
+  JornadaRegistro,
+  TramoJornada,
+  guardarJornadaRegistro
 } from './domain/nexocampoDB';
 
 // Componentes Modulares Desacoplados
@@ -42,7 +44,7 @@ import { ResumenModulo } from './components/resumen/ResumenModulo';
 import { JornadasModulo } from './components/jornadas/JornadasModulo';
 import { LaboresModulo } from './components/labores/LaboresModulo';
 import { OficiosVariosModulo } from './components/oficios-varios/OficiosVariosModulo';
-import { PlasticoModulo } from './components/plastico/PlasticoModulo';
+import { PlasticoModulo, type SubtareaItem } from './components/plastico/PlasticoModulo';
 import { AsistenciaModulo } from './components/asistencia/AsistenciaModulo';
 import { AusenciasModulo } from './components/ausencias/AusenciasModulo';
 import { ConsultaCruzadaModulo } from './components/consulta/ConsultaCruzadaModulo';
@@ -90,25 +92,26 @@ function App() {
   const [modoSol, setModoSol] = useState(false);
   const [docAbierto, setDocAbierto] = useState<string>('08');
 
-  // Estado del Formulario de Plástico y Polisombra
-  const [polisombraFecha, setPolisombraFecha] = useState('2026-10-19');
-  const [polisombraIntegrantes, setPolisombraIntegrantes] = useState<string[]>(['col_3', 'col_4']);
-  const [polisombraInicio, setPolisombraInicio] = useState('06:30');
-  const [polisombraFin, setPolisombraFin] = useState('11:30');
-  const [polisombraArea, setPolisombraArea] = useState('Jamaica');
-  const [polisombraBloque, setPolisombraBloque] = useState('T5');
-  const [polisombraTunel, setPolisombraTunel] = useState('Túnel 1');
-  const [polisombraCantTotal, setPolisombraCantTotal] = useState(100);
-  const [polisombraCantComp, setPolisombraCantComp] = useState(75);
-  const [polisombraCondiciones, setPolisombraCondiciones] = useState<string[]>(['soleado', 'vientos_fuertes']);
-  const [subtareasCobertura, setSubtareasCobertura] = useState([
-    { id: 'st_1', nombre: 'Tendido de polietileno', cant: 75, unidad: 'm lineales', estado: 'completa' },
-    { id: 'st_2', nombre: 'Costura y grapado de mallas', cant: 40, unidad: 'm costura', estado: 'pendiente_saldo' }
-  ]);
+  // Estado del Formulario de Plástico y Polisombra: sin datos precargados de demostración.
+  const [polisombraFecha, setPolisombraFecha] = useState(() => {
+    const hoy = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
+  });
+  const [polisombraIntegrantes, setPolisombraIntegrantes] = useState<string[]>([]);
+  const [polisombraInicio, setPolisombraInicio] = useState('');
+  const [polisombraFin, setPolisombraFin] = useState('');
+  const [polisombraArea, setPolisombraArea] = useState('');
+  const [polisombraBloque, setPolisombraBloque] = useState('');
+  const [polisombraTunel, setPolisombraTunel] = useState('');
+  const [polisombraCantTotal, setPolisombraCantTotal] = useState(0);
+  const [polisombraCantComp, setPolisombraCantComp] = useState(0);
+  const [polisombraCondiciones, setPolisombraCondiciones] = useState<string[]>([]);
+  const [subtareasCobertura, setSubtareasCobertura] = useState<SubtareaItem[]>([]);
 
-  // Modal de Justificación de Saldo Pendiente (ahora manejado en PlasticoModulo)
-  const [motivosJustificacion, setMotivosJustificacion] = useState<string[]>(['vientos_fuertes']);
-  const [justificacionConfirmada, setJustificacionConfirmada] = useState(true);
+  // La justificación solo se confirma cuando hay saldo pendiente.
+  const [motivosJustificacion, setMotivosJustificacion] = useState<string[]>([]);
+  const [justificacionConfirmada, setJustificacionConfirmada] = useState(false);
   const [notaSupervisorJustificacion, setNotaSupervisorJustificacion] = useState('');
 
   // Estado interactivo de Asistencia Semanal con persistencia real IndexedDB
