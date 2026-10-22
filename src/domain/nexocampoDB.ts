@@ -352,29 +352,56 @@ export async function capturarSnapshotMemoria(): Promise<DatabaseSnapshot> {
  * Valida minuciosamente la estructura del JSON antes de alterar la base de datos
  */
 export function validarEstructuraBackupJSON(data: any): { valido: boolean; error?: string } {
-  if (!data || typeof data !== 'object') {
-    return { valido: false, error: 'El archivo de respaldo no es un objeto JSON válido.' };
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { valido: false, error: 'El archivo de respaldo no contiene un objeto JSON válido.' };
   }
+
+  // Compatibilidad explícita con el formato actual del destino y el formato PWA original.
+  const formatoDestino = data.formato === 'nexocampo_backup' && data.version_db === DB_VERSION;
+  const formatoPwaOriginal = data.version === 'nexocampo-backup-v1';
+  if (!formatoDestino && !formatoPwaOriginal) {
+    return {
+      valido: false,
+      error: 'Formato o versión de respaldo no compatible. No se modificó la base de datos.'
+    };
+  }
+
   if (!data.stores || typeof data.stores !== 'object' || Array.isArray(data.stores)) {
     return { valido: false, error: 'La propiedad "stores" no existe o no tiene un formato válido.' };
   }
+
   const requeridos = ['colaboradores', 'labores', 'areas', 'ausencias', 'jornadas', 'asistencia'] as const;
-  for (const s of requeridos) {
-    if (data.stores[s] !== undefined && !Array.isArray(data.stores[s])) {
-      return { valido: false, error: `El almacén "${s}" debe ser un arreglo de elementos.` };
+  for (const nombre of requeridos) {
+    const lista = data.stores[nombre];
+    if (!Array.isArray(lista)) {
+      return {
+        valido: false,
+        error: `El almacén "${nombre}" falta o no es un arreglo. No se modificó la base de datos.`
+      };
     }
-  }
-  for (const s of requeridos) {
-    const list = data.stores[s];
-    if (Array.isArray(list)) {
-      for (let i = 0; i < list.length; i++) {
-        const item = list[i];
-        if (!item || typeof item !== 'object' || !item.id) {
-          return { valido: false, error: `Elemento en almacén "${s}" índice ${i} no contiene un id válido.` };
-        }
+
+    const ids = new Set<string>();
+    for (let i = 0; i < lista.length; i++) {
+      const item = lista[i];
+      if (!item || typeof item !== 'object' || Array.isArray(item) ||
+          (typeof item.id !== 'string' && typeof item.id !== 'number') ||
+          String(item.id).trim() === '') {
+        return {
+          valido: false,
+          error: `Elemento inválido en "${nombre}", posición ${i}: falta un identificador válido.`
+        };
       }
+      const id = String(item.id);
+      if (ids.has(id)) {
+        return {
+          valido: false,
+          error: `Identificador duplicado "${id}" en el almacén "${nombre}". No se modificó la base de datos.`
+        };
+      }
+      ids.add(id);
     }
   }
+
   return { valido: true };
 }
 
@@ -383,51 +410,82 @@ export function validarEstructuraBackupJSON(data: any): { valido: boolean; error
  * con validación previa en memoria y snapshot de seguridad con rollback automático
  */
 export async function restaurarBackupCanónicoJSON(jsonString: string): Promise<{ exito: boolean; mensaje: string }> {
+  let txError = '';
+
   try {
-    const data = JSON.parse(jsonString);
+    let data: any;
+    try {
+      data = JSON.parse(jsonString);
+    } catch {
+      return { exito: false, mensaje: 'El archivo no contiene JSON válido. No se modificó la base de datos.' };
+    }
+
     const validacion = validarEstructuraBackupJSON(data);
     if (!validacion.valido) {
-      return { exito: false, mensaje: validacion.error || 'Estructura inválida' };
+      return { exito: false, mensaje: validacion.error || 'Estructura de respaldo inválida.' };
     }
 
-    // 1. Snapshot preventivo en memoria antes de cualquier operación destructiva
-    const snapshot = await capturarSnapshotMemoria();
-
-    const { colaboradores, labores, areas, ausencias, jornadas, asistencia } = data.stores;
     const db = await abrirDB();
-    const tx = db.transaction(STORES as any, 'readwrite');
 
-    const restaurarColeccion = (nombre: StoreName, items?: any[]) => {
-      if (!Array.isArray(items)) return;
-      const os = tx.objectStore(nombre);
-      os.clear();
-      items.forEach((it) => {
-        if (it && it.id) os.put(it);
-      });
-    };
-
-    try {
-      restaurarColeccion('colaboradores', colaboradores);
-      restaurarColeccion('labores', labores);
-      restaurarColeccion('areas', areas);
-      restaurarColeccion('ausencias', ausencias);
-      restaurarColeccion('jornadas', jornadas);
-      restaurarColeccion('asistencia', asistencia);
-    } catch (writeErr: any) {
-      // Rollback al snapshot previo si falla la escritura
-      await restaurarSnapshot(snapshot);
-      return { exito: false, mensaje: `Fallo durante escritura, rollback completado: ${writeErr?.message}` };
-    }
-
-    return new Promise((resolve) => {
-      tx.oncomplete = () => resolve({ exito: true, mensaje: 'Respaldo restaurado con éxito en los 6 almacenes.' });
-      tx.onerror = async () => {
-        await restaurarSnapshot(snapshot);
-        resolve({ exito: false, mensaje: 'Error al escribir en IndexedDB. Se aplicó rollback preventivo.' });
+    // Una única transacción readwrite sobre los seis almacenes es atómica:
+    // si una operación falla y la transacción se aborta, IndexedDB conserva
+    // el estado previo. No se lanza un segundo "rollback" concurrente.
+    return await new Promise((resolve) => {
+      let finalizado = false;
+      const finalizar = (resultado: { exito: boolean; mensaje: string }) => {
+        if (finalizado) return;
+        finalizado = true;
+        resolve(resultado);
       };
+
+      let tx: IDBTransaction;
+      try {
+        tx = db.transaction([...STORES], 'readwrite');
+      } catch (error: any) {
+        finalizar({
+          exito: false,
+          mensaje: `No se pudo iniciar la restauración: ${error?.message || 'error de IndexedDB'}. No se modificó la base de datos.`
+        });
+        return;
+      }
+
+      tx.oncomplete = () => {
+        STORES.forEach((store) => notificarMutacionDatos(store, 'restore'));
+        finalizar({ exito: true, mensaje: 'Respaldo validado y restaurado en los 6 almacenes.' });
+      };
+
+      tx.onerror = () => {
+        txError = tx.error?.message || 'Error de transacción IndexedDB';
+      };
+
+      tx.onabort = () => {
+        finalizar({
+          exito: false,
+          mensaje: `La restauración fue abortada (${txError || tx.error?.message || 'error de escritura'}). IndexedDB conservó los datos anteriores; no se aplicó una restauración parcial.`
+        });
+      };
+
+      try {
+        for (const store of STORES) {
+          const objectStore = tx.objectStore(store);
+          objectStore.clear();
+          for (const item of data.stores[store]) {
+            objectStore.put(item);
+          }
+        }
+      } catch (error: any) {
+        txError = error?.message || 'Error al preparar los registros';
+        try { tx.abort(); } catch { /* La transacción pudo haber terminado. */ }
+        if (!finalizado && tx.readyState === 'done') {
+          finalizar({ exito: false, mensaje: `No se pudo preparar la restauración: ${txError}. No se confirmó ningún cambio.` });
+        }
+      }
     });
-  } catch (e: any) {
-    return { exito: false, mensaje: `Archivo JSON no válido: ${e?.message || 'Error de parseo'}` };
+  } catch (error: any) {
+    return {
+      exito: false,
+      mensaje: `No se pudo restaurar el respaldo: ${error?.message || 'error desconocido'}. No se confirmó ningún cambio.`
+    };
   }
 }
 
