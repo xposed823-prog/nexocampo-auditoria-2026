@@ -70,6 +70,8 @@ export function validarLabor(
 
   if (isNaN(cantidadCompletada) || cantidadCompletada < 0) {
     errores.cantidadCompletada = 'La cantidad completada no puede ser negativa.';
+  } else if (cantidadCompletada > cantidadTotal) {
+    errores.cantidadCompletada = 'La cantidad completada no puede superar la cantidad total.';
   }
 
   if (colaboradoresCount < 1) {
@@ -84,7 +86,7 @@ export function validarLabor(
 
 /**
  * Valida el registro especializado de Plástico y Polisombra.
- * Regla: Máximo 6 integrantes de cuadrilla.
+ * Regla: cuadrilla de 6 integrantes; el saldo pendiente requiere justificación.
  * Si cantidad completada < cantidad total, activa requerimiento de justificación.
  */
 export function validarPlasticoPolisombra(
@@ -97,8 +99,8 @@ export function validarPlasticoPolisombra(
 ): ResultadoValidacion & { requiereJustificacion: boolean; saldoPendiente: number } {
   const errores: Record<string, string> = {};
 
-  if (integrantesCount < 1 || integrantesCount > 6) {
-    errores.integrantes = 'La cuadrilla de plástico y polisombra debe tener entre 1 y 6 integrantes.';
+  if (integrantesCount !== 6) {
+    errores.integrantes = 'Seleccione exactamente 6 integrantes para la cuadrilla de plástico y polisombra.';
   }
 
   if (!horaInicio || !horaFin) {
