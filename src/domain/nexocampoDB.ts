@@ -406,8 +406,8 @@ export function validarEstructuraBackupJSON(data: any): { valido: boolean; error
 }
 
 /**
- * Restaura los 6 almacenes canónicos desde un archivo de respaldo JSON
- * con validación previa en memoria y snapshot de seguridad con rollback automático
+ * Restaura los seis almacenes en una sola transacción atómica.
+ * El formato se valida por completo antes de abrir la transacción de escritura.
  */
 export async function restaurarBackupCanónicoJSON(jsonString: string): Promise<{ exito: boolean; mensaje: string }> {
   let txError = '';
@@ -486,20 +486,6 @@ export async function restaurarBackupCanónicoJSON(jsonString: string): Promise<
   }
 }
 
-async function restaurarSnapshot(snap: DatabaseSnapshot): Promise<void> {
-  try {
-    const db = await abrirDB();
-    const tx = db.transaction(STORES as any, 'readwrite');
-    for (const store of STORES) {
-      const os = tx.objectStore(store);
-      os.clear();
-      const items = (snap as any)[store] || [];
-      items.forEach((item: any) => os.put(item));
-    }
-  } catch (err) {
-    console.error('[NexoCampo] Error crítico en rollback de snapshot:', err);
-  }
-}
 
 /**
  * Persistencia atómica de asistencia individual
