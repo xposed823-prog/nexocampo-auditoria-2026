@@ -114,10 +114,12 @@ async function requestAccessToken(prompt: string): Promise<string> {
   }
 
   await preloadGoogleIdentityServices();
+  const oauth = window.google?.accounts?.oauth2;
+  if (!oauth) throw new Error('Google Identity Services no está disponible.');
 
   return await new Promise((resolve, reject) => {
     try {
-      const client = window.google.accounts.oauth2.initTokenClient({
+      const client = oauth.initTokenClient({
         client_id: clientId,
         scope: DRIVE_SCOPE,
         callback: (response: any) => {
