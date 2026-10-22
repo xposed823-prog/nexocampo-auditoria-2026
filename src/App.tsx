@@ -625,6 +625,7 @@ function App() {
           <RespaldosModulo
             modoSol={modoSol}
             dispararToast={dispararToast}
+            onRestauracionExitosa={hidratarDatosDesdeIndexedDB}
           />
         )}
 
