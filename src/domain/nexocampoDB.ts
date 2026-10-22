@@ -33,7 +33,7 @@ export type StoreName = typeof STORES[number];
 
 export interface TramoJornada {
   id: string;
-  tipo: 'labor' | 'auxiliar' | 'interrupcion' | 'incidente';
+  tipo: 'labor' | 'auxiliar' | 'interrupcion' | 'incidente' | 'jornada_base';
   titulo: string;
   labor_id?: string;
   labor_nombre?: string;
@@ -59,6 +59,7 @@ export interface TramoJornada {
   tareas_asignadas?: number;
   tareas_completadas?: number;
   cumplimiento_tareas_pct?: number;
+  minutos_efectivos_jornada?: number;
   especial?: string;
   operacion?: string;
   material_tipo?: string;
