@@ -25,6 +25,7 @@ import {
   determinarEstadoVisual,
   EstadoVisualNegocio
 } from './domain/formValidators';
+import { detectarSolapamientoTemporal } from './domain/businessRulesEngine';
 import { COLABORADORES_CATALOGO, AREAS_AGRONOMICAS, LABORES_AGRONOMICAS } from './domain/catalogoAgronomico';
 import {
   abrirDB,
@@ -32,8 +33,8 @@ import {
   guardarAsistenciaAtomica,
   guardarLoteAsistencia,
   cargarMatrizAsistenciaSemana,
-  JornadaRegistro,
-  TramoJornada,
+  type JornadaRegistro,
+  type TramoJornada,
   guardarJornadaRegistro
 } from './domain/nexocampoDB';
 
