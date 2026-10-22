@@ -357,8 +357,10 @@ export async function consultarColaboradorFecha(
             try {
               const evalCumpl = calcularCumplimientoCantidad(t.completados!, t.meta!);
               cumplimientoMetaPct = evalCumpl.cumplimientoCantidadPct;
-              sumaMetasPct += cumplimientoMetaPct;
-              conteoMetasValidas++;
+              if (t.estado !== 'pendiente' && t.estado !== 'no_cumple') {
+                sumaMetasPct += cumplimientoMetaPct;
+                conteoMetasValidas++;
+              }
             } catch (_) {
               cumplimientoMetaPct = null;
             }
@@ -366,7 +368,9 @@ export async function consultarColaboradorFecha(
 
           // No mezclar cantidades de Oficios Varios con unidades técnicas de producción.
           if (!esOficioVario) {
-            if (t.estado === 'pendiente') {
+            if (t.estado === 'no_cumple') {
+              // No hubo ejecución: no suma producción completada ni pendiente.
+            } else if (t.estado === 'pendiente') {
               const cantidadAsignada = metaValida ? t.meta! : (typeof t.unidades === 'number' ? t.unidades : 0);
               produccionPendiente += Math.max(0, cantidadAsignada - (completadosValidos ? t.completados! : 0));
             } else if (completadosValidos) {
@@ -391,18 +395,24 @@ export async function consultarColaboradorFecha(
 
           if (t.tipo === 'labor' && !esOficioVario && !esSubtarea && !esMetaGrupal &&
               typeof estandarMin === 'number' && estandarMin > 0) {
-            totalMinutosEfectivos += minTramo;
-            const unidadesParaRendimiento = completadosValidos ? t.completados! : (t.unidades || 0);
-            const evalRend = calcularRendimientoTemporal(estandarMin, unidadesParaRendimiento, minTramo);
+            if (t.estado === 'pendiente' || t.estado === 'no_cumple') {
+              mensajeAuditoria = t.estado === 'pendiente'
+                ? 'Labor pendiente: excluida del rendimiento del día.'
+                : 'No cumple: no hubo ejecución computable para rendimiento.';
+            } else {
+              totalMinutosEfectivos += minTramo;
+              const unidadesParaRendimiento = completadosValidos ? t.completados! : (t.unidades || 0);
+              const evalRend = calcularRendimientoTemporal(estandarMin, unidadesParaRendimiento, minTramo);
 
-            rendimientoTemporalPct = evalRend.rendimientoTemporalPct;
-            estadoCalculo = evalRend.estadoCalculo;
-            mensajeAuditoria = evalRend.mensajeAuditoria;
+              rendimientoTemporalPct = evalRend.rendimientoTemporalPct;
+              estadoCalculo = evalRend.estadoCalculo;
+              mensajeAuditoria = evalRend.mensajeAuditoria;
 
-            evaluacionesRendimiento.push({
-              tiempoEfectivoMinutos: minTramo,
-              tiempoEstandarTotalMinutos: evalRend.tiempoEstandarTotalMinutos
-            });
+              evaluacionesRendimiento.push({
+                tiempoEfectivoMinutos: minTramo,
+                tiempoEstandarTotalMinutos: evalRend.tiempoEstandarTotalMinutos
+              });
+            }
           }
 
           tramosProcesados.push({
@@ -772,9 +782,10 @@ export async function consultarReportePeriodo(
 
         // Incidentes, interrupciones y auxiliares no se suman como minutos técnicos de labor.
         if (t.tipo !== 'labor') continue;
+        if (t.estado === 'no_cumple') continue;
         const esMetaGrupal = t.modelo === 'grupal_meta';
         const esSubtareaCobertura = t.es_subtarea === true;
-        if (!esMetaGrupal && !esSubtareaCobertura) minutosTotalesEfectivos += duracionMin;
+        if (t.estado !== 'pendiente' && !esMetaGrupal && !esSubtareaCobertura) minutosTotalesEfectivos += duracionMin;
 
         const claveLabor = laborInfo?.id || t.labor_id || t.labor_nombre || t.titulo;
         const nombreLabor = laborInfo?.nombre || t.labor_nombre || t.titulo;
@@ -802,7 +813,7 @@ export async function consultarReportePeriodo(
           mapaLabores.set(claveLabor, accum);
         }
 
-        if (!esMetaGrupal && !esSubtareaCobertura) accum.minutosEfectivos += duracionMin;
+        if (t.estado !== 'pendiente' && !esMetaGrupal && !esSubtareaCobertura) accum.minutosEfectivos += duracionMin;
 
         // Meta física
         const metaValida = !esSubtareaCobertura && typeof t.meta === 'number' && t.meta > 0;
@@ -830,7 +841,7 @@ export async function consultarReportePeriodo(
           totalUnidadesCompletadas += qty;
 
           // Si tiene estándar computable y tiempo efectivo > 0
-          if (tieneEstandar && duracionMin > 0) {
+          if (tieneEstandar && duracionMin > 0 && t.estado !== 'pendiente') {
             const minEstTramo = estandarMin! * qty;
             accum.minutosEstandarTotal += minEstTramo;
             evaluacionesGlobalesEficiencia.push({
