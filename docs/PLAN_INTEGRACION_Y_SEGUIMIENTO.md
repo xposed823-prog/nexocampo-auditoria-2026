@@ -28,7 +28,7 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 - [ ] Probar jornadas con varias labores consecutivas sin solapamiento real.
 - [ ] Probar jornada base independiente de los segmentos y descansos.
 - [ ] Probar Cumple, No cumple, Pendiente y estados de calidad.
-- [ ] Probar que Oficios Varios usa tareas asignadas/completadas y no rendimiento temporal.
+- [x] Implementar primera persistencia de Oficios Varios con tareas asignadas/completadas y sin estándar temporal.\n- [x] Separar su porcentaje operativo del rendimiento técnico en Consulta Cruzada y Reportes.\n- [ ] Probar CRUD, persistencia tras recarga y métricas con casos sintéticos.
 - [ ] Probar que Plástico/Polisombra hereda horarios sin doble contabilización.
 - [ ] Comparar consulta cruzada y reportes usando datos sintéticos.
 
@@ -89,7 +89,7 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 |---|---|---|---|---|---|
 | NC-001 | Jornada | Varias labores consecutivas y jornada base | Pendiente | Sin prueba ejecutada | Crear fixture sintético y test |
 | NC-002 | Rendimiento | Pendientes excluidos de rendimiento técnico | Pendiente | Regla documentada; falta corrida | Añadir/ejecutar pruebas de dominio |
-| NC-003 | Oficios Varios | 3 tareas completadas de 5 = 60%, sin minutos estándar | Pendiente | Reglas documentadas | Verificar servicio y reporte |
+| NC-003 | Oficios Varios | 3 tareas completadas de 5 = 60%, sin minutos estándar | En curso | Servicio, catálogo y separación de métricas implementados; sin pruebas ejecutadas | Ejecutar pruebas y validar recarga/consulta/reporte |
 | NC-004 | Plástico/Polisombra | Subtarea hereda horario sin doble conteo | Pendiente | Módulo y validador localizados | Pruebas de guardado y cálculo |
 | NC-005 | Consulta cruzada | Datos de asistencia, jornada y ausencia coherentes | Pendiente | Servicio localizado | Probar registros completos/incompletos |
 | NC-006 | Backup | Exportación contiene los seis almacenes esperados | Pendiente | Exportaciones localizadas | Comparar payload y stores |
