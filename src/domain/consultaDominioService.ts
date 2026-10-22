@@ -455,12 +455,13 @@ export async function consultarColaboradorFecha(
       const horaAperturaStr = minApertura !== Infinity ? `${String(Math.floor(minApertura / 60)).padStart(2, '0')}:${String(minApertura % 60).padStart(2, '0')}` : undefined;
       const horaCierreStr = maxCierre !== -Infinity ? `${String(Math.floor(maxCierre / 60)).padStart(2, '0')}:${String(maxCierre % 60).padStart(2, '0')}` : undefined;
       const minutosBrutosTotales = (maxCierre > minApertura && minApertura !== Infinity) ? (maxCierre - minApertura) : totalMinutosEfectivos;
+      const jornadaIds = [...new Set(jornadasDia.map((j) => j.jornada_base_id || j.id))];
 
       jornadaResultado = {
         registrado: true,
         conteoJornadasDia: jornadaIds.length,
-        jornadaIds: jornadasDia.map(j => j.id),
-        jornadaId: jornadasDia.map(j => j.id).join(', '),
+        jornadaIds,
+        jornadaId: jornadaIds[0],
         horaApertura: horaAperturaStr,
         horaCierre: horaCierreStr,
         minutosBrutos: minutosBrutosTotales,
