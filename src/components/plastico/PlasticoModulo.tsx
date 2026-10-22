@@ -398,6 +398,7 @@ export const PlasticoModulo: React.FC<PlasticoModuloProps> = ({
                 { id: 'llovizna_leve', label: '🌦️ Llovizna leve' },
                 { id: 'lluvia_moderada_intensa', label: '🌧️ Lluvia moderada/intensa' },
                 { id: 'terreno_humedo', label: '💧 Terreno húmedo' },
+                { id: 'terreno_saturado', label: '💦 Terreno saturado' },
                 { id: 'terreno_lodoso', label: '🚜 Terreno gredoso/lodoso' },
                 { id: 'vientos_fuertes', label: '💨 Vientos fuertes' },
               ].map((cond) => {
