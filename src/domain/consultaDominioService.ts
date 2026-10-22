@@ -345,7 +345,7 @@ export async function consultarColaboradorFecha(
           if (typeof t.unidades === 'number' && t.unidades > 0 && completadosValidos) {
             cumplimientoCantidadPct = Number(((t.completados! / t.unidades) * 100).toFixed(2));
           }
-          const metaValida = !esSubtareaCobertura && typeof t.meta === 'number' && t.meta > 0;
+          const metaValida = !esSubtarea && typeof t.meta === 'number' && t.meta > 0;
           const completadosValidos = typeof t.completados === 'number' && t.completados >= 0;
 
           if (esOficioVario) {
@@ -798,7 +798,7 @@ export async function consultarReportePeriodo(
         if (!esMetaGrupal && !esSubtareaCobertura) accum.minutosEfectivos += duracionMin;
 
         // Meta física
-        const metaValida = typeof t.meta === 'number' && t.meta > 0;
+        const metaValida = !esSubtareaCobertura && typeof t.meta === 'number' && t.meta > 0;
         const compValidos = typeof t.completados === 'number' && t.completados >= 0;
 
         if (metaValida && compValidos) {
