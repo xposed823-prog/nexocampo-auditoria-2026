@@ -49,6 +49,7 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
   const [observaciones, setObservaciones] = useState('');
 
   const laborActualObj = LABORES_TECNICAS.find((labor) => labor.nombre === nuevaLabor) || LABORES_TECNICAS[0];
+  const esPorMeta = !!laborActualObj && (laborActualObj.modelo === 'grupal_meta' || !(typeof laborActualObj.min === 'number' && laborActualObj.min > 0));
   const colActual = COLABORADORES_CATALOGO.find((colaborador) => colaborador.id === colaboradorSeleccionado) || COLABORADORES_CATALOGO[0];
   const panel = modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/40 border-slate-700/60';
   const texto = modoSol ? 'text-slate-900' : 'text-slate-100';
@@ -94,15 +95,15 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
       dispararToast('No hay una labor técnica disponible en el catálogo.');
       return;
     }
-    if (!Number.isInteger(nuevaMeta) || nuevaMeta < 1 || !Number.isInteger(nuevaComp) || nuevaComp < 0) {
-      dispararToast('La meta debe ser al menos 1 y la cantidad completada no puede ser negativa.');
+    if ((esPorMeta && (!Number.isInteger(nuevaMeta) || nuevaMeta < 1)) || !Number.isInteger(nuevaComp) || nuevaComp < 0) {
+      dispararToast(esPorMeta ? 'La meta debe ser al menos 1 y la cantidad completada no puede ser negativa.' : 'La cantidad completada no puede ser negativa.');
       return;
     }
-    if (estadoLabor === 'cumple' && nuevaComp < nuevaMeta) {
+    if (esPorMeta && estadoLabor === 'cumple' && nuevaComp < nuevaMeta) {
       dispararToast('Para marcar Cumple, la cantidad completada debe alcanzar la meta.');
       return;
     }
-    if (estadoLabor === 'pendiente' && nuevaComp >= nuevaMeta) {
+    if (esPorMeta && estadoLabor === 'pendiente' && nuevaComp >= nuevaMeta) {
       dispararToast('Una labor completamente terminada debe marcarse como Cumple.');
       return;
     }
@@ -139,7 +140,6 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
       return;
     }
 
-    const esPorMeta = laborActualObj.modelo === 'grupal_meta';
     const estandar = esPorMeta || laborActualObj.modelo === 'oficios_varios' ? null : laborActualObj.min;
     const tramo: TramoJornada = {
       id: idTramo,
@@ -157,7 +157,7 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
       ...(area ? { area } : {}),
       ...(bloque.trim() ? { bloque: bloque.trim() } : {}),
       ...(tunel.trim() ? { tunel: tunel.trim() } : {}),
-      meta: nuevaMeta,
+      ...(esPorMeta ? { meta: nuevaMeta } : {}),
       completados: nuevaComp,
       unidades: nuevaComp,
       estado: estadoLabor,
@@ -308,13 +308,15 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
               </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid gap-2 ${esPorMeta ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {esPorMeta && (
+                <label className="block">
+                  <span className={`block mb-1 font-semibold ${secundario}`}>Meta / cantidad asignada</span>
+                  <input type="number" min="1" step="1" value={nuevaMeta} onChange={(e) => setNuevaMeta(Number(e.target.value))} className="w-full min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono" />
+                </label>
+              )}
               <label className="block">
-                <span className={`block mb-1 font-semibold ${secundario}`}>Meta / cantidad asignada</span>
-                <input type="number" min="1" step="1" value={nuevaMeta} onChange={(e) => setNuevaMeta(Number(e.target.value))} className="w-full min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono" />
-              </label>
-              <label className="block">
-                <span className={`block mb-1 font-semibold ${secundario}`}>Cantidad completada</span>
+                <span className={`block mb-1 font-semibold ${secundario}`}>{esPorMeta ? 'Cantidad completada' : 'Unidades completadas (estándar temporal)'}</span>
                 <input type="number" min="0" step="1" value={nuevaComp} onChange={(e) => setNuevaComp(Number(e.target.value))} className="w-full min-h-[44px] px-3 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 font-mono text-emerald-400" />
               </label>
             </div>
