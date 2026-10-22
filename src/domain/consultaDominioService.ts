@@ -342,11 +342,11 @@ export async function consultarColaboradorFecha(
           let cumplimientoMetaPct: number | null = null;
           let cumplimientoTareasPct: number | null = null;
           let cumplimientoCantidadPct: number | null = null;
+          const metaValida = !esSubtarea && typeof t.meta === 'number' && t.meta > 0;
+          const completadosValidos = typeof t.completados === 'number' && t.completados >= 0;
           if (typeof t.unidades === 'number' && t.unidades > 0 && completadosValidos) {
             cumplimientoCantidadPct = Number(((t.completados! / t.unidades) * 100).toFixed(2));
           }
-          const metaValida = !esSubtarea && typeof t.meta === 'number' && t.meta > 0;
-          const completadosValidos = typeof t.completados === 'number' && t.completados >= 0;
 
           if (esOficioVario) {
             if (typeof tareasAsignadas === 'number' && tareasAsignadas > 0 &&
