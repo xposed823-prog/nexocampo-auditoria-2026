@@ -571,6 +571,12 @@ export interface ResultadoReporteConsolidado {
   colaboradoresParticipantes: number;
   totalAusenciasPeriodo: number;
   totalIncidentesPeriodo: number;
+  oficiosVariosResumen?: {
+    registros: number;
+    tareasAsignadas: number;
+    tareasCompletadas: number;
+    cumplimientoPct: number | null;
+  };
 }
 
 /**
@@ -701,6 +707,9 @@ export async function consultarReportePeriodo(
 
     let sumaCumplimientoMetas = 0;
     let conteoTramosMetasGlobal = 0;
+    let conteoRegistrosOficiosVarios = 0;
+    let totalTareasOficiosAsignadas = 0;
+    let totalTareasOficiosCompletadas = 0;
 
     for (const j of jornadasEnRango) {
       for (const t of j.tramos || []) {
@@ -721,11 +730,24 @@ export async function consultarReportePeriodo(
           duracionMin = 0;
         }
 
-        minutosTotalesEfectivos += duracionMin;
-
-        // Identificar labor
+        // Identificar labor y separar Oficios Varios de las métricas técnicas.
         const laborInfo = laboresCatalogo.find(l => l.id === t.labor_id || l.nombre === t.labor_nombre) ||
           LABORES_AGRONOMICAS.find(l => l.id === t.labor_id || l.nombre === t.labor_nombre);
+
+        const esOficioVario = t.modelo === 'oficios_varios' ||
+          t.tipo_registro === 'oficio_vario' ||
+          laborInfo?.tipo_registro === 'oficio_vario';
+
+        if (esOficioVario) {
+          conteoRegistrosOficiosVarios++;
+          totalTareasOficiosAsignadas += Math.max(0, t.tareas_asignadas ?? t.meta ?? 0);
+          totalTareasOficiosCompletadas += Math.max(0, t.tareas_completadas ?? t.completados ?? 0);
+          continue;
+        }
+
+        // Incidentes, interrupciones y auxiliares no se suman como minutos técnicos de labor.
+        if (t.tipo !== 'labor') continue;
+        minutosTotalesEfectivos += duracionMin;
 
         const claveLabor = laborInfo?.id || t.labor_id || t.labor_nombre || t.titulo;
         const nombreLabor = laborInfo?.nombre || t.labor_nombre || t.titulo;
@@ -872,7 +894,15 @@ export async function consultarReportePeriodo(
       laboresDesglose,
       colaboradoresParticipantes: colaboradoresUnicos.size,
       totalAusenciasPeriodo,
-      totalIncidentesPeriodo
+      totalIncidentesPeriodo,
+      oficiosVariosResumen: {
+        registros: conteoRegistrosOficiosVarios,
+        tareasAsignadas: totalTareasOficiosAsignadas,
+        tareasCompletadas: totalTareasOficiosCompletadas,
+        cumplimientoPct: totalTareasOficiosAsignadas > 0
+          ? Number(((totalTareasOficiosCompletadas / totalTareasOficiosAsignadas) * 100).toFixed(2))
+          : null
+      }
     };
   } catch (err: any) {
     console.error('[NexoCampo] Error al ejecutar consultarReportePeriodo:', err);
