@@ -19,7 +19,7 @@ La PWA original es la referencia funcional; Auditoría 2026 es el destino para a
 | Persistencia | IndexedDB, DB `nexocampo`, versión 4, seis almacenes documentados | IndexedDB, DB `nexocampo`, versión 4, seis almacenes declarados | No cambiar esquema/versiones sin auditoría de compatibilidad |
 | Dominio | Lógica integrada en el HTML y funciones JS existentes | Servicios TypeScript y módulos desacoplados | Portar reglas verificadas a servicios de dominio testeables |
 | PWA/offline | Manifiesto y Service Worker; documentación indica operación offline-first | Manifiesto y `service-worker.js`, gestor PWA y cola de pendientes | Verificar caché, actualización y escritura offline con pruebas |
-| Google Drive | Documentación de arquitectura registra OAuth y respaldo JSON a `NexoCampo/Respaldos/Global` | No se encontró integración de Drive en los archivos buscados de Auditoría 2026 | Integrar después de definir credenciales/configuración segura y pruebas |
+| Google Drive | Documentación de arquitectura registra OAuth y respaldo JSON a `NexoCampo/Respaldos/Global` | Servicio aislado y botón de copia manual agregados en la rama; configuración OAuth y prueba real pendientes | Configurar Client ID y probar autorización, carpetas y subida |
 | Pruebas | Changelog registra verificaciones estructurales y varias aceptaciones móviles pendientes | Scripts `test`, `lint` y `build` disponibles | Ejecutarlos en CI/entorno de ejecución; no afirmar PASS sin salida verificable |
 
 ## 3. Matriz funcional preliminar
@@ -32,14 +32,14 @@ Estados:
 
 | Función | Referencia PWA | Auditoría 2026 | Prioridad/acción |
 |---|---|---|---|
-| Catálogos de colaboradores, labores y áreas | Presente | Catálogos tipados disponibles | Alta: comparar registros y reglas sin exponer datos reales en pruebas |
+| Catálogos de colaboradores, labores y áreas | Presente | Catálogos tipados disponibles; Admin filtra arrays estáticos y no se localizaron escrituras CRUD a IndexedDB | P1: portar altas/edición/desactivación conservando IDs e historial |
 | Registro de jornadas individuales/grupales | Presente; tramos de varias labores | El módulo de jornadas guarda una jornada, pero usa fecha y colaboradores fijos; aún no equivale al flujo completo de labores consecutivas | P0: hacer dinámica la selección y completar segmentos con pruebas |
 | Jornada general independiente de sus tramos | Regla funcional documentada en historial y arquitectura | Tipos de jornada/tramo disponibles; falta demostrar equivalencia completa | P0: casos horarios y anti-solapamiento real |
 | Fórmulas de rendimiento técnico | Motor existente en PWA | Servicios/reglas y documentos matemáticos en destino | P0: pruebas comparativas con casos idénticos y resultados exactos |
 | Estados Cumple/No cumple/Pendiente y exclusiones | Documentados y aplicados en PWA | Taxonomía y reglas documentadas; integración requiere pruebas | P0: asegurar que pendientes no inflen ni reduzcan rendimiento |
 | Oficios Varios | Medición por tareas asignadas/completadas, sin estándar temporal | Módulo visual con valores 5/3; el botón solo muestra toast y no persiste | P0: conectar a jornadas/IndexedDB y probar que no calcula rendimiento temporal |
 | Plástico/Polisombra grupal | Reglas de cuadrilla, herencia horaria y subtareas | El módulo visual tiene datos de estado local; el botón de guardar solo muestra toast, sin escritura canónica confirmada | P0: persistir jornada, integrantes y subtareas con herencia horaria sin doble conteo |
-| Asistencia semanal independiente | Matriz de asistencia y almacén `asistencia` | Módulo y funciones atómicas/de lote presentes | P1: verificar matriz, estados, fechas y que no afecte rendimiento |
+| Asistencia semanal independiente | Matriz de asistencia y almacén `asistencia` | Persistencia existe, pero la App inicia con datos de ejemplo y fechas fijas de octubre de 2026 | P0: eliminar datos de demostración y calcular fechas reales; mantenerla separada del rendimiento |
 | Ausencias formales | Siete códigos documentados; almacén separado | Módulo y tipo de ausencia presentes | P1: verificar intervalos y separación de asistencia |
 | Consulta cruzada colaborador-fecha | Asistencia + jornada/rendimiento + ausencia | Módulo y servicio de dominio presentes; documentación registra integración | P0: contrastar datos persistidos y casos incompletos |
 | Reportes individual/general y CSV/PDF | PWA documenta PDF/impresión y exportaciones CSV de varios módulos | Reportes y botón de impresión presentes; exportaciones CSV por formato no confirmadas | P1: inventariar cada salida y completar las faltantes |
@@ -50,13 +50,13 @@ Estados:
 | Restauración segura | Importación explícita en PWA | Validación previa exige los seis almacenes y una versión conocida; escritura en una sola transacción IndexedDB. Pruebas de validador añadidas, aún no ejecutadas | P0: probar archivo inválido, incompleto, incompatible y aborto de transacción |
 | Cifrado/hash del backup | No se concluye aquí el detalle criptográfico del flujo PWA | La UI ya advierte que el JSON no está cifrado ni tiene hash criptográfico en esta versión | P0: decidir e implementar protección real si se requiere |
 | Autenticación/usuarios | Modelo operativo esperado: supervisión local, sin cuentas por colaborador | App importa AuthProvider/LoginScreen/UserManagement | P1: revisar y alinear con el uso de supervisor único; no habilitar cuentas innecesarias |
-| Incidentes y fotos | Registro de incidentes en PWA | Módulo de incidentes disponible | P2: comparar campos, severidad, áreas y adjuntos opcionales |
+| Incidentes y fotos | Registro de incidentes en PWA | Módulo visual disponible, pero lista y formulario solo actualizan estado React; no se encontró persistencia canónica | P1: persistir sin crear stores nuevos sin análisis y probar recuperación |
 | Instalación y operación offline | Manifiesto/SW; fuente funcional offline-first | Manifiesto/SW y gestor PWA presentes | P0: comprobar instalación, reinicio, modo avión y actualización de caché |
 
 ## 4. Riesgos técnicos detectados
 
 1. **No copiar la base de datos sin un mapeo.** Ambos declaran DB versión 4 y seis almacenes, pero eso no garantiza que cada registro tenga exactamente el mismo contrato, índices, cifrado o forma de serialización.
-2. **No confiar en etiquetas visuales de seguridad.** En `RespaldosModulo.tsx` aparecen “JSON Cifrado Local” y “Hash SHA-256 Activo”, pero el manejador visible solo invoca una exportación JSON y descarga el archivo. Hay que rastrear las funciones subyacentes antes de afirmar cifrado o hash.
+2. **No afirmar protección criptográfica inexistente.** En esta rama se retiraron las etiquetas de cifrado y SHA-256 no demostradas; el módulo avisa que el JSON actual no está cifrado ni incorpora un hash. Si se requiere esa protección, debe implementarse y probarse.
 3. **Evitar restauraciones destructivas.** La restauración debe validar formato, versión, almacenes y datos antes de escribir; la recuperación ante fallo debe estar probada.
 4. **No duplicar lógica matemática.** Consulta Cruzada, Reportes y visores deben consumir un servicio de dominio compartido.
 5. **No asumir que la presencia de componentes significa que funcionan.** La existencia de archivos no prueba persistencia, integridad, cálculo correcto, comportamiento offline o compatibilidad móvil.
@@ -101,7 +101,7 @@ Una función no se marca como terminada solo por existir su componente. Se consi
 
 - [x] Identificadas las arquitecturas y los almacenes declarados.
 - [x] Localizados los módulos principales de jornadas, asistencia, ausencias, consulta, reportes y respaldos en Auditoría 2026.
-- [x] Detectadas diferencias iniciales en Drive, destino local, exportaciones e historial de respaldos.
+- [x] Detectadas diferencias iniciales en Drive, destino local, exportaciones, persistencia de módulos e historial de respaldos.
 - [x] Servicio aislado de copia manual a Google Drive agregado en la rama de integración (pendiente de configuración y prueba real).\n- [x] Exportación del respaldo desde los seis almacenes canónicos, restauración transaccional con validación estricta, historial local y pruebas del validador agregadas.\n- [ ] Revisión completa función por función de los módulos y servicios.
 - [ ] Ejecución real de `npm test`, `npm run lint` y `npm run build`.
 - [ ] Pruebas comparativas con casos sintéticos.
