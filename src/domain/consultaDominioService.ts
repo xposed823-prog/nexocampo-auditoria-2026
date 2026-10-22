@@ -381,9 +381,16 @@ export async function consultarColaboradorFecha(
           let estadoCalculo: TramoDetalleConsulta['estadoCalculoRendimiento'] = 'NO_APLICA';
           let mensajeAuditoria = esOficioVario
             ? 'Oficios Varios se mide por tareas asignadas/completadas, no por estándar temporal.'
-            : 'No aplica cálculo de rendimiento temporal.';
+            : esSubtarea
+              ? 'La subtarea hereda el horario principal y no suma tiempo técnico adicional.'
+              : esMetaGrupal
+                ? 'Labor grupal por meta/cantidad; no calcula rendimiento temporal.'
+                : !(typeof estandarMin === 'number' && estandarMin > 0)
+                  ? 'Sin estándar temporal: evaluar por meta/cantidad, sin inventar rendimiento por tiempo.'
+                  : 'No aplica cálculo de rendimiento temporal.';
 
-          if (t.tipo === 'labor' && !esOficioVario && !esSubtarea && !esMetaGrupal) {
+          if (t.tipo === 'labor' && !esOficioVario && !esSubtarea && !esMetaGrupal &&
+              typeof estandarMin === 'number' && estandarMin > 0) {
             totalMinutosEfectivos += minTramo;
             const unidadesParaRendimiento = completadosValidos ? t.completados! : (t.unidades || 0);
             const evalRend = calcularRendimientoTemporal(estandarMin, unidadesParaRendimiento, minTramo);
