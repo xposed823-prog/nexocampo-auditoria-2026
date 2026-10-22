@@ -7,7 +7,7 @@
 | `JornadasModulo.tsx` | Sí, usa `guardarJornadaRegistro` y lee `jornadas` | Guarda una jornada, pero inicia con fecha fija y asigna un grupo fijo de colaboradores. El formulario principal no sustituye aún el registro completo de varias labores consecutivas de la PWA. | Usar fecha actual/seleccionable, selección real de colaboradores y segmentos; probar que jornada y tramos no se solapen indebidamente. |
 | `LaboresModulo.tsx` | No encontrada en el módulo | La línea de tiempo comienza con tres tramos precargados en estado React; añadir una labor solo actualiza la vista y calcula resultados. | Conectar el flujo con el modelo canónico de jornadas/labores o dejar explícito que es un simulador; no presentar el toast como persistencia. |
 | `OficiosVariosModulo.tsx` + `oficiosVariosService.ts` | Implementada en esta rama, pendiente de prueba | Ahora usa el almacén `labores` para los tres tipos iniciales y permite crear/editar/desactivar tipos; guarda los registros en `jornadas` con `modelo: oficios_varios`, muestra el historial local y separa cumplimiento de tareas del rendimiento técnico. | Ejecutar pruebas; comprobar CRUD, persistencia tras recarga, Consulta Cruzada y Reportes en Android. |
-| `PlasticoModulo.tsx` | No encontrada en el componente | El botón “Guardar Registro en IndexedDB” solo muestra un toast de éxito. La información vive en estado de React y algunos valores iniciales son de demostración. | Conectar con `guardarJornadaRegistro`, registrar integrantes/ubicación/cantidad/completados/condiciones y subtareas con horario heredado; solo confirmar éxito tras transacción. |
+| `PlasticoModulo.tsx` + `App.tsx` | Primera escritura canónica implementada en esta rama, pendiente de prueba | El formulario ya construye una jornada con labor principal y subtareas 30%/65%, guarda en IndexedDB y hereda el horario a subtareas sin añadir `meta` en ellas. Se quitaron los datos de demostración y se exige una cuadrilla de seis. | Ejecutar pruebas de validación, guardado/recarga, saldo pendiente, consulta y reporte; confirmar que no se duplica el tiempo. |
 | `AsistenciaModulo.tsx` + `App.tsx` | Sí, usa `guardarAsistenciaAtomica` y `guardarLoteAsistencia` | La matriz contiene datos iniciales de ejemplo y usa fechas codificadas en octubre de 2026; el cálculo de fechas no está basado en la semana seleccionada. | Empezar con celdas sin registro, calcular lunes-domingo/seis días según regla acordada y generar fechas ISO reales; no afectar rendimiento. |
 | `AusenciasModulo.tsx` | Sí, usa `dbGetAll` y `guardarAusenciaRegistro` | Tiene persistencia, pero el formulario usa fechas iniciales fijas; hay que validar recarga y rangos. | Reemplazar defaults fijos, probar siete códigos, intervalos y refresco tras restauración. |
 | `ConsultaCruzadaModulo.tsx` | Sí, consume `consultaDominioService` | Se conecta a la consulta de dominio; el catálogo de colaboradores que recibe procede del catálogo importado. | Comparar resultados con PWA para jornada, asistencia, ausencia y datos incompletos. |
@@ -20,7 +20,7 @@
 
 ## Hallazgos de alta prioridad
 
-1. **Toast de éxito sin persistencia:** se detectó en Oficios Varios y Plástico/Polisombra; son falsos positivos funcionales.
+1. **Toast de éxito sin persistencia:** se detectó en Oficios Varios y Plástico/Polisombra; ambos flujos tienen ahora una primera escritura canónica en esta rama, pero todavía no están validados mediante ejecución.
 2. **Datos de demostración:** la línea de tiempo de labores, la matriz de asistencia y el listado inicial de incidentes contienen valores precargados.
 3. **Fechas codificadas:** varios flujos usan `2026-10-19` u otras fechas fijas. Deben convertirse a fechas seleccionables/dinámicas según el flujo.
 4. **Catálogos estáticos:** la vista Admin no es aún un editor persistente de catálogos.
@@ -30,7 +30,7 @@
 ## Orden recomendado para la siguiente fase
 
 1. Ejecutar `npm test`, `npm run lint` y `npm run build`; corregir errores de compilación primero.
-2. Conectar Plástico/Polisombra a persistencia canónica; Oficios Varios ya tiene una primera implementación que requiere pruebas.
+2. Ejecutar pruebas de Plástico/Polisombra y Oficios Varios; corregir cualquier regresión antes de avanzar con incidentes.
 3. Eliminar falsos éxitos y persistir incidentes.
 4. Corregir fechas y matriz de asistencia.
 5. Habilitar CRUD persistente de catálogos.
