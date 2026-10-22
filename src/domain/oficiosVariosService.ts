@@ -9,7 +9,7 @@ import {
   OFICIOS_VARIOS_INICIALES,
   type LaborAgricola
 } from './catalogoAgronomico';
-import { calcularOficiosVarios } from './businessRulesEngine';
+import { calcularOficiosVarios, detectarSolapamientoTemporal } from './businessRulesEngine';
 
 export interface RegistroOficioVarioInput {
   fecha: string;
@@ -137,6 +137,40 @@ export async function guardarRegistroOficioVario(input: RegistroOficioVarioInput
     throw new Error('Selecciona una tarea activa del catálogo de Oficios Varios.');
   }
 
+  const jornadas = await dbGetAll<JornadaRegistro>('jornadas');
+  const delDia = jornadas.filter((jornada) =>
+    jornada.fecha === input.fecha && jornada.colaboradores_ids.includes(input.colaboradorId)
+  );
+  const jornadaBase = delDia.find((jornada) =>
+    (jornada.tramos || []).some((tramo) => tramo.tipo === 'jornada_base')
+  );
+  const tramoBase = jornadaBase?.tramos.find((tramo) => tramo.tipo === 'jornada_base');
+  if (!jornadaBase || !tramoBase) {
+    throw new Error('Registra primero la jornada base de este colaborador y fecha.');
+  }
+  if (input.horaInicio < tramoBase.hora_inicio || input.horaFin > tramoBase.hora_fin) {
+    throw new Error(`El horario de Oficios Varios debe quedar dentro de la jornada base ${tramoBase.hora_inicio}–${tramoBase.hora_fin}.`);
+  }
+
+  const intervalosExistentes = delDia.flatMap((jornada) => (jornada.tramos || [])
+    .filter((tramo) => tramo.tipo === 'labor' && !tramo.es_subtarea && tramo.estado !== 'no_cumple' &&
+      Boolean(tramo.hora_inicio) && Boolean(tramo.hora_fin))
+    .map((tramo) => ({
+      id: tramo.id,
+      colaboradorId: input.colaboradorId,
+      horaInicio: tramo.hora_inicio,
+      horaFin: tramo.hora_fin
+    })));
+  const conflicto = detectarSolapamientoTemporal(intervalosExistentes, {
+    id: `tramo_oficio_validacion_${Date.now()}`,
+    colaboradorId: input.colaboradorId,
+    horaInicio: input.horaInicio,
+    horaFin: input.horaFin
+  });
+  if (conflicto.haySolapamiento) {
+    throw new Error(conflicto.mensajeError || 'El horario de Oficios Varios se solapa con otra labor.');
+  }
+
   const calculo = calcularOficiosVarios(input.tareasAsignadas, input.tareasCompletadas);
   const ahora = new Date().toISOString();
   const id = `jornada_oficio_${input.fecha}_${Date.now()}`;
@@ -145,6 +179,7 @@ export async function guardarRegistroOficioVario(input: RegistroOficioVarioInput
   const jornada: JornadaRegistro = {
     id,
     fecha: input.fecha,
+    jornada_base_id: jornadaBase.jornada_base_id || jornadaBase.id,
     colaboradores_ids: [input.colaboradorId],
     tramos: [{
       id: tramoId,
