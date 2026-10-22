@@ -117,6 +117,8 @@ export function validarPlasticoPolisombra(
 
   if (isNaN(cantidadCompletada) || cantidadCompletada < 0) {
     errores.cantidadCompletada = 'La cantidad completada no puede ser negativa.';
+  } else if (cantidadCompletada > cantidadTotal) {
+    errores.cantidadCompletada = 'La cantidad completada no puede superar la cantidad total.';
   }
 
   if (condicionesSeleccionadas.length === 0) {
