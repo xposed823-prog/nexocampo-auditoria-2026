@@ -402,8 +402,10 @@ export const ConsultaCruzadaModulo: React.FC<ConsultaCruzadaModuloProps> = ({
                         )}
                       </div>
                       <p className="text-[11px] text-slate-400 mt-0.5">
-                        {tramo.horaInicio} - {tramo.horaFin} ({tramo.minutosCalculados} min efectivos) · {tramo.unidadesCompletadas || 0} {tramo.unidadMedida}
-                        {tramo.meta ? ` (Meta: ${tramo.meta})` : ''}
+                        {tramo.horaInicio} - {tramo.horaFin}
+                        {tramo.esOficioVario
+                          ? ` · ${tramo.tareasCompletadas ?? 0} de ${tramo.tareasAsignadas ?? 0} tareas completadas`
+                          : ` (${tramo.minutosCalculados} min efectivos) · ${tramo.unidadesCompletadas || 0} ${tramo.unidadMedida}${tramo.meta ? ` (Meta: ${tramo.meta})` : ''}`}
                       </p>
                       {tramo.mensajeAuditoriaRendimiento && (
                         <p className="text-[10px] text-slate-500 italic mt-0.5">
@@ -412,11 +414,19 @@ export const ConsultaCruzadaModulo: React.FC<ConsultaCruzadaModuloProps> = ({
                       )}
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 block">Rendimiento Técnico</span>
+                      <span className="text-[10px] text-slate-400 block">
+                        {tramo.esOficioVario ? 'Cumplimiento de tareas' : 'Rendimiento Técnico'}
+                      </span>
                       <span className={`font-mono text-xs font-bold ${
-                        tramo.rendimientoTemporalPct !== null ? 'text-emerald-400' : 'text-slate-500'
+                        tramo.esOficioVario
+                          ? 'text-violet-400'
+                          : tramo.rendimientoTemporalPct !== null ? 'text-emerald-400' : 'text-slate-500'
                       }`}>
-                        {tramo.rendimientoTemporalPct !== null ? `${tramo.rendimientoTemporalPct}%` : 'No calculable'}
+                        {tramo.esOficioVario
+                          ? tramo.cumplimientoTareasPct !== null && tramo.cumplimientoTareasPct !== undefined
+                            ? `${tramo.cumplimientoTareasPct}%`
+                            : 'Sin datos de tareas'
+                          : tramo.rendimientoTemporalPct !== null ? `${tramo.rendimientoTemporalPct}%` : 'No calculable'}
                       </span>
                     </div>
                   </div>
