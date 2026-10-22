@@ -286,12 +286,7 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
               <select value={nuevaLabor} onChange={(e) => {
                 const value = e.target.value;
                 setNuevaLabor(value);
-                const encontrada = LABORES_TECNICAS.find((labor) => labor.nombre === value);
-                if (encontrada?.min && encontrada.modelo !== 'grupal_meta') {
-                  setNuevaMeta(Math.max(1, Math.round(475 / encontrada.min)));
-                } else {
-                  setNuevaMeta(1);
-                }
+                setNuevaMeta(1);
               }} className={`w-full min-h-[44px] px-3 rounded-lg border text-xs font-medium ${modoSol ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-100'}`}>
                 {LABORES_TECNICAS.map((labor) => <option key={labor.id} value={labor.nombre}>{labor.nombre} ({labor.unidadMedida} · {labor.min ? `${labor.min} min` : 'sin estándar temporal'})</option>)}
               </select>
