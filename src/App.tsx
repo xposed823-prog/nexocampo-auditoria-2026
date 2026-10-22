@@ -432,7 +432,7 @@ function App() {
       especial: 'plastico_polisombra',
       operacion: 'instalar',
       material_tipo: 'plastico',
-      modalidad: 'individual',
+      modalidad: 'grupal',
       condiciones: [...polisombraCondiciones],
       motivos_pendiente: polisombraCantComp < polisombraCantTotal ? [...motivosJustificacion] : [],
       avance_pct: avancePrincipal,
