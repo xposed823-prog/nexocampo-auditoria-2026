@@ -373,6 +373,132 @@ function App() {
     justificacionConfirmada
   );
 
+  const guardarRegistroPlasticoPolisombra = async () => {
+    if (!validacionPolisombra.esValido) {
+      throw new Error('Corrige los campos de la labor principal antes de guardar.');
+    }
+    if (!polisombraArea || !polisombraBloque || !polisombraTunel) {
+      throw new Error('Selecciona área, bloque y túnel de la labor principal.');
+    }
+    if (polisombraCantComp < polisombraCantTotal &&
+        (!justificacionConfirmada || motivosJustificacion.length === 0)) {
+      throw new Error('Confirma una justificación válida para el saldo pendiente.');
+    }
+    if (subtareasCobertura.some((st) =>
+      !st.nombre.trim() || !st.tipoPolisombra || st.cant < 1 ||
+      st.completados < 0 || st.completados > st.cant ||
+      !st.area.trim() || !st.bloque.trim() || !st.tunel.trim()
+    )) {
+      throw new Error('Completa tipo, ubicación y cantidades válidas en todas las subtareas.');
+    }
+    if (subtareasCobertura.some((st) => st.completados < st.cant) &&
+        (!justificacionConfirmada || motivosJustificacion.length === 0)) {
+      throw new Error('Confirma la justificación de las subtareas pendientes.');
+    }
+
+    const ahora = new Date().toISOString();
+    const marca = Date.now();
+    const jornadaId = `jornada_plastico_${polisombraFecha}_${marca}`;
+    const idTramoPrincipal = `tramo_plastico_${marca}`;
+    const laborPlastico = LABORES_AGRONOMICAS.find((l) => l.nombre === 'Instalar plásticos');
+    const laborSombra = LABORES_AGRONOMICAS.find((l) => l.nombre === 'Instalar sombras');
+    const avancePrincipal = polisombraCantTotal > 0
+      ? Number(((polisombraCantComp / polisombraCantTotal) * 100).toFixed(2))
+      : 0;
+    const motivoPendiente = motivosJustificacion.join(', ');
+
+    const tramoPrincipal: TramoJornada = {
+      id: idTramoPrincipal,
+      tipo: 'labor',
+      titulo: 'Instalar plásticos',
+      labor_id: laborPlastico?.id,
+      labor_nombre: laborPlastico?.nombre || 'Instalar plásticos',
+      unidad: 'túnel',
+      estandar_min: null,
+      personal_requerido_tabla: laborPlastico?.personalReferencia || 6,
+      personas_reales: polisombraIntegrantes.length,
+      modelo: 'grupal_meta',
+      hora_inicio: polisombraInicio,
+      hora_fin: polisombraFin,
+      area: polisombraArea,
+      bloque: polisombraBloque,
+      tunel: polisombraTunel,
+      unidades: polisombraCantTotal,
+      meta: polisombraCantTotal,
+      completados: polisombraCantComp,
+      estado: polisombraCantComp >= polisombraCantTotal ? 'cumple' : 'pendiente',
+      ...(polisombraCantComp < polisombraCantTotal ? { motivo_pendiente: motivoPendiente } : {}),
+      observaciones: notaSupervisorJustificacion.trim() || undefined,
+      especial: 'plastico_polisombra',
+      operacion: 'instalar',
+      material_tipo: 'plastico',
+      modalidad: 'individual',
+      condiciones: [...polisombraCondiciones],
+      motivos_pendiente: polisombraCantComp < polisombraCantTotal ? [...motivosJustificacion] : [],
+      avance_pct: avancePrincipal,
+      ubicaciones: [{ area: polisombraArea, bloque: polisombraBloque, tunel: polisombraTunel }]
+    };
+
+    const tramosSubtareas: TramoJornada[] = subtareasCobertura.map((st, index) => ({
+      id: `tramo_polisombra_${marca}_${index}`,
+      continuidad_id: idTramoPrincipal,
+      ejecucion_id: jornadaId,
+      tipo: 'labor',
+      titulo: st.nombre,
+      labor_id: laborSombra?.id,
+      labor_nombre: st.nombre,
+      unidad: st.unidad || 'túnel',
+      estandar_min: null,
+      personal_requerido_tabla: laborSombra?.personalReferencia || 6,
+      personas_reales: polisombraIntegrantes.length,
+      modelo: 'grupal_meta',
+      hora_inicio: polisombraInicio,
+      hora_fin: polisombraFin,
+      area: st.area,
+      bloque: st.bloque,
+      tunel: st.tunel,
+      unidades: st.cant,
+      completados: st.completados,
+      estado: st.completados >= st.cant ? 'cumple' : 'pendiente',
+      ...(st.completados < st.cant ? { motivo_pendiente: motivoPendiente } : {}),
+      observaciones: notaSupervisorJustificacion.trim() || undefined,
+      especial: 'plastico_polisombra',
+      operacion: 'instalar',
+      material_tipo: 'polisombra',
+      modalidad: 'individual',
+      tipo_polisombra: st.tipoPolisombra,
+      es_subtarea: true,
+      condiciones: [...polisombraCondiciones],
+      motivos_pendiente: st.completados < st.cant ? [...motivosJustificacion] : [],
+      avance_pct: st.cant > 0 ? Number(((st.completados / st.cant) * 100).toFixed(2)) : 0,
+      ubicaciones: [{ area: st.area, bloque: st.bloque, tunel: st.tunel }]
+    }));
+
+    const jornada: JornadaRegistro = {
+      id: jornadaId,
+      fecha: polisombraFecha,
+      colaboradores_ids: [...polisombraIntegrantes],
+      tramos: [tramoPrincipal, ...tramosSubtareas],
+      creadoEn: ahora,
+      actualizadoEn: ahora,
+      sincronizado: false
+    };
+
+    await guardarJornadaRegistro(jornada);
+    setJornadasTotales((prev) => [...prev, jornada]);
+    setPolisombraIntegrantes([]);
+    setPolisombraCantTotal(0);
+    setPolisombraCantComp(0);
+    setPolisombraCondiciones([]);
+    setSubtareasCobertura([]);
+    setMotivosJustificacion([]);
+    setJustificacionConfirmada(false);
+    setNotaSupervisorJustificacion('');
+    setPolisombraInicio('');
+    setPolisombraFin('');
+    dispararToast('Registro de Plástico/Polisombra guardado en IndexedDB.');
+  };
+
   // Estado de autenticación
   const authState = authService.getAuthState();
   const [showUserManagement, setShowUserManagement] = useState(false);
@@ -533,6 +659,7 @@ function App() {
             esValido={validacionPolisombra.esValido}
             notaSupervisorJustificacion={notaSupervisorJustificacion}
             setNotaSupervisorJustificacion={setNotaSupervisorJustificacion}
+            onGuardarRegistro={guardarRegistroPlasticoPolisombra}
           />
         )}
 
