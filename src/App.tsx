@@ -465,7 +465,7 @@ function App() {
       especial: 'plastico_polisombra',
       operacion: 'instalar',
       material_tipo: 'polisombra',
-      modalidad: 'individual',
+      modalidad: 'grupal',
       tipo_polisombra: st.tipoPolisombra,
       es_subtarea: true,
       condiciones: [...polisombraCondiciones],
