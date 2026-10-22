@@ -1,0 +1,39 @@
+name: Auditoría de integración NexoCampo
+
+on:
+  push:
+    branches:
+      - integracion-pwa-auditoria-2026
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Pruebas, tipos y build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias bloqueadas
+        run: npm ci
+
+      - name: Ejecutar pruebas automatizadas
+        run: npm test
+
+      - name: Verificar TypeScript
+        run: npm run lint
+
+      - name: Compilar aplicación
+        run: npm run build
