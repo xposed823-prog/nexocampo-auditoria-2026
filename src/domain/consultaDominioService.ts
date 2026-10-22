@@ -80,6 +80,11 @@ export interface TramoDetalleConsulta {
   meta?: number;
   cumplimientoMetaPct: number | null;
   esOficioVario?: boolean;
+  esMetaGrupal?: boolean;
+  esSubtarea?: boolean;
+  tipoPolisombra?: string;
+  unidadesAsignadas?: number;
+  cumplimientoCantidadPct?: number | null;
   tareasAsignadas?: number;
   tareasCompletadas?: number;
   cumplimientoTareasPct?: number | null;
@@ -329,10 +334,17 @@ export async function consultarColaboradorFecha(
             laborInfo?.tipo_registro === 'oficio_vario';
           const tareasAsignadas = esOficioVario ? (t.tareas_asignadas ?? t.meta) : undefined;
           const tareasCompletadas = esOficioVario ? (t.tareas_completadas ?? t.completados) : undefined;
+          const esMetaGrupal = t.modelo === 'grupal_meta';
+          const esSubtarea = t.es_subtarea === true;
+          const unidadesAsignadas = typeof t.unidades === 'number' ? t.unidades : undefined;
 
           // Los Oficios Varios tienen métrica operativa propia; no se suman al rendimiento técnico.
           let cumplimientoMetaPct: number | null = null;
           let cumplimientoTareasPct: number | null = null;
+          let cumplimientoCantidadPct: number | null = null;
+          if (typeof t.unidades === 'number' && t.unidades > 0 && completadosValidos) {
+            cumplimientoCantidadPct = Number(((t.completados! / t.unidades) * 100).toFixed(2));
+          }
           const metaValida = typeof t.meta === 'number' && t.meta > 0;
           const completadosValidos = typeof t.completados === 'number' && t.completados >= 0;
 
@@ -355,7 +367,8 @@ export async function consultarColaboradorFecha(
           // No mezclar cantidades de Oficios Varios con unidades técnicas de producción.
           if (!esOficioVario) {
             if (t.estado === 'pendiente') {
-              produccionPendiente += (t.completados || t.unidades || 0);
+              const cantidadAsignada = metaValida ? t.meta! : (typeof t.unidades === 'number' ? t.unidades : 0);
+              produccionPendiente += Math.max(0, cantidadAsignada - (completadosValidos ? t.completados! : 0));
             } else if (completadosValidos) {
               produccionCompletadaValida += t.completados!;
             } else if (typeof t.unidades === 'number' && t.unidades > 0) {
@@ -370,7 +383,7 @@ export async function consultarColaboradorFecha(
             ? 'Oficios Varios se mide por tareas asignadas/completadas, no por estándar temporal.'
             : 'No aplica cálculo de rendimiento temporal.';
 
-          if (t.tipo === 'labor' && !esOficioVario) {
+          if (t.tipo === 'labor' && !esOficioVario && !esSubtarea && !esMetaGrupal) {
             totalMinutosEfectivos += minTramo;
             const unidadesParaRendimiento = completadosValidos ? t.completados! : (t.unidades || 0);
             const evalRend = calcularRendimientoTemporal(estandarMin, unidadesParaRendimiento, minTramo);
@@ -402,6 +415,11 @@ export async function consultarColaboradorFecha(
             meta: t.meta,
             cumplimientoMetaPct,
             esOficioVario,
+            esMetaGrupal,
+            esSubtarea,
+            tipoPolisombra: t.tipo_polisombra,
+            unidadesAsignadas,
+            cumplimientoCantidadPct,
             tareasAsignadas,
             tareasCompletadas,
             cumplimientoTareasPct,
