@@ -785,7 +785,7 @@ export async function consultarReportePeriodo(
         if (t.estado === 'no_cumple') continue;
         const esMetaGrupal = t.modelo === 'grupal_meta';
         const esSubtareaCobertura = t.es_subtarea === true;
-        if (t.estado !== 'pendiente' && !esMetaGrupal && !esSubtareaCobertura) minutosTotalesEfectivos += duracionMin;
+
 
         const claveLabor = laborInfo?.id || t.labor_id || t.labor_nombre || t.titulo;
         const nombreLabor = laborInfo?.nombre || t.labor_nombre || t.titulo;
@@ -794,6 +794,7 @@ export async function consultarReportePeriodo(
           ? t.estandar_min
           : ((laborInfo as any)?.estandar_min !== undefined ? (laborInfo as any).estandar_min : (laborInfo?.min ?? null));
         const tieneEstandar = !esMetaGrupal && !esSubtareaCobertura && typeof estandarMin === 'number' && estandarMin > 0;
+        if (tieneEstandar && t.estado !== 'pendiente') minutosTotalesEfectivos += duracionMin;
 
         let accum = mapaLabores.get(claveLabor);
         if (!accum) {
