@@ -77,6 +77,7 @@ export interface TramoJornada {
 export interface JornadaRegistro {
   id: string;
   fecha: string;
+  jornada_base_id?: string;
   colaboradores_ids: string[];
   tramos: TramoJornada[];
   creadoEn: string;
