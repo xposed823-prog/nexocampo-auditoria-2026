@@ -79,6 +79,8 @@ export interface TramoDetalleConsulta {
   unidadMedida?: string;
   meta?: number;
   cumplimientoMetaPct: number | null;
+  esJornadaBase?: boolean;
+  minutosJornadaEfectivos?: number;
   esOficioVario?: boolean;
   esMetaGrupal?: boolean;
   esSubtarea?: boolean;
@@ -329,6 +331,7 @@ export async function consultarColaboradorFecha(
             ? t.estandar_min
             : ((laborInfo as any)?.estandar_min !== undefined ? (laborInfo as any).estandar_min : (laborInfo?.min ?? null));
           const unidadMedida = laborInfo?.unidadMedida || (laborInfo as any)?.unidad || t.unidad || 'unidad';
+          const esJornadaBase = t.tipo === 'jornada_base';
           const esOficioVario = t.modelo === 'oficios_varios' ||
             t.tipo_registro === 'oficio_vario' ||
             laborInfo?.tipo_registro === 'oficio_vario';
@@ -383,7 +386,9 @@ export async function consultarColaboradorFecha(
           // Rendimiento temporal estricto: Oficios Varios no consume tiempo técnico computable.
           let rendimientoTemporalPct: number | null = null;
           let estadoCalculo: TramoDetalleConsulta['estadoCalculoRendimiento'] = 'NO_APLICA';
-          let mensajeAuditoria = esOficioVario
+          let mensajeAuditoria = esJornadaBase
+            ? 'Jornada base: define la ventana y los minutos efectivos; no es una labor productiva.'
+            : esOficioVario
             ? 'Oficios Varios se mide por tareas asignadas/completadas, no por estándar temporal.'
             : esSubtarea
               ? 'La subtarea hereda el horario principal y no suma tiempo técnico adicional.'
@@ -431,6 +436,8 @@ export async function consultarColaboradorFecha(
             unidadMedida,
             meta: t.meta,
             cumplimientoMetaPct,
+            esJornadaBase,
+            minutosJornadaEfectivos: t.minutos_efectivos_jornada,
             esOficioVario,
             esMetaGrupal,
             esSubtarea,
