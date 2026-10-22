@@ -59,8 +59,8 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 **Criterio de salida:** cada formato y destino tiene una prueba específica.
 
 ### Etapa 4 — Google Drive (P1)
-- [ ] Separar Drive en un servicio independiente de los componentes visuales.
-- [ ] Revisar cómo se proporciona el OAuth Client ID en el entorno de despliegue del destino; nunca copiar secretos de forma insegura.
+- [x] Crear servicio aislado `src/domain/googleDriveBackupService.ts` y conectarlo al módulo de respaldos para copia manual.\n- [ ] Separar/validar el estado de autorización y el manejo de errores mediante pruebas.
+- [ ] Configurar `VITE_GOOGLE_DRIVE_CLIENT_ID` en el entorno de compilación del destino; nunca copiar secretos de forma insegura.
 - [ ] Reutilizar el alcance mínimo necesario y mantener tokens en memoria cuando corresponda.
 - [ ] Implementar autorización, creación/reutilización de carpetas, subida, listado/estado y manejo de errores.
 - [ ] Definir si Drive es un destino de copia o sincronización; no sobrescribir datos locales de forma automática.
@@ -96,7 +96,7 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 | NC-007 | Restauración | Archivo inválido/fallo no deja base parcialmente aplicada | Pendiente | Garantía transaccional no demostrada | Inspeccionar implementación y probar |
 | NC-008 | Integridad | Hash SHA-256 calculado y validado | Pendiente | Etiqueta UI sin prueba suficiente | Rastrear/implementar |
 | NC-009 | Cifrado | Backup realmente cifrado y clave recuperable | Pendiente | Etiqueta UI sin prueba suficiente | Definir modelo antes de afirmar |
-| NC-010 | Google Drive | OAuth y subida desde el destino | Pendiente | No localizado en búsqueda inicial | Diseñar integración aislada |
+| NC-010 | Google Drive | OAuth y subida desde el destino | En curso | Servicio y botón manual agregados; sin prueba real | Configurar Client ID y validar origen OAuth/carpeta/subida |
 | NC-011 | Local | Carpeta elegida y fallback a Descargas | Pendiente | No localizado en módulo de backup | Adaptar y probar navegador |
 | NC-012 | Reportes | CSV/PDF/XLSX por módulo | Pendiente | Impresión localizada; formatos incompletos/no verificados | Inventario de salidas |
 | NC-013 | PWA/offline | Instalar, recargar, modo avión, reconectar | Pendiente | Archivos PWA presentes | Ejecutar en Android |
