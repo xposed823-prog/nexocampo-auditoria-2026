@@ -119,6 +119,18 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
     const jornadasDelDia = jornadas.filter((jornada) =>
       jornada.fecha === fecha && jornada.colaboradores_ids.includes(colaboradorSeleccionado)
     );
+    const jornadaBase = jornadasDelDia.find((jornada) =>
+      (jornada.tramos || []).some((tramo) => tramo.tipo === 'jornada_base')
+    );
+    const tramoBase = jornadaBase?.tramos.find((tramo) => tramo.tipo === 'jornada_base');
+    if (!jornadaBase || !tramoBase) {
+      dispararToast('Registra primero la jornada base de este colaborador y fecha.');
+      return;
+    }
+    if (nuevaInicio < tramoBase.hora_inicio || nuevaFin > tramoBase.hora_fin) {
+      dispararToast(`La labor debe quedar dentro de la jornada base ${tramoBase.hora_inicio}–${tramoBase.hora_fin}.`);
+      return;
+    }
     const intervalosExistentes = jornadasDelDia.flatMap((jornada) =>
       (jornada.tramos || [])
         .filter((tramo) => tramo.tipo === 'labor' && !tramo.es_subtarea && tramo.estado !== 'no_cumple' &&
@@ -173,6 +185,7 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
     const jornada: JornadaRegistro = {
       id: idJornada,
       fecha,
+      jornada_base_id: jornadaBase.id,
       colaboradores_ids: [colaboradorSeleccionado],
       tramos: [tramo],
       creadoEn: ahora,
