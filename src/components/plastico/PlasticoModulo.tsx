@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ShieldAlert,
   CheckCircle2,
   Clock,
   AlertTriangle,
   Check,
-  Plus
+  Plus,
+  X
 } from 'lucide-react';
 import { EstadoVisualNegocio } from '../../domain/formValidators';
 import { AREAS_AGRONOMICAS } from '../../domain/catalogoAgronomico';
@@ -51,13 +52,15 @@ export interface PlasticoModuloProps {
   justificacionConfirmada: boolean;
   setJustificacionConfirmada: (val: boolean) => void;
   motivosJustificacion: string[];
-  setModalJustificacionAbierto: (val: boolean) => void;
+  setMotivosJustificacion: (val: string[]) => void;
   polisombraCondiciones: string[];
   setPolisombraCondiciones: (val: string[]) => void;
   subtareasCobertura: SubtareaItem[];
   setSubtareasCobertura: (val: SubtareaItem[]) => void;
   dispararToast: (msg: string) => void;
   esValido: boolean;
+  notaSupervisorJustificacion: string;
+  setNotaSupervisorJustificacion: (val: string) => void;
 }
 
 export const PlasticoModulo: React.FC<PlasticoModuloProps> = ({
@@ -85,14 +88,18 @@ export const PlasticoModulo: React.FC<PlasticoModuloProps> = ({
   justificacionConfirmada,
   setJustificacionConfirmada,
   motivosJustificacion,
-  setModalJustificacionAbierto,
   polisombraCondiciones,
   setPolisombraCondiciones,
   subtareasCobertura,
   setSubtareasCobertura,
   dispararToast,
-  esValido
+  esValido,
+  notaSupervisorJustificacion,
+  setNotaSupervisorJustificacion
 }) => {
+  // Estado local del modal de justificación
+  const [modalJustificacionAbierto, setModalJustificacionAbierto] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className={`p-4 rounded-xl border ${modoSol ? 'bg-slate-50 border-slate-300' : 'bg-slate-800/40 border-slate-700/60'}`}>
@@ -392,6 +399,10 @@ export const PlasticoModulo: React.FC<PlasticoModuloProps> = ({
                   dispararToast('Corrija los campos señalados');
                   return;
                 }
+                if (polisombraCantComp < polisombraCantTotal && !justificacionConfirmada) {
+                  setModalJustificacionAbierto(true);
+                  return;
+                }
                 dispararToast('Registro de Plástico y Polisombra guardado localmente');
               }}
               className="w-full min-h-[48px] py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md"
@@ -400,6 +411,104 @@ export const PlasticoModulo: React.FC<PlasticoModuloProps> = ({
             </button>
           </div>
         </div>
+
+        {/* MODAL JUSTIFICACIÓN DE SALDOS PENDIENTES */}
+        {modalJustificacionAbierto && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div className={`w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border p-5 space-y-4 max-h-[90vh] overflow-y-auto ${
+              modoSol ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-100'
+            }`}>
+              <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto sm:hidden" />
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  Justificar Cantidad Pendiente
+                </h3>
+                <button
+                  onClick={() => setModalJustificacionAbierto(false)}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-200"
+                  aria-label="Cerrar modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-400">
+                El saldo pendiente es de <strong>{polisombraCantTotal - polisombraCantComp} unidades</strong>. Seleccione los motivos operativos aprobados:
+              </p>
+
+              <div className="space-y-2">
+                {[
+                  { id: 'tiempo_insuficiente', label: 'Tiempo insuficiente en la jornada' },
+                  { id: 'vientos_fuertes', label: 'Vientos fuertes (riesgo de rotura)' },
+                  { id: 'lluvia_intensa', label: 'Lluvia intensa (terreno resbaladizo)' },
+                ].map((motivo) => {
+                  const seleccionado = motivosJustificacion.includes(motivo.id);
+                  return (
+                    <button
+                      key={motivo.id}
+                      type="button"
+                      onClick={() => {
+                        if (seleccionado) {
+                          setMotivosJustificacion(motivosJustificacion.filter(m => m !== motivo.id));
+                        } else {
+                          setMotivosJustificacion([...motivosJustificacion, motivo.id]);
+                        }
+                      }}
+                      className={`w-full min-h-[44px] p-2.5 rounded-lg text-xs font-medium text-left border flex items-center justify-between ${
+                        seleccionado
+                          ? 'bg-amber-950/40 border-amber-500 text-amber-200'
+                          : 'bg-slate-800 border-slate-700 text-slate-300'
+                      }`}
+                    >
+                      <span>{motivo.label}</span>
+                      {seleccionado && <Check className="w-4 h-4 text-amber-400" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                  Nota Explicativa del Supervisor (Opcional, máx 120 caracteres)
+                </label>
+                <textarea
+                  value={notaSupervisorJustificacion}
+                  maxLength={120}
+                  onChange={(e) => setNotaSupervisorJustificacion(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs"
+                />
+                <span className="text-[10px] text-slate-500 block text-right">{notaSupervisorJustificacion.length}/120</span>
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalJustificacionAbierto(false)}
+                  className="flex-1 min-h-[44px] py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (motivosJustificacion.length === 0) {
+                      dispararToast('Seleccione al menos un motivo aprobado');
+                      return;
+                    }
+                    setJustificacionConfirmada(true);
+                    setModalJustificacionAbierto(false);
+                    dispararToast('Justificación de saldo pendiente aprobada');
+                  }}
+                  className="flex-1 min-h-[44px] py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold"
+                >
+                  Confirmar Justificación
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Subtareas de Cobertura (Herencia Horaria) */}
         <div className={`p-4 rounded-xl border space-y-4 ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/50 border-slate-700/60'}`}>

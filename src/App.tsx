@@ -7,8 +7,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Smartphone, AlertTriangle, Check, X, Search, FileBarChart } from 'lucide-react';
+import { CheckCircle2, Smartphone, AlertTriangle, Check, X, Search, FileBarChart, User, LogOut } from 'lucide-react';
 import { usePWAInstall, useOnlineStatus } from './domain/usePWAInstall';
+import { authService } from './domain/authService';
+import { AuthProvider, useAuth } from './components/auth/AuthProvider';
+import { LoginScreen } from './components/auth/LoginScreen';
+import { UserManagement } from './components/auth/UserManagement';
 import {
   guardarRegistroPendiente,
   obtenerRegistrosPendientes,
@@ -78,7 +82,8 @@ const COLABORADORES_MOCK = COLABORADORES_CATALOGO;
 
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-export default function App() {
+// Componente principal envuelto en AuthProvider
+function App() {
   const [tabActual, setTabActual] = useState<string>('inicio');
   const [subTabRegistrar, setSubTabRegistrar] = useState<'labores' | 'polisombra' | 'oficios' | 'jornadas' | 'incidentes'>('labores');
   const [subTabReportes, setSubTabReportes] = useState<'rendimiento' | 'consulta'>('rendimiento');
@@ -101,10 +106,8 @@ export default function App() {
     { id: 'st_2', nombre: 'Costura y grapado de mallas', cant: 40, unidad: 'm costura', estado: 'pendiente_saldo' }
   ]);
 
-  // Modal de Justificación de Saldo Pendiente
-  const [modalJustificacionAbierto, setModalJustificacionAbierto] = useState(false);
+  // Modal de Justificación de Saldo Pendiente (ahora manejado en PlasticoModulo)
   const [motivosJustificacion, setMotivosJustificacion] = useState<string[]>(['vientos_fuertes']);
-  const [notaSupervisorJustificacion, setNotaSupervisorJustificacion] = useState('Ráfagas de viento a las 10:45 impidieron tensar la malla con seguridad.');
   const [justificacionConfirmada, setJustificacionConfirmada] = useState(true);
 
   // Estado interactivo de Asistencia Semanal con persistencia real IndexedDB
@@ -366,6 +369,27 @@ export default function App() {
     justificacionConfirmada
   );
 
+  // Estado de autenticación
+  const authState = authService.getAuthState();
+  const [showUserManagement, setShowUserManagement] = useState(false);
+
+  // Inicializar usuarios al montar
+  useEffect(() => {
+    authService.initializeUsers();
+  }, []);
+
+  // Verificar autenticación
+  if (!authState.isAuthenticated) {
+    return (
+      <LoginScreen
+        onLoginSuccess={() => {
+          // Recargar el componente para actualizar el estado de autenticación
+          window.location.reload();
+        }}
+      />
+    );
+  }
+
   return (
     <div className={`min-h-screen transition-colors duration-150 ${modoSol ? 'bg-[#f1f5f9] text-[#334155]' : 'bg-slate-950 text-slate-100'} font-sans`}>
       <div className={`app-shell max-w-[28rem] w-full mx-auto min-h-screen flex flex-col relative shadow-2xl ${modoSol ? 'bg-[#f8fafc]' : 'bg-slate-900'} pb-32`}>
@@ -382,6 +406,12 @@ export default function App() {
           setShowIOSPrompt={setShowIOSPrompt}
           totalPendientesLocal={totalPendientesLocal}
           setTabActual={setTabActual}
+          user={authState.user}
+          onLogout={() => {
+            authService.logout('Logout manual');
+            window.location.reload();
+          }}
+          onManageUsers={() => setShowUserManagement(true)}
         />
 
         {/* Modal Guía iOS */}
@@ -490,13 +520,15 @@ export default function App() {
             justificacionConfirmada={justificacionConfirmada}
             setJustificacionConfirmada={setJustificacionConfirmada}
             motivosJustificacion={motivosJustificacion}
-            setModalJustificacionAbierto={setModalJustificacionAbierto}
+            setMotivosJustificacion={setMotivosJustificacion}
             polisombraCondiciones={polisombraCondiciones}
             setPolisombraCondiciones={setPolisombraCondiciones}
             subtareasCobertura={subtareasCobertura}
             setSubtareasCobertura={setSubtareasCobertura}
             dispararToast={dispararToast}
             esValido={validacionPolisombra.esValido}
+            notaSupervisorJustificacion={notaSupervisorJustificacion}
+            setNotaSupervisorJustificacion={setNotaSupervisorJustificacion}
           />
         )}
 
@@ -674,111 +706,22 @@ export default function App() {
         </footer>
       </main>
 
-      {/* MODAL JUSTIFICACIÓN DE SALDOS PENDIENTES */}
-      {modalJustificacionAbierto && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className={`w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border p-5 space-y-4 max-h-[90vh] overflow-y-auto ${
-            modoSol ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-100'
-          }`}>
-            <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto sm:hidden" />
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-sm flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
-                Justificar Cantidad Pendiente
-              </h3>
-              <button
-                onClick={() => setModalJustificacionAbierto(false)}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-200"
-                aria-label="Cerrar modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-400">
-              El saldo pendiente es de <strong>{polisombraCantTotal - polisombraCantComp} unidades</strong>. Seleccione los motivos operativos aprobados:
-            </p>
-
-            <div className="space-y-2">
-              {[
-                { id: 'tiempo_insuficiente', label: 'Tiempo insuficiente en la jornada' },
-                { id: 'vientos_fuertes', label: 'Vientos fuertes (riesgo de rotura)' },
-                { id: 'lluvia_intensa', label: 'Lluvia intensa (terreno resbaladizo)' },
-              ].map((motivo) => {
-                const seleccionado = motivosJustificacion.includes(motivo.id);
-                return (
-                  <button
-                    key={motivo.id}
-                    type="button"
-                    onClick={() => {
-                      if (seleccionado) {
-                        setMotivosJustificacion(motivosJustificacion.filter(m => m !== motivo.id));
-                      } else {
-                        setMotivosJustificacion([...motivosJustificacion, motivo.id]);
-                      }
-                    }}
-                    className={`w-full min-h-[44px] p-2.5 rounded-lg text-xs font-medium text-left border flex items-center justify-between ${
-                      seleccionado
-                        ? 'bg-amber-950/40 border-amber-500 text-amber-200'
-                        : 'bg-slate-800 border-slate-700 text-slate-300'
-                    }`}
-                  >
-                    <span>{motivo.label}</span>
-                    {seleccionado && <Check className="w-4 h-4 text-amber-400" />}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">
-                Nota Explicativa del Supervisor (Opcional, máx 120 caracteres)
-              </label>
-              <textarea
-                value={notaSupervisorJustificacion}
-                maxLength={120}
-                onChange={(e) => setNotaSupervisorJustificacion(e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs"
-              />
-              <span className="text-[10px] text-slate-500 block text-right">{notaSupervisorJustificacion.length}/120</span>
-            </div>
-
-            <div className="pt-2 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setModalJustificacionAbierto(false)}
-                className="flex-1 min-h-[44px] py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (motivosJustificacion.length === 0) {
-                    dispararToast('Seleccione al menos un motivo aprobado');
-                    return;
-                  }
-                  setJustificacionConfirmada(true);
-                  setModalJustificacionAbierto(false);
-                  dispararToast('Justificación de saldo pendiente aprobada');
-                }}
-                className="flex-1 min-h-[44px] py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold"
-              >
-                Confirmar Justificación
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Barra de Navegación Inferior Canónica */}
       <Navigation
         tabActual={tabActual}
         setTabActual={setTabActual}
         modoSol={modoSol}
       />
-      </div>
+
+      {/* Modal de Gestión de Usuarios */}
+      {showUserManagement && (
+        <UserManagement
+          onClose={() => setShowUserManagement(false)}
+        />
+      )}
+    </div>
     </div>
   );
-}
+};
+
+export default App;

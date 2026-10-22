@@ -11,6 +11,8 @@
  *  - ausencias (Incapacidades, permisos y faltas con 7 códigos normativos)
  *  - jornadas (Jornadas integradas con tramos heterogéneos)
  *  - asistencia (Registros semanales con clave compuesta colaborador_id + fecha)
+ * 
+ * NOTA DE SEGURIDAD: Este módulo ahora soporta cifrado AES-GCM-256 para protección de datos sensibles
  */
 
 import {
@@ -22,6 +24,7 @@ import {
   AreaAgricola
 } from './catalogoAgronomico';
 import { notificarMutacionDatos } from './eventBus';
+import { encryptData, decryptData } from './cryptoUtils';
 
 export const DB_NAME = 'nexocampo';
 export const DB_VERSION = 4;
@@ -201,29 +204,50 @@ export class IndexedDBError extends Error {
   }
 }
 
-export async function dbGetAll<T>(store: StoreName): Promise<T[]> {
+export async function dbGetAll<T>(store: StoreName, decrypt: boolean = false): Promise<T[]> {
   try {
     const res = await _dbRequest<T[]>(store, 'readonly', (os) => os.getAll());
-    return res || [];
+    if (!res || res.length === 0) return [];
+    
+    if (decrypt) {
+      return await Promise.all(res.map(async item => {
+        if (item && typeof item === 'object' && item._encrypted) {
+          return await decryptData(item);
+        }
+        return item;
+      }));
+    }
+    return res;
   } catch (e: any) {
     console.error(`[NexoCampo IDB] Error en dbGetAll(${store}):`, e);
     throw new IndexedDBError(store, e?.message || 'Error al consultar almacén en IndexedDB', e);
   }
 }
 
-export async function dbGet<T>(store: StoreName, id: string): Promise<T | null> {
+export async function dbGet<T>(store: StoreName, id: string, decrypt: boolean = false): Promise<T | null> {
   try {
     const res = await _dbRequest<T>(store, 'readonly', (os) => os.get(id));
-    return res !== undefined ? res : null;
+    if (res === undefined) return null;
+    
+    if (decrypt && res && typeof res === 'object' && (res as any)._encrypted) {
+      return await decryptData(res as any);
+    }
+    return res;
   } catch (e: any) {
     console.error(`[NexoCampo IDB] Error en dbGet(${store}, ${id}):`, e);
     throw new IndexedDBError(store, e?.message || `Error al obtener registro con ID ${id}`, e);
   }
 }
 
-export async function dbPut<T extends { id: string }>(store: StoreName, item: T): Promise<T> {
+export async function dbPut<T extends { id: string }>(store: StoreName, item: T, encrypt: boolean = false): Promise<T> {
   try {
-    await _dbRequest(store, 'readwrite', (os) => os.put(item));
+    let itemToStore = item;
+    if (encrypt) {
+      const encrypted = await encryptData(item);
+      itemToStore = { ...item, ...encrypted, _encrypted: true } as T;
+    }
+    await _dbRequest(store, 'readwrite', (os) => os.put(itemToStore));
+    notificarMutacionDatos(store, 'put', item.id);
     return item;
   } catch (e: any) {
     console.error(`[NexoCampo IDB] Error en dbPut(${store}, ${item.id}):`, e);
