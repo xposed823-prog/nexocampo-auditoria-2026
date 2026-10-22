@@ -458,13 +458,13 @@ export async function consultarColaboradorFecha(
 
       jornadaResultado = {
         registrado: true,
-        conteoJornadasDia: jornadasDia.length,
+        conteoJornadasDia: jornadaIds.length,
         jornadaIds: jornadasDia.map(j => j.id),
         jornadaId: jornadasDia.map(j => j.id).join(', '),
         horaApertura: horaAperturaStr,
         horaCierre: horaCierreStr,
         minutosBrutos: minutosBrutosTotales,
-        minutosEfectivosNetos: totalMinutosEfectivos,
+        minutosEfectivosNetos: tramosDia.find((t) => t.tipo === 'jornada_base')?.minutos_efectivos_jornada ?? 0,
         tramos: tramosProcesados
       };
     }
