@@ -21,7 +21,7 @@ import {
   Permission
 } from './authTypes';
 import { dbGet, dbPut, dbGetAll, dbDelete } from './nexocampoDB';
-import { clearEncryptionKey, deleteEncryptionKey, initCrypto } from './cryptoUtils';
+import { clearEncryptionKey, deleteEncryptionKey, initCrypto, setUserEncryptionKey, clearUserEncryptionKey } from './cryptoUtils';
 
 /**
  * Hash simple para PIN (en producción usar bcrypt o similar)
@@ -257,8 +257,8 @@ export class AuthService {
       // Login exitoso
       this.loginAttempts.delete(credentials.username);
       
-      // Inicializar cifrado
-      await initCrypto();
+      // Inicializar cifrado con el PIN del usuario
+      await setUserEncryptionKey(credentials.pin);
 
       // Crear sesión
       const expiresAt = new Date(Date.now() + SECURITY_CONFIG.SESSION_TIMEOUT_MINUTES * 60 * 1000);
@@ -321,7 +321,7 @@ export class AuthService {
    */
   public logout(reason?: string): void {
     this.clearSession();
-    deleteEncryptionKey();
+    clearUserEncryptionKey();
     
     if (reason) {
       console.log(`[NexoCampo Auth] Logout: ${reason}`);

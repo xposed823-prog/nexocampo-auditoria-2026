@@ -12,6 +12,14 @@ const MASTER_PASSWORD = 'NexoCampo2026_SecretKey_DoNotExpose';
 
 // Cache para la clave de cifrado
 let cryptoKey: CryptoKey | null = null;
+let userCryptoKey: CryptoKey | null = null;
+
+// Storage key for user-specific encryption key
+const USER_ENCRYPTION_KEY_STORE = 'nexocampo_user_encryption_key';
+const USER_SALT_STORE = 'nexocampo_user_salt';
+
+// Session storage key for current user
+const CURRENT_USER_KEY = 'nexocampo_current_user_id';
 
 /**
  * Deriva una clave AES-GCM-256 desde una contraseña usando PBKDF2
@@ -123,7 +131,7 @@ function generateIV(): Uint8Array {
  * @returns Objeto con iv y ciphertext en formato Base64
  */
 export async function encryptData(data: any): Promise<{ iv: string; ciphertext: string }> {
-  const key = await getEncryptionKey();
+  const key = await getUserEncryptionKey();
   const iv = generateIV();
   
   const encoder = new TextEncoder();
@@ -147,7 +155,7 @@ export async function encryptData(data: any): Promise<{ iv: string; ciphertext: 
  * @returns Datos originales descifrados
  */
 export async function decryptData(encrypted: { iv: string; ciphertext: string }): Promise<any> {
-  const key = await getEncryptionKey();
+  const key = await getUserEncryptionKey();
   
   const iv = new Uint8Array(
     Array.from(atob(encrypted.iv)).map(c => c.charCodeAt(0))
@@ -236,10 +244,96 @@ export async function initCrypto(): Promise<boolean> {
     }
     
     // Intentar obtener/generar la clave
-    await getEncryptionKey();
+    await getUserEncryptionKey();
     return true;
   } catch (e) {
     console.error('[NexoCampo Crypto] Error al inicializar cifrado:', e);
     return false;
   }
+}
+
+/**
+ * Deriva una clave de cifrado espec\u00edfica para un usuario desde su PIN
+ */
+async function deriveUserKeyFromPin(pin: string, userId: string): Promise<CryptoKey> {
+  // Generar salt \u00fanico por usuario
+  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  
+  // Derivar clave usando PBKDF2
+  const encoder = new TextEncoder();
+  const pinBuffer = encoder.encode(pin);
+  
+  const importedKey = await window.crypto.subtle.importKey(
+    'raw',
+    pinBuffer,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey']
+  );
+
+  const userKey = await window.crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    importedKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+
+  // Almacenar salt asociado al usuario en sessionStorage
+  sessionStorage.setItem(`${USER_SALT_STORE}_${userId}`, JSON.stringify(Array.from(salt)));
+  
+  return userKey;
+}
+
+/**
+ * Inicializa el cifrado para un usuario espec\u00edfico
+ */
+export async function setUserEncryptionKey(pin: string): Promise<void> {
+  // Obtener el usuario actual
+  const currentUserId = sessionStorage.getItem(CURRENT_USER_KEY);
+  if (!currentUserId) {
+    throw new Error('No hay usuario autenticado');
+  }
+
+  // Derivar clave del PIN del usuario
+  userCryptoKey = await deriveUserKeyFromPin(pin, currentUserId);
+  
+  // Almacenar referencia del usuario
+  sessionStorage.setItem(CURRENT_USER_KEY, currentUserId);
+}
+
+/**
+ * Obtiene la clave de cifrado del usuario actual
+ * Usa la clave derivada del PIN si est\u00e1 disponible, de lo contrario usa la clave maestra
+ */
+export async function getUserEncryptionKey(): Promise<CryptoKey> {
+  if (userCryptoKey) {
+    return userCryptoKey;
+  }
+
+  // Intentar restaurar desde sessionStorage
+  const currentUserId = sessionStorage.getItem(CURRENT_USER_KEY);
+  const userPin = sessionStorage.getItem('nexocampo_user_pin');
+  
+  if (currentUserId && userPin) {
+    userCryptoKey = await deriveUserKeyFromPin(userPin, currentUserId);
+    return userCryptoKey;
+  }
+
+  // Caer de nuevo a la clave maestra
+  console.warn('[NexoCampo Crypto] No se encontr\u00f3 clave de usuario, usando clave maestra');
+  return getEncryptionKey();
+}
+
+/**
+ * Limpia la clave de cifrado del usuario
+ */
+export function clearUserEncryptionKey(): void {
+  userCryptoKey = null;
+  sessionStorage.removeItem(CURRENT_USER_KEY);
 }
