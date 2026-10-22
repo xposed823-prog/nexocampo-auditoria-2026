@@ -83,6 +83,37 @@ describe('separación matemática de Oficios Varios', () => {
     assert.equal(result.cumplimientoMetasGlobalPct, null);
   });
 
+  it('excluye una labor pendiente del rendimiento técnico del día', async () => {
+    const jornada: JornadaRegistro = {
+      ...jornadaOficios,
+      id: 'jornada_test_pendiente_001',
+      tramos: [{
+        id: 'tramo_test_pendiente_001',
+        tipo: 'labor',
+        titulo: 'Labor temporal de prueba',
+        labor_nombre: 'Labor temporal de prueba',
+        unidad: 'unidad',
+        estandar_min: 10,
+        modelo: 'individual',
+        hora_inicio: '06:30',
+        hora_fin: '07:30',
+        meta: 1,
+        completados: 0,
+        unidades: 1,
+        estado: 'pendiente'
+      }]
+    };
+    const result = await consultarColaboradorFecha(colaborador.id, FECHA, {
+      mockDatos: { ...mockDatos, jornadas: [jornada] }
+    });
+
+    assert.equal(result.jornada.tramos[0].rendimientoTemporalPct, null);
+    assert.equal(result.metricasConsolidadas.minutosEfectivosLaborales, 0);
+    assert.equal(result.metricasConsolidadas.rendimientoPonderadoPct, null);
+    assert.equal(result.metricasConsolidadas.cumplimientoMetasPct, null);
+    assert.equal(result.metricasConsolidadas.produccionPendiente, 1);
+  });
+
   it('no cuenta el tiempo heredado de una subtarea de cobertura como tiempo técnico adicional', async () => {
     const jornada: JornadaRegistro = {
       ...jornadaOficios,
@@ -135,6 +166,6 @@ describe('separación matemática de Oficios Varios', () => {
     const reporte = await consultarReportePeriodo(FECHA, FECHA, { mockDatos: datosCobertura });
     assert.equal(reporte.minutosTotalesEfectivos, 0);
     assert.equal(reporte.eficienciaPonderadaGlobalPct, null);
-    assert.equal(reporte.cumplimientoMetasGlobalPct, 75);
+    assert.equal(reporte.cumplimientoMetasGlobalPct, null);
   });
 });
