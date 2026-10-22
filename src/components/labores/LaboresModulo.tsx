@@ -111,6 +111,10 @@ export const LaboresModulo: React.FC<LaboresModuloProps> = ({ modoSol, dispararT
       dispararToast('Una labor No cumple debe registrar cero unidades ejecutadas.');
       return;
     }
+    if (!esPorMeta && estadoLabor === 'cumple' && nuevaComp < 1) {
+      dispararToast('Una labor temporal marcada Cumple debe tener al menos una unidad completada.');
+      return;
+    }
 
     const jornadasDelDia = jornadas.filter((jornada) =>
       jornada.fecha === fecha && jornada.colaboradores_ids.includes(colaboradorSeleccionado)
