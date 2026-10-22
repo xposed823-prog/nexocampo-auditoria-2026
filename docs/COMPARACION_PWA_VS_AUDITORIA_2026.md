@@ -43,12 +43,12 @@ Estados:
 | Ausencias formales | Siete códigos documentados; almacén separado | Módulo y tipo de ausencia presentes | P1: verificar intervalos y separación de asistencia |
 | Consulta cruzada colaborador-fecha | Asistencia + jornada/rendimiento + ausencia | Módulo y servicio de dominio presentes; documentación registra integración | P0: contrastar datos persistidos y casos incompletos |
 | Reportes individual/general y CSV/PDF | PWA documenta PDF/impresión y exportaciones CSV de varios módulos | Reportes y botón de impresión presentes; exportaciones CSV por formato no confirmadas | P1: inventariar cada salida y completar las faltantes |
-| Backup completo JSON | Exportación/importación de la base documentadas | Exportación JSON disponible en dos flujos; restauración canónica desde Admin | P0: unificar servicio, validar contenido, errores y recuperación |
-| Historial de respaldos | No se confirmó como historial persistente en PWA | No se encontró listado de historial en el módulo revisado | P2: diseñar bitácora local de metadatos, sin duplicar datos personales |
+| Backup completo JSON | Exportación/importación de la base documentadas | El módulo Respaldos ahora exporta los seis almacenes canónicos; validación estricta y compatibilidad con ambos marcadores de formato implementadas en la rama | P0: ejecutar pruebas de contenido y recuperación |
+| Historial de respaldos | No se confirmó como historial persistente en PWA | Historial local de hasta 10 operaciones (exportación/restauración/Drive) agregado; depende de localStorage | P2: probar persistencia y comportamiento si localStorage no está disponible |
 | Destino de respaldo local configurable | Selector de carpeta y fallback a Descargas documentados en PWA | No se encontró en el módulo revisado | P1: adaptar File System Access API con fallback compatible |
 | Google Drive OAuth/sincronización | Arquitectura PWA documenta integración verificada en producción | No se localizó integración en Auditoría 2026 | P1: portar por separado, sin copiar secretos ni suponer configuración OAuth |
-| Restauración segura | Importación explícita en PWA | Restauración canónica existe; garantías de transacción/rollback no demostradas | P0: pruebas con archivo inválido, parcial, incompatible y fallo de escritura |
-| Cifrado/hash del backup | No se concluye aquí el detalle criptográfico del flujo PWA | La UI anuncia cifrado y SHA-256, pero el módulo visible no demuestra que los calcule/aplique | P0: retirar afirmaciones no verificadas o implementar y probar realmente |
+| Restauración segura | Importación explícita en PWA | Validación previa exige los seis almacenes y una versión conocida; escritura en una sola transacción IndexedDB. Pruebas de validador añadidas, aún no ejecutadas | P0: probar archivo inválido, incompleto, incompatible y aborto de transacción |
+| Cifrado/hash del backup | No se concluye aquí el detalle criptográfico del flujo PWA | La UI ya advierte que el JSON no está cifrado ni tiene hash criptográfico en esta versión | P0: decidir e implementar protección real si se requiere |
 | Autenticación/usuarios | Modelo operativo esperado: supervisión local, sin cuentas por colaborador | App importa AuthProvider/LoginScreen/UserManagement | P1: revisar y alinear con el uso de supervisor único; no habilitar cuentas innecesarias |
 | Incidentes y fotos | Registro de incidentes en PWA | Módulo de incidentes disponible | P2: comparar campos, severidad, áreas y adjuntos opcionales |
 | Instalación y operación offline | Manifiesto/SW; fuente funcional offline-first | Manifiesto/SW y gestor PWA presentes | P0: comprobar instalación, reinicio, modo avión y actualización de caché |
@@ -98,7 +98,7 @@ Una función no se marca como terminada solo por existir su componente. Se consi
 - [x] Identificadas las arquitecturas y los almacenes declarados.
 - [x] Localizados los módulos principales de jornadas, asistencia, ausencias, consulta, reportes y respaldos en Auditoría 2026.
 - [x] Detectadas diferencias iniciales en Drive, destino local, exportaciones e historial de respaldos.
-- [x] Servicio aislado de copia manual a Google Drive agregado en la rama de integración (pendiente de configuración y prueba real).\n- [ ] Revisión completa función por función de los módulos y servicios.
+- [x] Servicio aislado de copia manual a Google Drive agregado en la rama de integración (pendiente de configuración y prueba real).\n- [x] Exportación del respaldo desde los seis almacenes canónicos, restauración transaccional con validación estricta, historial local y pruebas del validador agregadas.\n- [ ] Revisión completa función por función de los módulos y servicios.
 - [ ] Ejecución real de `npm test`, `npm run lint` y `npm run build`.
 - [ ] Pruebas comparativas con casos sintéticos.
 - [ ] Aceptación funcional desde Android.
