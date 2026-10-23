@@ -206,7 +206,7 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs text-slate-400">Descuentos</span>
-              <span className="text-sm font-mono font-bold text-amber-300">{calculo.minutosDeducidos} min</span>
+              <span className="text-sm font-mono font-bold text-amber-300">{calculo.totalDeduccionesMinutos} min</span>
             </div>
             <div className="pt-2 border-t border-slate-700 flex items-center justify-between gap-3">
               <span className="text-xs font-semibold text-emerald-300">Tiempo efectivo de jornada</span>
