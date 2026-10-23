@@ -83,6 +83,9 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 - [ ] Probar uso en modo avión, persistencia tras cerrar/abrir y reconexión.
 - [ ] Revisar navegación móvil, foco, contraste, controles táctiles y formularios largos.
 - [x] Retirar login/gestión multiusuario del flujo activo y mantener el modelo de supervisor único; los archivos heredados se conservan fuera del chequeo TypeScript.
+- [x] Retirar datos de demostración de asistencia/incidentes y usar fechas dinámicas.
+- [x] Persistir incidentes en el store de jornadas con colaborador opcional y foto opcional de máximo 3 MB.
+- [x] Advertir y pedir confirmación antes de subir a Drive un JSON sin cifrar.
 - [ ] Mantener datos de prueba sintéticos y documentar privacidad y manejo de respaldos.
 
 ### Etapa 6 — Aceptación y liberación controlada
@@ -109,11 +112,14 @@ Adaptar las capacidades verificadas de `xposed823-prog/nexocampo-pwa-` al reposi
 | NC-011 | Local | Carpeta elegida y fallback a Descargas | Pendiente | No localizado en módulo de backup | Adaptar y probar navegador |
 | NC-012 | Reportes | CSV/PDF/XLSX por módulo | En curso | CSV consolidado agregado; impresión disponible; XLSX real no implementado | Probar CSV y completar salidas faltantes |
 | NC-013 | PWA/offline | Instalar, recargar, modo avión, reconectar | Pendiente | Archivos PWA presentes; todavía sin prueba funcional Android | Ejecutar prueba de aceptación en Android y documentar resultado |
+| NC-014 | Incidentes | Persistencia, foto opcional y atribución correcta | En curso | Guardado y lectura desde IndexedDB; suite sintética valida que un incidente global no se atribuya a todos ni cuente como jornada | Probar formulario, recarga, adjunto y consulta desde Android |
+| NC-015 | Asistencia | Semana actual lunes-domingo y fecha correcta al marcar | En curso | Matriz sin datos demo; fechas calculadas para los siete días; CI aprobado | Probar cambio de semana, guardado de todos presentes y recarga en Android |
+| NC-016 | Privacidad backup | Evitar subida accidental de JSON sin cifrar | En curso | Aviso visible y confirmación antes de Google Drive; el archivo sigue sin cifrado | Definir modelo de cifrado/clave antes de habilitar respaldo cifrado |
 
 ## Evidencia de CI
 
-- Commit validado: `91983e607205ba587df820bd79aeb90b5a48cebc`.
-- [Ejecución GitHub Actions 39884009272](https://github.com/xposed823-prog/nexocampo-auditoria-2026/actions/runs/39884009272).
+- Commit validado: `a74f3c47ee5259f74dd4ec2230314a0fcac5d91f`.
+- [Ejecución GitHub Actions 39884286240](https://github.com/xposed823-prog/nexocampo-auditoria-2026/actions/runs/39884286240).
 - `npm test`: 98 aprobadas, 0 fallidas.
 - `npm run lint`: aprobado.
 - `npm run build`: aprobado.
