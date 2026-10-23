@@ -311,7 +311,9 @@ test('FASE 3 [TC-08]: Estado pendiente no suma a la producción completada', asy
         labor_id: 'lab_2',
         hora_inicio: '09:30',
         hora_fin: '12:30',
-        completados: 35,
+        unidades: 35,
+        meta: 35,
+        completados: 0,
         estado: 'pendiente', // Saldo pendiente
         motivo_pendiente: 'Lluvia torrencial'
       }
