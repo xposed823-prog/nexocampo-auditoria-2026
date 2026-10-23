@@ -21,6 +21,13 @@ const USER_SALT_STORE = 'nexocampo_user_salt';
 // Session storage key for current user
 const CURRENT_USER_KEY = 'nexocampo_current_user_id';
 
+// Copia a un ArrayBuffer propio para compatibilidad estricta con Web Crypto y TypeScript moderno.
+function toArrayBufferSource(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer as ArrayBuffer;
+}
+
 /**
  * Deriva una clave AES-GCM-256 desde una contraseña usando PBKDF2
  */
@@ -39,7 +46,7 @@ async function deriveKeyFromPassword(password: string, salt: Uint8Array = new Te
   return window.crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt,
+      salt: toArrayBufferSource(salt),
       iterations: 100000,
       hash: 'SHA-256'
     },
@@ -75,7 +82,7 @@ export async function exportKeyToRaw(key: CryptoKey): Promise<Uint8Array> {
 export async function importKeyFromRaw(rawKey: Uint8Array): Promise<CryptoKey> {
   return window.crypto.subtle.importKey(
     'raw',
-    rawKey,
+    toArrayBufferSource(rawKey),
     { name: 'AES-GCM' },
     false,
     ['encrypt', 'decrypt']
@@ -138,9 +145,9 @@ export async function encryptData(data: any): Promise<{ iv: string; ciphertext: 
   const dataBuffer = encoder.encode(JSON.stringify(data));
 
   const ciphertextBuffer = await window.crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
+    { name: 'AES-GCM', iv: toArrayBufferSource(iv) },
     key,
-    dataBuffer
+    toArrayBufferSource(dataBuffer)
   );
 
   return {
@@ -200,7 +207,7 @@ export async function decryptFields<T extends Record<string, any>>(
   
   for (const field of encryptedFields) {
     if (result[field] && typeof result[field] === 'object' && 'iv' in result[field] && 'ciphertext' in result[field]) {
-      result[field] = await decryptData(result[field]);
+      (result as Record<string, any>)[field] = await decryptData(result[field]);
     }
   }
   
