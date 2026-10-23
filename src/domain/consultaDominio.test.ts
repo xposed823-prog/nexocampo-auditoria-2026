@@ -205,8 +205,9 @@ test('FASE 3 [TC-05]: Labor sin estándar (Oficios Varios) no calcula rendimient
   assert.equal(tramo.rendimientoTemporalPct, null);
   assert.equal(tramo.estadoCalculoRendimiento, 'ESTANDAR_NO_DISPONIBLE');
   assert.match(tramo.mensajeAuditoriaRendimiento, /sin estándar temporal/i);
-  // Cumplimiento físico de tareas: 4/5 = 80%
-  assert.equal(tramo.cumplimientoMetaPct, 80);
+  // Oficios Varios usa su métrica propia de tareas: 4/5 = 80%, no cumplimiento técnico.
+  assert.equal(tramo.cumplimientoTareasPct, 80);
+  assert.equal(tramo.cumplimientoMetaPct, null);
 });
 
 // ========================================================
