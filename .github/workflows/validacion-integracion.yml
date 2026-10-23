@@ -1,0 +1,45 @@
+name: Validación de integración NexoCampo
+
+on:
+  push:
+    branches:
+      - integracion-pwa-auditoria-2026
+  pull_request:
+    branches:
+      - integracion-pwa-auditoria-2026
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validacion-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validar:
+    name: Pruebas, tipos y compilación
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias bloqueadas
+        run: npm ci
+
+      - name: Ejecutar pruebas unitarias
+        run: npm test
+
+      - name: Verificar tipos TypeScript
+        run: npm run lint
+
+      - name: Compilar aplicación
+        run: npm run build
