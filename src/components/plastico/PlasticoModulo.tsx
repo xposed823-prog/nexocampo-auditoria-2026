@@ -94,6 +94,7 @@ export const PlasticoModulo: React.FC<PlasticoModuloProps> = ({
   justificacionConfirmada,
   setJustificacionConfirmada,
   motivosJustificacion,
+  setMotivosJustificacion,
   polisombraCondiciones,
   setPolisombraCondiciones,
   subtareasCobertura,
