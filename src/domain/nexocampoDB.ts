@@ -55,6 +55,7 @@ export interface TramoJornada {
   observaciones?: string;
   severidad?: 'leve' | 'moderado' | 'grave';
   primeros_auxilios?: boolean;
+  foto_data_url?: string;
   tipo_registro?: 'oficio_vario';
   tareas_asignadas?: number;
   tareas_completadas?: number;
