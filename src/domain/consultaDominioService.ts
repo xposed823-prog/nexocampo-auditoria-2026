@@ -830,7 +830,7 @@ export async function consultarReportePeriodo(
         const metaValida = !esSubtareaCobertura && typeof t.meta === 'number' && t.meta > 0;
         const compValidos = typeof t.completados === 'number' && t.completados >= 0;
 
-        if (metaValida && compValidos && t.estado !== 'pendiente' && t.estado !== 'no_cumple') {
+        if (metaValida && compValidos && t.estado !== 'pendiente') {
           accum.metasTotal += t.meta!;
           accum.completadasParaMetas += t.completados!;
           accum.conteoTramosConMeta++;
@@ -852,7 +852,7 @@ export async function consultarReportePeriodo(
           totalUnidadesCompletadas += qty;
 
           // Si tiene estándar computable y tiempo efectivo > 0
-          if (tieneEstandar && duracionMin > 0 && t.estado !== 'pendiente') {
+          if (tieneEstandar && duracionMin > 0) {
             const minEstTramo = estandarMin! * qty;
             accum.minutosEstandarTotal += minEstTramo;
             evaluacionesGlobalesEficiencia.push({
