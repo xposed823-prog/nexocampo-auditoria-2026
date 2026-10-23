@@ -68,6 +68,13 @@ function lunesSemanaActual(): string {
   return `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
 }
 
+function fechaSemanaActual(diaIdx: number): string {
+  const fecha = new Date(`${lunesSemanaActual()}T12:00:00`);
+  fecha.setDate(fecha.getDate() + diaIdx);
+  const pad = (valor: number) => String(valor).padStart(2, '0');
+  return `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())}`;
+}
+
 const DOCUMENTOS_TAREA_3 = [
   { id: '15', archivo: '15-reglas-jornada.md', titulo: 'Reglas de Jornada y Segmentos', resumen: 'Aritmética canónica, jornada general única, 3 labores consecutivas sin triplicar jornadas y solapamiento real vs subtareas.' },
   { id: '16', archivo: '16-reglas-estados.md', titulo: 'Taxonomía y Reglas de Estados', resumen: 'Comportamiento de Cumple, No Cumple, Pendiente, Sin Registro, Incompleto. Invariante de no penalización implícita.' },
@@ -93,7 +100,7 @@ const DOCUMENTOS_TAREA_2 = [
 // Catálogo de colaboradores reales del sistema
 const COLABORADORES_MOCK = COLABORADORES_CATALOGO;
 
-const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 // Componente principal envuelto en AuthProvider
 function App() {
@@ -366,7 +373,7 @@ function App() {
 
     // 2. Persistencia atómica en IndexedDB (store: asistencia)
     try {
-      const fechaCalculada = `2026-10-${19 + diaIdx}`;
+      const fechaCalculada = fechaSemanaActual(diaIdx);
       await guardarAsistenciaAtomica(colId, fechaCalculada, siguiente);
       dispararToast(`✓ Asistencia en IndexedDB (${colId} día ${DIAS_SEMANA[diaIdx]}): ${siguiente}`);
     } catch (e) {
@@ -377,10 +384,11 @@ function App() {
   const marcarTodosPresentesHoy = async () => {
     const actualizada = { ...matrizAsistencia };
     const lote: Array<{ colaborador_id: string; fecha: string; estado: 'presente' }> = [];
-    const fechaHoy = '2026-10-19';
+    const fechaHoy = fechaLocalHoy();
+    const diaHoyIdx = (new Date(`${fechaHoy}T12:00:00`).getDay() + 6) % 7;
 
     COLABORADORES_MOCK.forEach(c => {
-      actualizada[`${c.id}-0`] = 'presente';
+      actualizada[`${c.id}-${diaHoyIdx}`] = 'presente';
       lote.push({ colaborador_id: c.id, fecha: fechaHoy, estado: 'presente' });
     });
 
