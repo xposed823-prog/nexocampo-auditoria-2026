@@ -70,10 +70,6 @@ export function validarLabor(
 
   if (isNaN(cantidadCompletada) || cantidadCompletada < 0) {
     errores.cantidadCompletada = 'La cantidad completada no puede ser negativa.';
-  } else if (cantidadCompletada > cantidadTotal) {
-    errores.cantidadCompletada = 'La cantidad completada no puede superar la cantidad total.';
-  } else if (cantidadCompletada > cantidadTotal) {
-    errores.cantidadCompletada = 'La cantidad completada no puede superar la cantidad total.';
   }
 
   if (colaboradoresCount < 1) {
