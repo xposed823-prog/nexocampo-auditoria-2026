@@ -130,7 +130,7 @@ test('RED TEAM [RT-06]: Sobredotación de Cuadrilla en Cubiertas (Ataque de Mano
   // Dotación cero operarios
   const qCero = validarPlasticoPolisombra(0, '07:00', '15:00', 100, 100, ['soleado']);
   assert.equal(qCero.esValido, false);
-  assert.match(qCero.errores.integrantes, /entre 1 y 6 integrantes/i);
+  assert.match(qCero.errores.integrantes, /exactamente 6 integrantes/i);
 
   // Dotación límite superior exacto (6 operarios) -> VÁLIDO
   const qSeis = validarPlasticoPolisombra(6, '07:00', '15:00', 100, 100, ['soleado']);
@@ -139,7 +139,7 @@ test('RED TEAM [RT-06]: Sobredotación de Cuadrilla en Cubiertas (Ataque de Mano
   // Dotación excesiva: 7 integrantes -> BLOQUEADO
   const qSiete = validarPlasticoPolisombra(7, '07:00', '15:00', 100, 100, ['soleado']);
   assert.equal(qSiete.esValido, false);
-  assert.match(qSiete.errores.integrantes, /entre 1 y 6 integrantes/i);
+  assert.match(qSiete.errores.integrantes, /exactamente 6 integrantes/i);
 
   // Dotación masiva anómala: 99 operarios -> BLOQUEADO
   const q99 = validarPlasticoPolisombra(99, '07:00', '15:00', 100, 100, ['soleado']);
