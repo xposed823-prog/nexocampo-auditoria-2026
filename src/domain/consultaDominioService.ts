@@ -334,7 +334,8 @@ export async function consultarColaboradorFecha(
           const esJornadaBase = t.tipo === 'jornada_base';
           const esOficioVario = t.modelo === 'oficios_varios' ||
             t.tipo_registro === 'oficio_vario' ||
-            laborInfo?.tipo_registro === 'oficio_vario';
+            laborInfo?.tipo_registro === 'oficio_vario' ||
+            (t.labor_nombre || t.titulo || '').trim().toLocaleLowerCase('es') === 'oficios varios';
           const tareasAsignadas = esOficioVario ? (t.tareas_asignadas ?? t.meta) : undefined;
           const tareasCompletadas = esOficioVario ? (t.tareas_completadas ?? t.completados) : undefined;
           const esMetaGrupal = t.modelo === 'grupal_meta';
@@ -385,7 +386,8 @@ export async function consultarColaboradorFecha(
 
           // Rendimiento temporal estricto: Oficios Varios no consume tiempo técnico computable.
           let rendimientoTemporalPct: number | null = null;
-          let estadoCalculo: TramoDetalleConsulta['estadoCalculoRendimiento'] = 'NO_APLICA';
+          let estadoCalculo: TramoDetalleConsulta['estadoCalculoRendimiento'] =
+            esOficioVario ? 'ESTANDAR_NO_DISPONIBLE' : 'NO_APLICA';
           let mensajeAuditoria = esJornadaBase
             ? 'Jornada base: define la ventana y los minutos efectivos; no es una labor productiva.'
             : esOficioVario
@@ -472,7 +474,7 @@ export async function consultarColaboradorFecha(
         horaApertura: horaAperturaStr,
         horaCierre: horaCierreStr,
         minutosBrutos: minutosBrutosTotales,
-        minutosEfectivosNetos: jornadasDia.flatMap((j) => j.tramos || []).find((t) => t.tipo === 'jornada_base')?.minutos_efectivos_jornada ?? 0,
+        minutosEfectivosNetos: jornadasDia.flatMap((j) => j.tramos || []).find((t) => t.tipo === 'jornada_base')?.minutos_efectivos_jornada ?? totalMinutosEfectivos,
         tramos: tramosProcesados
       };
     }
@@ -828,7 +830,7 @@ export async function consultarReportePeriodo(
         const metaValida = !esSubtareaCobertura && typeof t.meta === 'number' && t.meta > 0;
         const compValidos = typeof t.completados === 'number' && t.completados >= 0;
 
-        if (metaValida && compValidos) {
+        if (metaValida && compValidos && t.estado !== 'pendiente' && t.estado !== 'no_cumple') {
           accum.metasTotal += t.meta!;
           accum.completadasParaMetas += t.completados!;
           accum.conteoTramosConMeta++;
