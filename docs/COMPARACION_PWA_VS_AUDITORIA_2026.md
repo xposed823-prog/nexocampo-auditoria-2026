@@ -111,8 +111,8 @@ Una función no se marca como terminada solo por existir su componente. Se consi
 
 ## Evidencia de ejecución automatizada
 
-- Commit validado: `91983e607205ba587df820bd79aeb90b5a48cebc`.
-- [GitHub Actions — ejecución 39884009272](https://github.com/xposed823-prog/nexocampo-auditoria-2026/actions/runs/39884009272).
+- Commit validado: `a74f3c47ee5259f74dd4ec2230314a0fcac5d91f`.
+- [GitHub Actions — ejecución 39884286240](https://github.com/xposed823-prog/nexocampo-auditoria-2026/actions/runs/39884286240).
 - `npm test`: 98 aprobadas, 0 fallidas; `npm run lint`: aprobado; `npm run build`: aprobado.
 - Instalación CI usa `npm ci --legacy-peer-deps` por una incompatibilidad declarada entre Vite 8 y la versión de esbuild en el lockfile. Alinear las dependencias y regenerar el lockfile sigue pendiente.
 - No se han ejecutado pruebas manuales de Android, OAuth real, restauración transaccional en navegador ni modo avión.
