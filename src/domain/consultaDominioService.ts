@@ -520,18 +520,23 @@ export async function consultarColaboradorFecha(
     const tieneAsistencia = asistenciaResultado.registrado;
     const tieneJornada = jornadaResultado.registrado;
     const tieneAusencia = ausenciasEncontradas.length > 0;
+    const tieneIncidente = incidentesDetectados.length > 0;
 
     let estadoIntegridad: EstadoIntegridadConsulta = 'EXITO_COMPLETO';
     let mensajeEstado = 'Consulta cruzada realizada con éxito sobre datos persistidos.';
     let clasificacionDato: ClasificacionDato = 'observado';
 
-    if (!tieneAsistencia && !tieneJornada && !tieneAusencia) {
+    if (!tieneAsistencia && !tieneJornada && !tieneAusencia && !tieneIncidente) {
       estadoIntegridad = 'SIN_REGISTROS';
       mensajeEstado = 'Sin registros de jornada, asistencia ni ausencias para la fecha consultada.';
       clasificacionDato = 'incompleto';
     } else if (!tieneAsistencia && tieneJornada) {
       estadoIntegridad = 'DATOS_INCOMPLETOS';
       mensajeEstado = 'Jornada registrada sin pase de lista de asistencia correspondiente.';
+      clasificacionDato = 'incompleto';
+    } else if (tieneIncidente && !tieneAsistencia && !tieneJornada && !tieneAusencia) {
+      estadoIntegridad = 'DATOS_INCOMPLETOS';
+      mensajeEstado = 'Incidente registrado sin jornada ni asistencia asociada; no se cuenta como jornada laboral.';
       clasificacionDato = 'incompleto';
     } else if (tieneAsistencia && !tieneJornada && !tieneAusencia) {
       estadoIntegridad = 'DATOS_INCOMPLETOS';
