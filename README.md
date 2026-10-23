@@ -24,33 +24,35 @@ La aplicación alternativa no debe recibir una copia monolítica de `index.html`
 
 ## Documentación de integración
 
-- [Comparación PWA vs. Auditoría 2026](docs/COMPARACION_PWA_VS_AUDITORIA_2026.md)\n- [Inventario funcional por módulo](docs/INVENTARIO_FUNCIONAL_AUDITORIA.md)
+- [Comparación PWA vs. Auditoría 2026](docs/COMPARACION_PWA_VS_AUDITORIA_2026.md)
+- [Inventario funcional por módulo](docs/INVENTARIO_FUNCIONAL_AUDITORIA.md)
 - [Plan de integración y seguimiento](docs/PLAN_INTEGRACION_Y_SEGUIMIENTO.md)
-- [Configuración de Google Drive](docs/GOOGLE_DRIVE_CONFIGURACION.md)
+- [Configuración de Google Drive](docs/CONFIGURACION_GOOGLE_DRIVE.md)
 
 ## Funcionalidades en evolución
 
-- Registro de jornadas y tramos.
-- Rendimiento y estados de labor.
-- Oficios Varios.
-- Plástico/Polisombra.
-- Asistencia y ausencias.
-- Consulta cruzada y reportes.
-- Exportación/restauración de respaldo JSON e historial local.
-- Copia manual a Google Drive, pendiente de configuración OAuth y prueba real.
+- Jornadas base y tramos de labores, con separación de tiempos y validación de solapamientos.
+- Rendimiento técnico y estados de labor; los trabajos pendientes no deben incrementar el rendimiento del día.
+- Oficios Varios medido por tareas asignadas/completadas, sin inventar un estándar temporal.
+- Plástico/Polisombra con cuadrilla de seis, subtareas y herencia horaria.
+- Asistencia, ausencias, consulta cruzada e incidentes con persistencia local implementada en la rama.
+- Respaldo y restauración JSON, historial local y copia manual a Google Drive.
+- Exportación CSV consolidada; XLSX real no implementado y PDF mediante impresión del navegador.
+
+La presencia de código no equivale a aceptación funcional. Las pruebas en Android, la restauración real en navegador y el flujo OAuth de Drive continúan pendientes de aceptación.
 
 ## Comandos de verificación
 
 Ejecutar desde un entorno con Node.js 22:
 
 ```bash
-npm ci
+npm ci --legacy-peer-deps
 npm test
 npm run lint
 npm run build
 ```
 
-La rama incluye un flujo de GitHub Actions para ejecutar estas verificaciones en cada actualización de la rama de integración. No se debe afirmar que una prueba pasó hasta consultar su resultado real.
+La rama incluye un flujo de GitHub Actions para ejecutar estas verificaciones en cada actualización de la rama de integración. El uso de `--legacy-peer-deps` es una solución temporal documentada mientras se resuelve la compatibilidad de dependencias.
 
 ## Reglas de protección
 
