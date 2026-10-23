@@ -5,11 +5,7 @@ import {
   WifiOff,
   Smartphone,
   Database,
-  User,
-  LogOut,
-  Settings
 } from 'lucide-react';
-import { AuthUser } from '../../domain/authTypes';
 
 export interface HeaderProps {
   modoSol: boolean;
@@ -22,9 +18,6 @@ export interface HeaderProps {
   setShowIOSPrompt: (val: boolean) => void;
   totalPendientesLocal: number;
   setTabActual: (tab: string) => void;
-  user?: AuthUser | null;
-  onLogout?: () => void;
-  onManageUsers?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -38,9 +31,6 @@ export const Header: React.FC<HeaderProps> = ({
   setShowIOSPrompt,
   totalPendientesLocal,
   setTabActual,
-  user,
-  onLogout,
-  onManageUsers
 }) => {
   return (
     <header className={`sticky top-0 z-40 border-b ${modoSol ? 'bg-white/95 border-slate-200 shadow-sm' : 'bg-slate-900/90 border-slate-800 backdrop-blur-md'}`}>
@@ -128,27 +118,6 @@ export const Header: React.FC<HeaderProps> = ({
             <Sun className="w-3.5 h-3.5 text-amber-500" />
             <span className="hidden sm:inline">{modoSol ? 'Normal' : 'Sol'}</span>
           </button>
-
-          {/* Usuario y Autenticación */}
-          {user && (
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={onManageUsers}
-                className="min-h-[36px] px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-semibold flex items-center gap-1 hover:bg-slate-700 transition-colors"
-                title="Gestionar usuarios"
-              >
-                <Settings className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{user.username}</span>
-              </button>
-              <button
-                onClick={onLogout}
-                className="min-h-[36px] px-2 py-1 rounded-lg bg-rose-800/50 border border-rose-700 text-rose-300 text-[10px] font-semibold flex items-center gap-1 hover:bg-rose-700/50 transition-colors"
-                title="Cerrar sesión"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
 
           {/* Píldora de Cola IndexedDB con enlace a la vista PWA */}
           <button
