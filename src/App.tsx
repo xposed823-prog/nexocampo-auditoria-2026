@@ -9,10 +9,6 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Smartphone, AlertTriangle, Check, X, Search, FileBarChart, User, LogOut } from 'lucide-react';
 import { usePWAInstall, useOnlineStatus } from './domain/usePWAInstall';
-import { authService } from './domain/authService';
-import { AuthProvider, useAuth } from './components/auth/AuthProvider';
-import { LoginScreen } from './components/auth/LoginScreen';
-import { UserManagement } from './components/auth/UserManagement';
 import {
   guardarRegistroPendiente,
   obtenerRegistrosPendientes,
@@ -540,27 +536,6 @@ function App() {
     dispararToast('Registro de Plástico/Polisombra guardado en IndexedDB.');
   };
 
-  // Estado de autenticación
-  const authState = authService.getAuthState();
-  const [showUserManagement, setShowUserManagement] = useState(false);
-
-  // Inicializar usuarios al montar
-  useEffect(() => {
-    authService.initializeUsers();
-  }, []);
-
-  // Verificar autenticación
-  if (!authState.isAuthenticated) {
-    return (
-      <LoginScreen
-        onLoginSuccess={() => {
-          // Recargar el componente para actualizar el estado de autenticación
-          window.location.reload();
-        }}
-      />
-    );
-  }
-
   return (
     <div className={`min-h-screen transition-colors duration-150 ${modoSol ? 'bg-[#f1f5f9] text-[#334155]' : 'bg-slate-950 text-slate-100'} font-sans`}>
       <div className={`app-shell max-w-[28rem] w-full mx-auto min-h-screen flex flex-col relative shadow-2xl ${modoSol ? 'bg-[#f8fafc]' : 'bg-slate-900'} pb-32`}>
@@ -577,12 +552,6 @@ function App() {
           setShowIOSPrompt={setShowIOSPrompt}
           totalPendientesLocal={totalPendientesLocal}
           setTabActual={setTabActual}
-          user={authState.user}
-          onLogout={() => {
-            authService.logout('Logout manual');
-            window.location.reload();
-          }}
-          onManageUsers={() => setShowUserManagement(true)}
         />
 
         {/* Modal Guía iOS */}
@@ -886,12 +855,6 @@ function App() {
         modoSol={modoSol}
       />
 
-      {/* Modal de Gestión de Usuarios */}
-      {showUserManagement && (
-        <UserManagement
-          onClose={() => setShowUserManagement(false)}
-        />
-      )}
     </div>
     </div>
   );
