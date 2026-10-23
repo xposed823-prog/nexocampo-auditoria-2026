@@ -159,6 +159,7 @@ function App() {
             area: tramo.area || 'Ubicación no especificada',
             descripcion: tramo.observaciones || '',
             primerosAuxilios: Boolean(tramo.primeros_auxilios),
+            fotoDataUrl: tramo.foto_data_url,
             colaboradorId: jornada.colaboradores_ids[0]
           }))
       ).sort((a, b) => `${b.fecha} ${b.hora}`.localeCompare(`${a.fecha} ${a.hora}`));
@@ -204,6 +205,7 @@ function App() {
         area: incidente.area,
         severidad: incidente.severidad as 'leve' | 'moderado' | 'grave',
         primeros_auxilios: incidente.primerosAuxilios,
+        ...(incidente.fotoDataUrl ? { foto_data_url: incidente.fotoDataUrl } : {}),
         observaciones: incidente.descripcion,
         estandar_min: null
       }],
