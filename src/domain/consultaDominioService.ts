@@ -391,7 +391,7 @@ export async function consultarColaboradorFecha(
           let mensajeAuditoria = esJornadaBase
             ? 'Jornada base: define la ventana y los minutos efectivos; no es una labor productiva.'
             : esOficioVario
-            ? 'Oficios Varios no tiene estándar temporal; se mide por tareas asignadas/completadas.'
+            ? 'Oficios Varios: sin estándar temporal; se mide por tareas asignadas/completadas.'
             : esSubtarea
               ? 'La subtarea hereda el horario principal y no suma tiempo técnico adicional.'
               : esMetaGrupal
