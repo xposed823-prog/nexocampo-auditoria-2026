@@ -39,18 +39,18 @@ Estados:
 | Estados Cumple/No cumple/Pendiente y exclusiones | Documentados y aplicados en PWA | Taxonomía y reglas documentadas; integración requiere pruebas | P0: asegurar que pendientes no inflen ni reduzcan rendimiento |
 | Oficios Varios | Medición por tareas asignadas/completadas, sin estándar temporal | Primera implementación en la rama: catálogo editable, registro en IndexedDB y porcentaje separado en Consulta Cruzada/Reportes; falta ejecutar pruebas | P0: probar CRUD, persistencia y exclusión del rendimiento técnico |
 | Plástico/Polisombra grupal | Reglas de cuadrilla, herencia horaria y subtareas | Primera escritura canónica implementada: jornada grupal, seis integrantes, ubicación, condiciones, cantidades y subtareas 30%/65% con horario heredado y sin `meta`; falta ejecutar pruebas | P0: validar guardado, consulta, pendientes y ausencia de doble conteo |
-| Asistencia semanal independiente | Matriz de asistencia y almacén `asistencia` | Persistencia existe, pero la App inicia con datos de ejemplo y fechas fijas de octubre de 2026 | P0: eliminar datos de demostración y calcular fechas reales; mantenerla separada del rendimiento |
+| Asistencia semanal independiente | Matriz de asistencia y almacén `asistencia` | Matriz inicia vacía, con fechas dinámicas y semana lunes-domingo; persiste con `guardarAsistenciaAtomica` y `guardarLoteAsistencia` | P0: aceptar el flujo con recarga y datos reales en Android; mantenerla separada del rendimiento |
 | Ausencias formales | Siete códigos documentados; almacén separado | Módulo y tipo de ausencia presentes | P1: verificar intervalos y separación de asistencia |
-| Consulta cruzada colaborador-fecha | Asistencia + jornada/rendimiento + ausencia | Módulo y servicio de dominio presentes; documentación registra integración | P0: contrastar datos persistidos y casos incompletos |
+| Consulta cruzada colaborador-fecha | Asistencia + jornada/rendimiento + ausencia | Servicio compartido y suite sintética; los incidentes no se atribuyen globalmente ni cuentan como jornada | P0: contrastar datos persistidos y casos incompletos en Android |
 | Reportes individual/general y CSV/PDF/XLSX | PWA documenta impresión/PDF y exportaciones CSV de varios módulos | CSV consolidado agregado a Reportes; impresión del navegador disponible para PDF; XLSX real y CSV por módulo aún no confirmados | P1: probar CSV y completar formatos sin llamar XLSX a un CSV |
-| Backup completo JSON | Exportación/importación de la base documentadas | El módulo Respaldos ahora exporta los seis almacenes canónicos; validación estricta y compatibilidad con ambos marcadores de formato implementadas en la rama | P0: ejecutar pruebas de contenido y recuperación |
+| Backup completo JSON | Exportación/importación de la base documentadas | El módulo Respaldos exporta los seis almacenes; validador estructural cubierto por pruebas y restauración en una transacción IndexedDB | P0: probar exportación/restauración real y recuperación ante aborto en navegador |
 | Historial de respaldos | No se confirmó como historial persistente en PWA | Historial local de hasta 10 operaciones (exportación/restauración/Drive) agregado; depende de localStorage | P2: probar persistencia y comportamiento si localStorage no está disponible |
 | Destino de respaldo local configurable | Selector de carpeta y fallback a Descargas documentados en PWA | No se encontró en el módulo revisado | P1: adaptar File System Access API con fallback compatible |
 | Google Drive OAuth/sincronización | Arquitectura PWA documenta integración verificada en producción | Servicio de copia manual agregado; no se ha configurado ni probado el Client ID del destino | P1: configurar origen OAuth y validar autorización, carpetas y subida |
-| Restauración segura | Importación explícita en PWA | Validación previa exige los seis almacenes y una versión conocida; escritura en una sola transacción IndexedDB. Pruebas de validador añadidas, aún no ejecutadas | P0: probar archivo inválido, incompleto, incompatible y aborto de transacción |
+| Restauración segura | Importación explícita en PWA | Validación de formato, versión, almacenes e IDs pasa pruebas automatizadas; la escritura usa una sola transacción. El aborto real de IndexedDB aún no se ha probado en navegador | P0: probar archivo inválido, incompleto, incompatible y aborto de transacción en navegador |
 | Cifrado/hash del backup | No se concluye aquí el detalle criptográfico del flujo PWA | La UI ya advierte que el JSON no está cifrado ni tiene hash criptográfico en esta versión | P0: decidir e implementar protección real si se requiere |
-| Autenticación/usuarios | Modelo operativo esperado: supervisión local, sin cuentas por colaborador | App importa AuthProvider/LoginScreen/UserManagement | P1: revisar y alinear con el uso de supervisor único; no habilitar cuentas innecesarias |
-| Incidentes y fotos | Registro de incidentes en PWA | Módulo visual disponible, pero lista y formulario solo actualizan estado React; no se encontró persistencia canónica | P1: persistir sin crear stores nuevos sin análisis y probar recuperación |
+| Autenticación/usuarios | Modelo operativo esperado: supervisor local, sin cuentas por colaborador | Login y gestión multiusuario retirados del flujo activo; archivos heredados conservados fuera del chequeo TypeScript | P1: decidir si se requiere un mecanismo de acceso específico del supervisor, sin cuentas de colaboradores |
+| Incidentes y fotos | Registro de incidentes en PWA | Incidentes persistidos como tramos `tipo: incidente`; fecha/hora, severidad, primeros auxilios, vínculo opcional a colaborador y foto opcional hasta 3 MB | P1: probar persistencia, adjunto y atribución desde Android |
 | Instalación y operación offline | Manifiesto/SW; fuente funcional offline-first | Manifiesto/SW y gestor PWA presentes | P0: comprobar instalación, reinicio, modo avión y actualización de caché |
 
 ## 4. Riesgos técnicos detectados
@@ -74,16 +74,16 @@ La revisión más detallada de persistencia por módulo está en [Inventario fun
 - Pruebas matemáticas de jornadas, segmentos consecutivos, pendientes, metas y Oficios Varios.
 - Validación robusta y recuperación de respaldo/restauración.
 - Pruebas de consulta cruzada con datos completos, faltantes y errores de lectura.
-- Ejecutar pruebas, TypeScript/lint y build con resultados registrados.
+- Pruebas CI ejecutadas: 98/98 tests, typecheck y build aprobados en el commit documentado; falta aceptación en navegador.
 
 ### P1 — Paridad operativa
 - Completar formatos de exportación faltantes.
 - Adaptar selector de carpeta local y fallback a Descargas.
-- Diseñar e integrar Google Drive en un servicio separado, después de confirmar configuración OAuth del destino.
+- Configurar y validar el servicio de Google Drive ya implementado; confirmar Client ID y origen OAuth del destino.
 - Alinear autenticación al modelo real de supervisor único.
 
 ### P2 — Organización y calidad de uso
-- Historial de respaldos.
+- Probar historial local de respaldos y fallback cuando localStorage no esté disponible.
 - Revisar incidentes, adjuntos opcionales, controles de almacenamiento, accesibilidad y detalles de interfaz móvil.
 - Documentar procedimientos de prueba y recuperación.
 
@@ -102,9 +102,19 @@ Una función no se marca como terminada solo por existir su componente. Se consi
 - [x] Identificadas las arquitecturas y los almacenes declarados.
 - [x] Localizados los módulos principales de jornadas, asistencia, ausencias, consulta, reportes y respaldos en Auditoría 2026.
 - [x] Detectadas diferencias iniciales en Drive, destino local, exportaciones, persistencia de módulos e historial de respaldos.
-- [x] Servicio aislado de copia manual a Google Drive agregado en la rama de integración (pendiente de configuración y prueba real).\n- [x] Exportación del respaldo desde los seis almacenes canónicos, restauración transaccional con validación estricta, historial local y pruebas del validador agregadas.\n- [ ] Revisión completa función por función de los módulos y servicios.
-- [ ] Ejecución real de `npm test`, `npm run lint` y `npm run build`.
-- [ ] Pruebas comparativas con casos sintéticos.
+- [x] Servicio aislado de copia manual a Google Drive agregado en la rama de integración (pendiente de configuración y prueba real).
+- [x] Exportación del respaldo desde los seis almacenes canónicos, restauración transaccional con validación estricta, historial local y pruebas del validador agregadas.
+- [ ] Revisión completa función por función de los módulos y servicios.
+- [x] Ejecución real de `npm test`, `npm run lint` y `npm run build` en GitHub Actions.
+- [x] Pruebas comparativas sintéticas de jornada, rendimiento, pendientes, Oficios Varios, cobertura e incidentes.
 - [ ] Aceptación funcional desde Android.
+
+## Evidencia de ejecución automatizada
+
+- Commit validado: `91983e607205ba587df820bd79aeb90b5a48cebc`.
+- [GitHub Actions — ejecución 39884009272](https://github.com/xposed823-prog/nexocampo-auditoria-2026/actions/runs/39884009272).
+- `npm test`: 98 aprobadas, 0 fallidas; `npm run lint`: aprobado; `npm run build`: aprobado.
+- Instalación CI usa `npm ci --legacy-peer-deps` por una incompatibilidad declarada entre Vite 8 y la versión de esbuild en el lockfile. Alinear las dependencias y regenerar el lockfile sigue pendiente.
+- No se han ejecutado pruebas manuales de Android, OAuth real, restauración transaccional en navegador ni modo avión.
 
 **Importante:** esta matriz es una línea base de inspección estática. Los estados deben actualizarse al ejecutar y comprobar cada flujo.
