@@ -68,6 +68,8 @@ test('FASE 2 [P2-02]: Validador de Estructura rechaza payloads corruptos o sin I
 
   // Caso 4: Registro interno sin campo obligatorio 'id'
   const conRegistroSinId = {
+    formato: 'nexocampo_backup',
+    version_db: 4,
     stores: {
       colaboradores: [{ codigo: 'COL-999' }], // Falta id
       labores: [],
@@ -79,7 +81,7 @@ test('FASE 2 [P2-02]: Validador de Estructura rechaza payloads corruptos o sin I
   };
   const resSinId = validarEstructuraBackupJSON(conRegistroSinId);
   assert.equal(resSinId.valido, false);
-  assert.match(resSinId.error || '', /no contiene un id válido/i);
+  assert.match(resSinId.error || '', /identificador válido/i);
 });
 
 test('FASE 2 [P2-03]: Formato de Clave Compuesta Normativa para Asistencia', () => {
