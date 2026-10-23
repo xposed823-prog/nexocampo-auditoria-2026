@@ -927,7 +927,7 @@ export async function consultarReportePeriodo(
       estadoIntegridad: jornadasEnRango.length === 0 ? 'SIN_REGISTROS' : 'EXITO_COMPLETO',
       mensajeEstado: jornadasEnRango.length === 0
         ? 'No se encontraron registros para el periodo seleccionado.'
-        : `Reporte consolidado: ${conteoJornadasUnicas} jornadas únicas y ${totalIncidentesPeriodo} incidentes auditados.`
+        : `Reporte consolidado: ${conteoJornadasUnicas} jornadas únicas y ${totalIncidentesPeriodo} incidentes auditados.`,
       periodo: {
         fechaInicio,
         fechaFin,
