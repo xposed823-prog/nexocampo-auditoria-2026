@@ -221,4 +221,67 @@ describe('separación matemática de Oficios Varios', () => {
     assert.equal(reporte.eficienciaPonderadaGlobalPct, null);
     assert.equal(reporte.cumplimientoMetasGlobalPct, null);
   });
+  it('no atribuye un incidente global a todos los colaboradores ni lo cuenta como jornada', async () => {
+    const incidenteGlobal: JornadaRegistro = {
+      id: 'jornada_incidente_global_test',
+      fecha: FECHA,
+      colaboradores_ids: [],
+      tramos: [{
+        id: 'incidente_global_test',
+        tipo: 'incidente',
+        titulo: 'Incidente de seguridad',
+        hora_inicio: '09:15',
+        hora_fin: '09:15',
+        severidad: 'leve',
+        primeros_auxilios: false,
+        observaciones: 'Incidente de prueba sin atribución individual'
+      }],
+      creadoEn: '2026-10-22T14:15:00.000Z',
+      actualizadoEn: '2026-10-22T14:15:00.000Z',
+      sincronizado: false
+    };
+    const datos = { ...mockDatos, jornadas: [incidenteGlobal] };
+
+    const consulta = await consultarColaboradorFecha(colaborador.id, FECHA, { mockDatos: datos });
+    assert.equal(consulta.jornada.registrado, false);
+    assert.equal(consulta.jornada.conteoJornadasDia, 0);
+    assert.equal(consulta.incidentes.length, 0);
+
+    const reporte = await consultarReportePeriodo(FECHA, FECHA, { mockDatos: datos });
+    assert.equal(reporte.conteoJornadasUnicas, 0);
+    assert.equal(reporte.totalIncidentesPeriodo, 1);
+  });
+
+  it('muestra un incidente asociado sin contarlo como jornada productiva', async () => {
+    const incidenteAsociado: JornadaRegistro = {
+      id: 'jornada_incidente_asociado_test',
+      fecha: FECHA,
+      colaboradores_ids: [colaborador.id],
+      tramos: [{
+        id: 'incidente_asociado_test',
+        tipo: 'incidente',
+        titulo: 'Incidente de seguridad',
+        hora_inicio: '09:15',
+        hora_fin: '09:15',
+        severidad: 'moderado',
+        primeros_auxilios: true,
+        observaciones: 'Incidente de prueba asociado'
+      }],
+      creadoEn: '2026-10-22T14:15:00.000Z',
+      actualizadoEn: '2026-10-22T14:15:00.000Z',
+      sincronizado: false
+    };
+    const datos = { ...mockDatos, jornadas: [incidenteAsociado] };
+
+    const consulta = await consultarColaboradorFecha(colaborador.id, FECHA, { mockDatos: datos });
+    assert.equal(consulta.jornada.registrado, false);
+    assert.equal(consulta.jornada.conteoJornadasDia, 0);
+    assert.equal(consulta.incidentes.length, 1);
+    assert.equal(consulta.estadoIntegridad, 'DATOS_INCOMPLETOS');
+
+    const reporte = await consultarReportePeriodo(FECHA, FECHA, { mockDatos: datos });
+    assert.equal(reporte.conteoJornadasUnicas, 0);
+    assert.equal(reporte.totalIncidentesPeriodo, 1);
+  });
+
 });
