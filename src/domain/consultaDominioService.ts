@@ -361,7 +361,7 @@ export async function consultarColaboradorFecha(
             try {
               const evalCumpl = calcularCumplimientoCantidad(t.completados!, t.meta!);
               cumplimientoMetaPct = evalCumpl.cumplimientoCantidadPct;
-              if (t.estado !== 'pendiente' && t.estado !== 'no_cumple') {
+              if (t.estado !== 'pendiente') {
                 sumaMetasPct += cumplimientoMetaPct;
                 conteoMetasValidas++;
               }
