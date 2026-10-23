@@ -1,10 +1,12 @@
 import React from 'react';
 import { HardHat, Plus, X } from 'lucide-react';
-import { AREAS_AGRONOMICAS } from '../../domain/catalogoAgronomico';
+import { AREAS_AGRONOMICAS, COLABORADORES_CATALOGO } from '../../domain/catalogoAgronomico';
 
 export interface IncidenteItem {
   id: string;
+  fecha: string;
   hora: string;
+  colaboradorId?: string;
   severidad: 'leve' | 'moderado' | 'grave' | string;
   tipo: string;
   area: string;
@@ -18,8 +20,13 @@ export interface IncidentesModuloProps {
   setIncidentesLista: React.Dispatch<React.SetStateAction<IncidenteItem[]>>;
   modalIncidenteAbierto: boolean;
   setModalIncidenteAbierto: (val: boolean) => void;
+  incidenteFecha: string;
+  setIncidenteFecha: (val: string) => void;
   incidenteHora: string;
   setIncidenteHora: (val: string) => void;
+  incidenteColaboradorId: string;
+  setIncidenteColaboradorId: (val: string) => void;
+  onGuardarIncidente: (incidente: IncidenteItem) => Promise<void>;
   incidenteSeveridad: 'leve' | 'moderado' | 'grave';
   setIncidenteSeveridad: (val: 'leve' | 'moderado' | 'grave') => void;
   incidenteArea: string;
@@ -37,8 +44,13 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
   setIncidentesLista,
   modalIncidenteAbierto,
   setModalIncidenteAbierto,
+  incidenteFecha,
+  setIncidenteFecha,
   incidenteHora,
   setIncidenteHora,
+  incidenteColaboradorId,
+  setIncidenteColaboradorId,
+  onGuardarIncidente,
   incidenteSeveridad,
   setIncidenteSeveridad,
   incidenteArea,
@@ -59,7 +71,7 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
               Bitácora de Incidentes y Primeros Auxilios (SG-SST)
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Registro de eventos de seguridad en campo. No exige hora final. Fotografía estrictamente opcional. Respeto a privacidad médica (Ley 1581).
+              Registro de eventos de seguridad en campo. Solo requiere fecha y hora del evento; no exige hora final ni diagnósticos médicos.
             </p>
           </div>
           <button
@@ -83,7 +95,7 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
           >
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-mono text-xs font-bold text-amber-400">{inc.hora}</span>
+                <span className="font-mono text-xs font-bold text-amber-400">{inc.fecha} · {inc.hora}</span>
                 <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold uppercase">
                   Severidad: {inc.severidad}
                 </span>
@@ -91,6 +103,7 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
               </div>
               <p className="text-xs font-semibold text-slate-200">{inc.tipo}</p>
               <p className="text-xs text-slate-400 mt-0.5">{inc.descripcion}</p>
+              {inc.colaboradorId && <p className="text-[11px] text-slate-500 mt-1">Relacionado con: {COLABORADORES_CATALOGO.find((c) => c.id === inc.colaboradorId)?.nombreCompleto || inc.colaboradorId}</p>}
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
@@ -125,6 +138,10 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1">Fecha del evento</label>
+                <input type="date" required value={incidenteFecha} onChange={(e) => setIncidenteFecha(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs" />
+              </div>
+              <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1">Hora del Evento</label>
                 <input
                   type="time"
@@ -148,12 +165,20 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
             </div>
 
             <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Colaborador relacionado (opcional)</label>
+              <select value={incidenteColaboradorId} onChange={(e) => setIncidenteColaboradorId(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs">
+                <option value="">Sin atribución individual</option>
+                {COLABORADORES_CATALOGO.map((colaborador) => <option key={colaborador.id} value={colaborador.id}>{colaborador.nombreCompleto}</option>)}
+              </select>
+            </div>
+            <div>
               <label className="block text-xs font-semibold text-slate-400 mb-1">Área y Ubicación Agronómica</label>
               <select
                 value={incidenteArea}
                 onChange={(e) => setIncidenteArea(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs font-medium text-slate-100"
               >
+                <option value="">Seleccione área y bloque</option>
                 {AREAS_AGRONOMICAS.map((a) => (
                   <optgroup key={a.id} label={`Área ${a.nombre} (${a.codigo})`}>
                     {a.bloques.map((b) => (
@@ -169,6 +194,7 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
             <div>
               <label className="block text-xs font-semibold text-slate-400 mb-1">Descripción del Hecho</label>
               <textarea
+                required
                 value={incidenteDescripcion}
                 onChange={(e) => setIncidenteDescripcion(e.target.value)}
                 rows={3}
@@ -204,23 +230,32 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  if (!incidenteDescripcion.trim()) {
-                    dispararToast('Ingrese la descripción del incidente');
+                onClick={async () => {
+                  if (!incidenteFecha || !incidenteHora || !incidenteArea || !incidenteDescripcion.trim()) {
+                    dispararToast('Complete fecha, hora, área y descripción del incidente.');
                     return;
                   }
-                  const nuevo = {
+                  const nuevo: IncidenteItem = {
                     id: `inc_${Date.now()}`,
+                    fecha: incidenteFecha,
                     hora: incidenteHora,
+                    colaboradorId: incidenteColaboradorId || undefined,
                     severidad: incidenteSeveridad,
-                    tipo: 'Incidente registrado',
+                    tipo: 'Incidente de seguridad',
                     area: incidenteArea,
-                    descripcion: incidenteDescripcion,
+                    descripcion: incidenteDescripcion.trim(),
                     primerosAuxilios: incidenteAuxilios
                   };
-                  setIncidentesLista([nuevo, ...incidentesLista]);
-                  setModalIncidenteAbierto(false);
-                  dispararToast('Incidente registrado en la bitácora SG-SST');
+                  try {
+                    await onGuardarIncidente(nuevo);
+                    setModalIncidenteAbierto(false);
+                    setIncidenteDescripcion('');
+                    setIncidenteHora('');
+                    setIncidenteColaboradorId('');
+                    setIncidenteAuxilios(false);
+                  } catch (error: any) {
+                    dispararToast(`No se pudo guardar el incidente: ${error?.message || 'error de IndexedDB'}`);
+                  }
                 }}
                 className="flex-1 min-h-[44px] py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold"
               >
