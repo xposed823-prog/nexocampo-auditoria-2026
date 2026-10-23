@@ -268,7 +268,7 @@ export async function consultarColaboradorFecha(
 
     // 3. Jornadas y tramos del colaborador en la fecha consultada (soporte multi-jornada)
     const jornadasDia = jornadas.filter(
-      j => j.fecha === fecha && (j.colaboradores_ids.includes(colaboradorId) || j.colaboradores_ids.length === 0)
+      j => j.fecha === fecha && j.colaboradores_ids.includes(colaboradorId)
     );
 
     let jornadaResultado: ResultadoConsultaCruzada['jornada'] = {
@@ -464,10 +464,11 @@ export async function consultarColaboradorFecha(
       const horaAperturaStr = minApertura !== Infinity ? `${String(Math.floor(minApertura / 60)).padStart(2, '0')}:${String(minApertura % 60).padStart(2, '0')}` : undefined;
       const horaCierreStr = maxCierre !== -Infinity ? `${String(Math.floor(maxCierre / 60)).padStart(2, '0')}:${String(maxCierre % 60).padStart(2, '0')}` : undefined;
       const minutosBrutosTotales = (maxCierre > minApertura && minApertura !== Infinity) ? (maxCierre - minApertura) : totalMinutosEfectivos;
-      const jornadaIds = [...new Set(jornadasDia.map((j) => j.jornada_base_id || j.id))];
+      const jornadasOperativasDia = jornadasDia.filter((j) => (j.tramos || []).some((t) => t.tipo !== 'incidente'));
+      const jornadaIds = [...new Set(jornadasOperativasDia.map((j) => j.jornada_base_id || j.id))];
 
       jornadaResultado = {
-        registrado: true,
+        registrado: jornadasOperativasDia.length > 0,
         conteoJornadasDia: jornadaIds.length,
         jornadaIds,
         jornadaId: jornadaIds[0],
@@ -717,12 +718,13 @@ export async function consultarReportePeriodo(
     });
 
     // Conteo estricto de jornadas únicas (por ID)
-    const jornadaIdsUnicos = new Set(jornadasEnRango.map((j) => j.jornada_base_id || j.id));
+    const jornadasConActividad = jornadasEnRango.filter((j) => (j.tramos || []).some((t) => t.tipo !== 'incidente'));
+    const jornadaIdsUnicos = new Set(jornadasConActividad.map((j) => j.jornada_base_id || j.id));
     const conteoJornadasUnicas = jornadaIdsUnicos.size;
 
     // Conjunto de colaboradores únicos que participaron
     const colaboradoresUnicos = new Set<string>();
-    jornadasEnRango.forEach(j => j.colaboradores_ids.forEach(cid => colaboradoresUnicos.add(cid)));
+    jornadasConActividad.forEach(j => j.colaboradores_ids.forEach(cid => colaboradoresUnicos.add(cid)));
 
     // 2. Procesamiento de tramos agregados
     let conteoTramosTotales = 0;
@@ -922,10 +924,10 @@ export async function consultarReportePeriodo(
     const horasTotalesEfectivas = Number((minutosTotalesEfectivos / 60).toFixed(1));
 
     return {
-      estadoIntegridad: conteoJornadasUnicas === 0 ? 'SIN_REGISTROS' : 'EXITO_COMPLETO',
-      mensajeEstado: conteoJornadasUnicas === 0
-        ? 'No se encontraron jornadas para el periodo seleccionado.'
-        : `Reporte consolidado exitoso: ${conteoJornadasUnicas} jornadas únicas auditadas.`,
+      estadoIntegridad: jornadasEnRango.length === 0 ? 'SIN_REGISTROS' : 'EXITO_COMPLETO',
+      mensajeEstado: jornadasEnRango.length === 0
+        ? 'No se encontraron registros para el periodo seleccionado.'
+        : `Reporte consolidado: ${conteoJornadasUnicas} jornadas únicas y ${totalIncidentesPeriodo} incidentes auditados.`
       periodo: {
         fechaInicio,
         fechaFin,
