@@ -228,9 +228,10 @@ export async function dbGetAll<T>(store: StoreName, decrypt: boolean = false): P
     if (!res || res.length === 0) return [];
     
     if (decrypt) {
-      return await Promise.all(res.map(async item => {
-        if (item && typeof item === 'object' && item._encrypted) {
-          return await decryptData(item);
+      return await Promise.all(res.map(async (item) => {
+        if (item && typeof item === 'object' && (item as Record<string, unknown>)._encrypted === true) {
+          const encryptedItem = item as unknown as { iv: string; ciphertext: string };
+          return await decryptData(encryptedItem) as T;
         }
         return item;
       }));
