@@ -9,6 +9,12 @@ export interface AusenciasModuloProps {
   dispararToast: (msg: string) => void;
 }
 
+function fechaLocalHoy(): string {
+  const hoy = new Date();
+  const pad = (valor: number) => String(valor).padStart(2, '0');
+  return `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
+}
+
 const TIPO_MAP: Record<string, 'I' | 'JV' | 'LP' | 'P' | 'V' | 'SP' | 'C'> = {
   'Incapacidad Médica': 'I',
   'Jurado de Votación': 'JV',
@@ -35,9 +41,9 @@ export const AusenciasModulo: React.FC<AusenciasModuloProps> = ({ modoSol, dispa
 
   const [colaboradorId, setColaboradorId] = useState(COLABORADORES_CATALOGO[0].id);
   const [tipoEtiqueta, setTipoEtiqueta] = useState('Incapacidad Médica');
-  const [fechaInicio, setFechaInicio] = useState('2026-10-19');
-  const [fechaFin, setFechaFin] = useState('2026-10-19');
-  const [motivo, setMotivo] = useState('Incapacidad EPS por lumbalgia');
+  const [fechaInicio, setFechaInicio] = useState(fechaLocalHoy);
+  const [fechaFin, setFechaFin] = useState(fechaLocalHoy);
+  const [motivo, setMotivo] = useState('');
 
   const cargarAusencias = async () => {
     try {
@@ -64,6 +70,11 @@ export const AusenciasModulo: React.FC<AusenciasModuloProps> = ({ modoSol, dispa
   const registrarAusencia = async () => {
     if (!colaboradorId || !fechaInicio || !fechaFin) {
       dispararToast('Complete todos los campos obligatorios');
+      return;
+    }
+
+    if (fechaFin < fechaInicio) {
+      dispararToast('La fecha final no puede ser anterior a la fecha inicial.');
       return;
     }
 
@@ -209,12 +220,12 @@ export const AusenciasModulo: React.FC<AusenciasModuloProps> = ({ modoSol, dispa
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1 font-semibold">Motivo / Diagnóstico</label>
+              <label className="block text-slate-400 mb-1 font-semibold">Motivo administrativo (sin diagnóstico clínico)</label>
               <input
                 type="text"
                 value={motivo}
                 onChange={(e) => setMotivo(e.target.value)}
-                placeholder="Descripción breve..."
+                placeholder="Ej. permiso personal, vacaciones o ausencia formalizada"
                 className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100"
               />
             </div>
