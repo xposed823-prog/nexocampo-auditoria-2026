@@ -564,14 +564,20 @@ export async function guardarLoteAsistencia(
  * Hidratación de la matriz semanal de asistencia desde IndexedDB
  */
 export async function cargarMatrizAsistenciaSemana(
-  fechaInicioLunes: string = '2026-10-19'
+  fechaInicioLunes: string = (() => {
+    const hoy = new Date();
+    const dia = (hoy.getDay() + 6) % 7;
+    hoy.setDate(hoy.getDate() - dia);
+    const pad = (valor: number) => String(valor).padStart(2, '0');
+    return `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
+  })()
 ): Promise<Record<string, 'sin_registrar' | 'presente' | 'retardo' | 'ausencia'>> {
   const registros = await dbGetAll<AsistenciaRegistro>('asistencia');
   const matriz: Record<string, 'sin_registrar' | 'presente' | 'retardo' | 'ausencia'> = {};
 
   const fechasSemana: string[] = [];
   const baseDate = new Date(`${fechaInicioLunes}T12:00:00Z`);
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 7; i++) {
     const d = new Date(baseDate);
     d.setDate(baseDate.getDate() + i);
     fechasSemana.push(d.toISOString().split('T')[0]);
