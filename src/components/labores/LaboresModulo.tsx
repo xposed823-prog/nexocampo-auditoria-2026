@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Briefcase, Plus, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
-import { detectarSolapamientoTemporal, calcularCumplimientoCantidad } from '../../domain/businessRulesEngine';
+import { detectarSolapamientoTemporal } from '../../domain/businessRulesEngine';
+import { calcularCumplimientoCantidad } from '../../domain/formValidators';
 import { LABORES_AGRONOMICAS, COLABORADORES_CATALOGO, AREAS_AGRONOMICAS } from '../../domain/catalogoAgronomico';
 import { dbGetAll, guardarJornadaRegistro, type JornadaRegistro, type TramoJornada } from '../../domain/nexocampoDB';
 import { suscribirMutacionDatos } from '../../domain/consultaDominioService';
