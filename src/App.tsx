@@ -54,6 +54,20 @@ import { PwaSyncModulo } from './components/pwa/PwaSyncModulo';
 import { AdminModulo } from './components/admin/AdminModulo';
 
 // Documentos técnicos generados para Tarea 3
+function fechaLocalHoy(): string {
+  const hoy = new Date();
+  const pad = (valor: number) => String(valor).padStart(2, '0');
+  return `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
+}
+
+function lunesSemanaActual(): string {
+  const hoy = new Date(`${fechaLocalHoy()}T12:00:00`);
+  const diasDesdeLunes = (hoy.getDay() + 6) % 7;
+  hoy.setDate(hoy.getDate() - diasDesdeLunes);
+  const pad = (valor: number) => String(valor).padStart(2, '0');
+  return `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
+}
+
 const DOCUMENTOS_TAREA_3 = [
   { id: '15', archivo: '15-reglas-jornada.md', titulo: 'Reglas de Jornada y Segmentos', resumen: 'Aritmética canónica, jornada general única, 3 labores consecutivas sin triplicar jornadas y solapamiento real vs subtareas.' },
   { id: '16', archivo: '16-reglas-estados.md', titulo: 'Taxonomía y Reglas de Estados', resumen: 'Comportamiento de Cumple, No Cumple, Pendiente, Sin Registro, Incompleto. Invariante de no penalización implícita.' },
@@ -112,15 +126,7 @@ function App() {
   const [notaSupervisorJustificacion, setNotaSupervisorJustificacion] = useState('');
 
   // Estado interactivo de Asistencia Semanal con persistencia real IndexedDB
-  const [matrizAsistencia, setMatrizAsistencia] = useState<Record<string, 'sin_registrar' | 'presente' | 'retardo' | 'ausencia'>>({
-    'col_1-0': 'presente',
-    'col_1-1': 'presente',
-    'col_1-2': 'retardo',
-    'col_2-0': 'presente',
-    'col_2-1': 'sin_registrar',
-    'col_3-0': 'presente',
-    'col_3-1': 'ausencia',
-  });
+  const [matrizAsistencia, setMatrizAsistencia] = useState<Record<string, 'sin_registrar' | 'presente' | 'retardo' | 'ausencia'>>({});
   const [jornadasTotales, setJornadasTotales] = useState<JornadaRegistro[]>([]);
   const [dbCargada, setDbCargada] = useState(false);
 
@@ -128,12 +134,28 @@ function App() {
   const hidratarDatosDesdeIndexedDB = async () => {
     try {
       await abrirDB();
-      const matrizGuardada = await cargarMatrizAsistenciaSemana('2026-10-19');
+      const matrizGuardada = await cargarMatrizAsistenciaSemana(lunesSemanaActual());
       if (Object.keys(matrizGuardada).length > 0) {
         setMatrizAsistencia(prev => ({ ...prev, ...matrizGuardada }));
       }
       const listaJornadas = await dbGetAll<JornadaRegistro>('jornadas');
       setJornadasTotales(listaJornadas || []);
+      const incidentesPersistidos: IncidenteItem[] = (listaJornadas || []).flatMap((jornada) =>
+        (jornada.tramos || [])
+          .filter((tramo) => tramo.tipo === 'incidente')
+          .map((tramo) => ({
+            id: tramo.id,
+            fecha: jornada.fecha,
+            hora: tramo.hora_inicio,
+            severidad: tramo.severidad || 'leve',
+            tipo: tramo.titulo || 'Incidente registrado',
+            area: tramo.area || 'Ubicación no especificada',
+            descripcion: tramo.observaciones || '',
+            primerosAuxilios: Boolean(tramo.primeros_auxilios),
+            colaboradorId: jornada.colaboradores_ids[0]
+          }))
+      ).sort((a, b) => `${b.fecha} ${b.hora}`.localeCompare(`${a.fecha} ${a.hora}`));
+      setIncidentesLista(incidentesPersistidos);
       setDbCargada(true);
     } catch (e) {
       console.warn('[NexoCampo] Advertencia al hidratar desde IndexedDB:', e);
@@ -147,26 +169,45 @@ function App() {
 
   // Estado del filtro de Consulta Cruzada
   const [consultaColaborador, setConsultaColaborador] = useState<string>('col_1');
-  const [consultaFecha, setConsultaFecha] = useState<string>('2026-10-19');
+  const [consultaFecha, setConsultaFecha] = useState<string>(fechaLocalHoy());
 
-  // Estado de Incidentes
+  // Estado de Incidentes: formulario vacío y registros cargados desde IndexedDB.
   const [modalIncidenteAbierto, setModalIncidenteAbierto] = useState(false);
-  const [incidenteHora, setIncidenteHora] = useState('09:15');
+  const [incidenteFecha, setIncidenteFecha] = useState(fechaLocalHoy());
+  const [incidenteHora, setIncidenteHora] = useState('');
+  const [incidenteColaboradorId, setIncidenteColaboradorId] = useState('');
   const [incidenteSeveridad, setIncidenteSeveridad] = useState<'leve' | 'moderado' | 'grave'>('leve');
-  const [incidenteArea, setIncidenteArea] = useState('Bloque 2 - Túnel 4');
-  const [incidenteDescripcion, setIncidenteDescripcion] = useState('Corte superficial en guante de cuero durante templado de guaya.');
-  const [incidenteAuxilios, setIncidenteAuxilios] = useState(true);
-  const [incidentesLista, setIncidentesLista] = useState<IncidenteItem[]>([
-    {
-      id: 'inc_1',
-      hora: '09:15',
-      severidad: 'leve',
-      tipo: 'Corte superficial',
-      area: 'Bloque 2 - Túnel 4',
-      descripcion: 'Corte en guante de cuero; atendido con botiquín de primeros auxilios.',
-      primerosAuxilios: true
-    }
-  ]);
+  const [incidenteArea, setIncidenteArea] = useState('');
+  const [incidenteDescripcion, setIncidenteDescripcion] = useState('');
+  const [incidenteAuxilios, setIncidenteAuxilios] = useState(false);
+  const [incidentesLista, setIncidentesLista] = useState<IncidenteItem[]>([]);
+
+  const guardarIncidentePersistido = async (incidente: IncidenteItem) => {
+    const ahora = new Date().toISOString();
+    const jornada: JornadaRegistro = {
+      id: `jornada_incidente_${incidente.fecha}_${Date.now()}`,
+      fecha: incidente.fecha,
+      colaboradores_ids: incidente.colaboradorId ? [incidente.colaboradorId] : [],
+      tramos: [{
+        id: incidente.id,
+        tipo: 'incidente',
+        titulo: incidente.tipo,
+        hora_inicio: incidente.hora,
+        hora_fin: incidente.hora,
+        area: incidente.area,
+        severidad: incidente.severidad as 'leve' | 'moderado' | 'grave',
+        primeros_auxilios: incidente.primerosAuxilios,
+        observaciones: incidente.descripcion,
+        estandar_min: null
+      }],
+      creadoEn: ahora,
+      actualizadoEn: ahora,
+      sincronizado: false
+    };
+    await guardarJornadaRegistro(jornada);
+    await hidratarDatosDesdeIndexedDB();
+    dispararToast('Incidente guardado en IndexedDB.');
+  };
 
   // Toast Feedback
   const [toastMensaje, setToastMensaje] = useState<string | null>(null);
@@ -747,8 +788,13 @@ function App() {
             setIncidentesLista={setIncidentesLista}
             modalIncidenteAbierto={modalIncidenteAbierto}
             setModalIncidenteAbierto={setModalIncidenteAbierto}
+            incidenteFecha={incidenteFecha}
+            setIncidenteFecha={setIncidenteFecha}
             incidenteHora={incidenteHora}
             setIncidenteHora={setIncidenteHora}
+            incidenteColaboradorId={incidenteColaboradorId}
+            setIncidenteColaboradorId={setIncidenteColaboradorId}
+            onGuardarIncidente={guardarIncidentePersistido}
             incidenteSeveridad={incidenteSeveridad}
             setIncidenteSeveridad={setIncidenteSeveridad}
             incidenteArea={incidenteArea}
