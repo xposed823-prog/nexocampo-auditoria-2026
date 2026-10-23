@@ -42,7 +42,7 @@
 
 - Rama: `integracion-pwa-auditoria-2026`
 - Commit validado: `91983e607205ba587df820bd79aeb90b5a48cebc`
-- GitHub Actions: [ejecución 39884009272](https://github.com/xposed823-prog/nexocampo-auditoria-2026/actions/runs/39884009272)
+- GitHub Actions: [ejecución 39884286240](https://github.com/xposed823-prog/nexocampo-auditoria-2026/actions/runs/39884286240)
 - Resultado: `npm test` — 98/98 pruebas aprobadas; `npm run lint` — aprobado; `npm run build` — aprobado.
 - Limitación: esto no sustituye pruebas de IndexedDB, OAuth ni interfaz en Android. La instalación usa `npm ci --legacy-peer-deps` por el conflicto declarado entre Vite 8 y la versión de esbuild bloqueada; queda pendiente alinear dependencias y lockfile.
 
