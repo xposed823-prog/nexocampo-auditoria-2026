@@ -123,6 +123,7 @@ export const RespaldosModulo: React.FC<RespaldosModuloProps> = ({
   };
 
   const guardarEnDrive = async () => {
+    if (!window.confirm('El respaldo JSON no está cifrado y puede incluir datos personales y fotos de incidentes. Confirma que esta es tu cuenta privada de Google Drive y que autorizas subir el archivo. ¿Continuar?')) return;
     const nombreFallback = `nexocampo-backup-${new Date().toISOString().slice(0, 10)}.json`;
     setCargando(true);
     try {
@@ -228,6 +229,9 @@ export const RespaldosModulo: React.FC<RespaldosModuloProps> = ({
           {estadoDrive.connected
             ? `Cuenta autorizada en este dispositivo. Último respaldo: ${estadoDrive.lastSync ? new Date(estadoDrive.lastSync).toLocaleString() : 'sin registro'}.`
             : 'La autorización se solicita al guardar. No se almacenan tokens OAuth en localStorage.'}
+        </p>
+        <p className="text-xs leading-relaxed text-amber-500">
+          Atención: el archivo JSON no está cifrado. Puede contener datos personales y fotografías opcionales de incidentes. Súbelo solo a una cuenta privada autorizada.
         </p>
         {!driveConfigurado && (
           <p className="text-xs text-amber-500">
