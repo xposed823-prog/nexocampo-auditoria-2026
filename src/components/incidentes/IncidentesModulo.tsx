@@ -107,8 +107,8 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[11px] px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                ✓ Primeros Auxilios Aplicados
+              <span className={`text-[11px] px-2.5 py-1 rounded border ${inc.primerosAuxilios ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-slate-500/10 text-slate-400 border-slate-500/30'}`}>
+                {inc.primerosAuxilios ? '✓ Primeros auxilios aplicados' : 'Primeros auxilios no reportados'}
               </span>
             </div>
           </div>
