@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HardHat, Plus, X } from 'lucide-react';
 import { AREAS_AGRONOMICAS, COLABORADORES_CATALOGO } from '../../domain/catalogoAgronomico';
 
@@ -12,6 +12,7 @@ export interface IncidenteItem {
   area: string;
   descripcion: string;
   primerosAuxilios: boolean;
+  fotoDataUrl?: string;
 }
 
 export interface IncidentesModuloProps {
@@ -61,6 +62,34 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
   setIncidenteAuxilios,
   dispararToast
 }) => {
+  const [fotoDataUrl, setFotoDataUrl] = useState<string | undefined>();
+  const [fotoNombre, setFotoNombre] = useState('');
+
+  const seleccionarFoto = (archivo?: File) => {
+    if (!archivo) {
+      setFotoDataUrl(undefined);
+      setFotoNombre('');
+      return;
+    }
+    if (!archivo.type.startsWith('image/')) {
+      dispararToast('Seleccione un archivo de imagen.');
+      return;
+    }
+    if (archivo.size > 3 * 1024 * 1024) {
+      dispararToast('La foto debe pesar máximo 3 MB.');
+      return;
+    }
+    const lector = new FileReader();
+    lector.onload = () => {
+      if (typeof lector.result === 'string') {
+        setFotoDataUrl(lector.result);
+        setFotoNombre(archivo.name);
+      }
+    };
+    lector.onerror = () => dispararToast('No se pudo leer la foto seleccionada.');
+    lector.readAsDataURL(archivo);
+  };
+
   return (
     <div className="space-y-6">
       <div className={`p-4 rounded-xl border ${modoSol ? 'bg-slate-50 border-slate-300' : 'bg-slate-800/40 border-slate-700/60'}`}>
@@ -104,6 +133,7 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
               <p className="text-xs font-semibold text-slate-200">{inc.tipo}</p>
               <p className="text-xs text-slate-400 mt-0.5">{inc.descripcion}</p>
               {inc.colaboradorId && <p className="text-[11px] text-slate-500 mt-1">Relacionado con: {COLABORADORES_CATALOGO.find((c) => c.id === inc.colaboradorId)?.nombreCompleto || inc.colaboradorId}</p>}
+              {inc.fotoDataUrl && <img src={inc.fotoDataUrl} alt="Fotografía adjunta del incidente" className="mt-2 max-h-40 max-w-full rounded-lg border border-slate-700 object-contain" />}
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
@@ -203,6 +233,17 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
               />
             </div>
 
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1">Fotografía (opcional, máximo 3 MB)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => seleccionarFoto(e.target.files?.[0])}
+                className="block w-full text-xs text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-700 file:px-3 file:py-2 file:text-slate-100"
+              />
+              {fotoNombre && <p className="mt-1 text-[11px] text-emerald-400">Adjunta: {fotoNombre}</p>}
+            </div>
+
             <div className="flex items-center gap-2 pt-1">
               <input
                 type="checkbox"
@@ -244,7 +285,8 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
                     tipo: 'Incidente de seguridad',
                     area: incidenteArea,
                     descripcion: incidenteDescripcion.trim(),
-                    primerosAuxilios: incidenteAuxilios
+                    primerosAuxilios: incidenteAuxilios,
+                    fotoDataUrl
                   };
                   try {
                     await onGuardarIncidente(nuevo);
@@ -253,6 +295,8 @@ export const IncidentesModulo: React.FC<IncidentesModuloProps> = ({
                     setIncidenteHora('');
                     setIncidenteColaboradorId('');
                     setIncidenteAuxilios(false);
+                    setFotoDataUrl(undefined);
+                    setFotoNombre('');
                   } catch (error: any) {
                     dispararToast(`No se pudo guardar el incidente: ${error?.message || 'error de IndexedDB'}`);
                   }
