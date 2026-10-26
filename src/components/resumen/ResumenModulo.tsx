@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, ArrowRight, Plus } from 'lucide-react';
+import { ArrowRight, ClipboardCheck, Layers, Plus, ShieldAlert } from 'lucide-react';
 
 export interface ResumenModuloProps {
   modoSol: boolean;
@@ -12,78 +12,56 @@ export const ResumenModulo: React.FC<ResumenModuloProps> = ({
   setTabActual,
   setModalIncidenteAbierto
 }) => {
+  const surface = modoSol
+    ? 'bg-white border-slate-200 shadow-sm'
+    : 'bg-slate-800/50 border-slate-700/60';
+
   return (
-    <div className="space-y-6">
-      <div className={`p-4 rounded-xl border ${modoSol ? 'bg-slate-50 border-slate-300' : 'bg-slate-800/40 border-slate-700/60'}`}>
-        <h2 className="text-sm font-bold flex items-center gap-2">
-          <Layers className="w-4 h-4 text-emerald-500" />
-          Panel de Control de Cuadrilla de Campo (Día en Curso)
-        </h2>
-        <p className="text-xs text-slate-400 mt-1">
-          Visualización sintetizada de la jornada del supervisor. En este modelo operativo los operarios no usan cuentas personales.
-        </p>
-      </div>
+    <section className="space-y-4" aria-labelledby="inicio-title">
+      <header className="relative overflow-hidden rounded-2xl border border-emerald-900/10 bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-700 p-5 text-white shadow-lg shadow-emerald-950/10">
+        <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-emerald-300/15 blur-2xl" />
+        <div className="relative flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10">
+            <Layers className="h-5 w-5 text-emerald-100" />
+          </div>
+          <div className="min-w-0">
+            <p className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-200">Centro de operaciones</p>
+            <h1 id="inicio-title" className="text-xl font-extrabold leading-tight tracking-tight sm:text-2xl">NexoCampo</h1>
+            <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-emerald-50/90">
+              Registra la jornada, consulta resultados y gestiona novedades de campo.
+            </p>
+          </div>
+        </div>
+      </header>
 
-      {/* Tarjetas de Métricas Clave (Grilla 2x2 Ergonómica) */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Jornada Activa</span>
-          <p className="text-lg font-bold font-mono text-emerald-400 mt-1">06:30 - 15:30</p>
-          <span className="text-[10px] text-slate-400 block mt-0.5">475 min netos estimados</span>
-        </div>
-        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Cuadrilla Presente</span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-xl font-bold font-mono text-sky-400">5 / 6</span>
-            <span className="text-xs text-slate-300 font-sans">operarios</span>
+      <div className={`rounded-2xl border p-4 ${surface}`}>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h2 className={`text-base font-bold ${modoSol ? 'text-slate-900' : 'text-white'}`}>Acciones frecuentes</h2>
+            <p className={`mt-1 text-sm ${modoSol ? 'text-slate-500' : 'text-slate-400'}`}>Accesos directos para el trabajo diario.</p>
           </div>
-          <span className="text-[10px] text-slate-400 block mt-0.5">1 retardo registrado</span>
+          <span className="rounded-lg bg-emerald-50 p-2 text-emerald-800">
+            <ClipboardCheck className="h-5 w-5" />
+          </span>
         </div>
-        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Cubiertas (Plástico)</span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-xl font-bold font-mono text-amber-400">75%</span>
-            <span className="text-xs text-slate-300 font-sans">avance</span>
-          </div>
-          <span className="text-[10px] text-amber-400 font-semibold block mt-0.5">Saldo justificado</span>
-        </div>
-        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Incidentes SST</span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-xl font-bold font-mono text-slate-200">1</span>
-            <span className="text-xs text-slate-300 font-sans">reporte</span>
-          </div>
-          <span className="text-[10px] text-slate-400 block mt-0.5">Severidad leve · Atendido</span>
-        </div>
-      </div>
-
-      {/* Accesos Rápidos Táctiles para Android */}
-      <div className={`p-4 rounded-xl border space-y-3 ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/30 border-slate-700/50'}`}>
-        <h3 className="font-semibold text-xs uppercase tracking-wider text-slate-400">Acciones Táctiles de Campo</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <button
-            onClick={() => setTabActual('asistencia')}
-            className="min-h-[48px] py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-between"
-          >
-            <span>Pase de Lista Rápido</span>
-            <ArrowRight className="w-4 h-4" />
+        <div className="grid grid-cols-1 gap-2.5">
+          <button type="button" onClick={() => setTabActual('asistencia')}
+            className="flex min-h-[52px] items-center justify-between gap-3 rounded-xl bg-emerald-700 px-4 py-3 text-left text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-800">
+            <span className="flex items-center gap-3"><ClipboardCheck className="h-5 w-5 shrink-0" /> Pase de lista</span>
+            <ArrowRight className="h-4 w-4 shrink-0" />
           </button>
-          <button
-            onClick={() => setTabActual('polisombra')}
-            className="min-h-[48px] py-2.5 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs flex items-center justify-between"
-          >
-            <span>Registrar Plástico/Malla</span>
-            <ArrowRight className="w-4 h-4" />
+          <button type="button" onClick={() => setTabActual('polisombra')}
+            className={`flex min-h-[52px] items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm font-bold transition-colors ${modoSol ? 'border-slate-200 bg-slate-50 text-slate-800 hover:bg-emerald-50' : 'border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700'}`}>
+            <span className="flex items-center gap-3"><Layers className="h-5 w-5 shrink-0 text-emerald-600" /> Registrar plástico / malla</span>
+            <ArrowRight className="h-4 w-4 shrink-0" />
           </button>
-          <button
-            onClick={() => setModalIncidenteAbierto(true)}
-            className="min-h-[48px] py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 font-semibold text-xs flex items-center justify-between"
-          >
-            <span>Reportar Incidente SST</span>
-            <Plus className="w-4 h-4" />
+          <button type="button" onClick={() => setModalIncidenteAbierto(true)}
+            className={`flex min-h-[52px] items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm font-bold transition-colors ${modoSol ? 'border-amber-200 bg-amber-50 text-amber-950 hover:bg-amber-100' : 'border-amber-700/50 bg-amber-950/30 text-amber-200 hover:bg-amber-900/40'}`}>
+            <span className="flex items-center gap-3"><ShieldAlert className="h-5 w-5 shrink-0" /> Reportar incidente</span>
+            <Plus className="h-4 w-4 shrink-0" />
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

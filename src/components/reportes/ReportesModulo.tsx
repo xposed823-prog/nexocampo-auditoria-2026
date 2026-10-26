@@ -108,7 +108,7 @@ export const ReportesModulo: React.FC<ReportesModuloProps> = ({ modoSol, dispara
             type="date"
             value={fechaInicio}
             onChange={(e) => setFechaInicio(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-slate-100"
+            className={`w-full min-h-11 px-3 py-2 rounded-xl border text-sm font-mono focus-visible:outline-2 focus-visible:outline-emerald-500 ${modoSol ? 'bg-white border-slate-300 text-slate-800' : 'bg-slate-900 border-slate-700 text-slate-100'}`}
           />
         </div>
         <div>
@@ -117,7 +117,7 @@ export const ReportesModulo: React.FC<ReportesModuloProps> = ({ modoSol, dispara
             type="date"
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-slate-100"
+            className={`w-full min-h-11 px-3 py-2 rounded-xl border text-sm font-mono focus-visible:outline-2 focus-visible:outline-emerald-500 ${modoSol ? 'bg-white border-slate-300 text-slate-800' : 'bg-slate-900 border-slate-700 text-slate-100'}`}
           />
         </div>
         <div>
@@ -125,7 +125,7 @@ export const ReportesModulo: React.FC<ReportesModuloProps> = ({ modoSol, dispara
           <select
             value={cuadrilla}
             onChange={(e) => setCuadrilla(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs font-medium text-slate-100"
+            className={`w-full min-h-11 px-3 py-2 rounded-xl border text-sm font-medium focus-visible:outline-2 focus-visible:outline-emerald-500 ${modoSol ? 'bg-white border-slate-300 text-slate-800' : 'bg-slate-900 border-slate-700 text-slate-100'}`}
           >
             <option value="todas">Todas las cuadrillas</option>
             <option value="A">Cuadrilla A</option>

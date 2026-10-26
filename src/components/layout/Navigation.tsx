@@ -1,20 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- * 
- * NexoCampo v18.1.9 - Barra de Navegación Inferior Móvil Canónica (Bottom Nav)
- * 6 Vistas Oficiales: Inicio, Registrar, Reportes, Ausencias, Asistencia, Admin
- */
-
 import React from 'react';
-import {
-  Home,
-  Edit3,
-  BarChart3,
-  Calendar,
-  CheckCircle2,
-  Settings
-} from 'lucide-react';
+import { Home, Edit3, BarChart3, Calendar, CheckCircle2, Settings } from 'lucide-react';
 
 export interface NavigationProps {
   tabActual: string;
@@ -23,57 +8,34 @@ export interface NavigationProps {
 }
 
 export const VISTAS_NEXOCAMPO = [
-  { id: 'inicio', label: 'Inicio', icon: Home, emoji: '🏠' },
-  { id: 'registrar', label: 'Registrar', icon: Edit3, emoji: '✏️' },
-  { id: 'reportes', label: 'Reportes', icon: BarChart3, emoji: '📊' },
-  { id: 'ausencias', label: 'Ausencias', icon: Calendar, emoji: '📅' },
-  { id: 'asistencia', label: 'Asistencia', icon: CheckCircle2, emoji: '✅' },
-  { id: 'admin', label: 'Admin', icon: Settings, emoji: '⚙️' }
+  { id: 'inicio', label: 'Inicio', icon: Home },
+  { id: 'registrar', label: 'Registrar', icon: Edit3 },
+  { id: 'reportes', label: 'Reportes', icon: BarChart3 },
+  { id: 'ausencias', label: 'Ausencias', icon: Calendar },
+  { id: 'asistencia', label: 'Asistencia', icon: CheckCircle2 },
+  { id: 'admin', label: 'Admin', icon: Settings }
 ];
 
-export const Navigation: React.FC<NavigationProps> = ({
-  tabActual,
-  setTabActual,
-  modoSol
-}) => {
-  return (
-    <nav
-      className={`fixed bottom-0 left-0 right-0 z-40 max-w-[28rem] mx-auto border-t select-none transition-colors duration-150 ${
-        modoSol
-          ? 'bg-white/95 border-slate-200 text-slate-600 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]'
-          : 'bg-slate-900/95 border-slate-800 text-slate-400 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]'
-      } backdrop-blur-md pb-[env(safe-area-inset-bottom,0px)]`}
-      aria-label="Navegación principal inferior NexoCampo"
-    >
-      <div className="grid grid-cols-6 h-14 items-center px-1">
-        {VISTAS_NEXOCAMPO.map((item) => {
-          const Icon = item.icon;
-          const activo = tabActual === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setTabActual(item.id)}
-              className={`flex flex-col items-center justify-center h-full min-h-[44px] transition-all duration-150 ${
-                activo
-                  ? modoSol
-                    ? 'text-emerald-700 font-bold scale-105'
-                    : 'text-emerald-400 font-bold scale-105'
-                  : modoSol
-                    ? 'hover:text-slate-900 text-slate-500'
-                    : 'hover:text-slate-200 text-slate-400'
-              }`}
-            >
-              <div className={`p-1 rounded-lg transition-colors ${activo ? (modoSol ? 'bg-emerald-50' : 'bg-emerald-500/15') : ''}`}>
-                <Icon className={`w-4 h-4 ${activo ? (modoSol ? 'text-emerald-700' : 'text-emerald-400') : 'currentColor'}`} />
-              </div>
-              <span className="text-[10px] tracking-tight mt-0.5 leading-none">
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
-  );
-};
+export const Navigation: React.FC<NavigationProps> = ({ tabActual, setTabActual, modoSol }) => (
+  <nav
+    className={`fixed bottom-0 left-0 right-0 z-40 mx-auto max-w-[28rem] border-t pb-[env(safe-area-inset-bottom,0px)] backdrop-blur-xl ${modoSol ? 'border-slate-200 bg-white/95 text-slate-600 shadow-[0_-4px_16px_rgba(15,23,42,0.08)]' : 'border-slate-800 bg-slate-950/95 text-slate-400 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]'}`}
+    aria-label="Navegación principal"
+  >
+    <div className="grid min-h-[4.25rem] grid-cols-6 items-stretch px-1">
+      {VISTAS_NEXOCAMPO.map((item) => {
+        const Icon = item.icon;
+        const activo = tabActual === item.id || (item.id === 'registrar' && ['jornadas', 'labores', 'oficios', 'polisombra', 'incidentes'].includes(tabActual));
+        return (
+          <button key={item.id} type="button" onClick={() => setTabActual(item.id)}
+            aria-current={activo ? 'page' : undefined}
+            className={`flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-2 text-center transition-colors focus-visible:z-10 ${activo ? (modoSol ? 'font-bold text-emerald-800' : 'font-bold text-emerald-300') : (modoSol ? 'text-slate-500 hover:text-slate-900' : 'text-slate-400 hover:text-white')}`}>
+            <span className={`flex h-7 w-8 items-center justify-center rounded-lg ${activo ? (modoSol ? 'bg-emerald-50' : 'bg-emerald-500/15') : ''}`}>
+              <Icon className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="text-[11px] leading-tight tracking-tight">{item.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  </nav>
+);
