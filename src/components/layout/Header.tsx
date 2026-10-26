@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  Sun,
-  Wifi,
-  WifiOff,
-  Smartphone,
-  Database,
-  User,
-  LogOut,
-  Settings
-} from 'lucide-react';
+import { Sun, Wifi, WifiOff, Smartphone, Database, LogOut, Settings } from 'lucide-react';
 import { AuthUser } from '../../domain/authTypes';
 
 export interface HeaderProps {
@@ -28,145 +19,65 @@ export interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  modoSol,
-  setModoSol,
-  isOnline,
-  isInstallable,
-  isInstalled,
-  isIOS,
-  install,
-  setShowIOSPrompt,
-  totalPendientesLocal,
-  setTabActual,
-  user,
-  onLogout,
-  onManageUsers
-}) => {
-  return (
-    <header className={`sticky top-0 z-40 border-b ${modoSol ? 'bg-white/95 border-slate-200 shadow-sm' : 'bg-slate-900/90 border-slate-800 backdrop-blur-md'}`}>
-      <div className="max-w-[28rem] mx-auto px-3 py-2 flex items-center justify-between gap-2">
-        
-        {/* Logotipo Oficial NexoCampo PRO */}
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 shrink-0 rounded-[10px] bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-[0_4px_12px_rgba(34,197,94,0.35)] border border-emerald-400/30 text-white font-bold text-base select-none">
-            🌱
-          </div>
+  modoSol, setModoSol, isOnline, isInstallable, isInstalled, isIOS, install,
+  setShowIOSPrompt, totalPendientesLocal, setTabActual, user, onLogout, onManageUsers
+}) => (
+  <header className={`sticky top-0 z-40 border-b backdrop-blur-xl ${modoSol ? 'border-slate-200 bg-white/95 shadow-sm' : 'border-slate-800 bg-slate-950/95'}`}>
+    <div className="mx-auto flex w-full max-w-[28rem] flex-col gap-3 px-4 pb-3 pt-3">
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-400/30 bg-gradient-to-br from-emerald-700 to-emerald-500 text-xl text-white shadow-md shadow-emerald-900/15" aria-hidden="true">🌱</div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className={`font-extrabold text-sm sm:text-base tracking-tight leading-none ${modoSol ? 'text-slate-900' : 'text-white'}`}>
-                NexoCampo
-              </span>
-              <span className="px-1 py-0.2 text-[8px] font-black uppercase tracking-wider rounded bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
-                PRO
-              </span>
-              <span className="text-[9px] font-mono text-slate-400">
-                v18.1.9
-              </span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className={`truncate text-base font-extrabold tracking-tight ${modoSol ? 'text-slate-900' : 'text-white'}`}>NexoCampo</span>
+              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-emerald-800">Auditoría</span>
             </div>
-            <span className={`text-[9px] font-medium tracking-tight block truncate mt-0.5 ${modoSol ? 'text-slate-500' : 'text-slate-400'}`}>
-              Control operativo de adecuaciones
-            </span>
+            <p className={`mt-0.5 text-xs ${modoSol ? 'text-slate-500' : 'text-slate-400'}`}>Supervisión de campo · 2026</p>
           </div>
         </div>
-
-        {/* Controles de Accesibilidad, Conectividad y PWA */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Indicador de Conectividad en Campo */}
-          <div
-            className={`px-2 py-1 rounded-md text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 border transition-colors ${
-              isOnline
-                ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30'
-                : 'bg-amber-950/60 text-amber-300 border-amber-500/50 animate-pulse'
-            }`}
-            title={isOnline ? 'Conexión activa con el servidor central' : 'Modo Offline en Campo: Guardando en IndexedDB'}
-          >
-            {isOnline ? (
-              <>
-                <Wifi className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">En Línea</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="w-3.5 h-3.5 text-amber-400" />
-                <span>Offline</span>
-              </>
-            )}
-          </div>
-
-          {/* Botón de Instalación In-App PWA */}
-          {isInstallable && (
-            <button
-              onClick={install}
-              className="min-h-[36px] px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-sm transition"
-              aria-label="Instalar NexoCampo como aplicación móvil"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Instalar App</span>
-            </button>
-          )}
-
-          {isIOS && !isInstalled && (
-            <button
-              onClick={() => setShowIOSPrompt(true)}
-              className="min-h-[36px] px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-semibold flex items-center gap-1"
-            >
-              <Smartphone className="w-3 h-3 text-emerald-400" />
-              <span>Instalar iOS</span>
-            </button>
-          )}
-
-          {/* Botón Modo Sol */}
-          <button
-            onClick={() => setModoSol(!modoSol)}
-            className={`min-h-[36px] px-2.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors border ${
-              modoSol
-                ? 'bg-amber-100 border-amber-400 text-amber-950'
-                : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
-            }`}
-            aria-label="Alternar modo contraste sol campo"
-          >
-            <Sun className="w-3.5 h-3.5 text-amber-500" />
-            <span className="hidden sm:inline">{modoSol ? 'Normal' : 'Sol'}</span>
-          </button>
-
-          {/* Usuario y Autenticación */}
-          {user && (
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={onManageUsers}
-                className="min-h-[36px] px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-[10px] font-semibold flex items-center gap-1 hover:bg-slate-700 transition-colors"
-                title="Gestionar usuarios"
-              >
-                <Settings className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{user.username}</span>
-              </button>
-              <button
-                onClick={onLogout}
-                className="min-h-[36px] px-2 py-1 rounded-lg bg-rose-800/50 border border-rose-700 text-rose-300 text-[10px] font-semibold flex items-center gap-1 hover:bg-rose-700/50 transition-colors"
-                title="Cerrar sesión"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-
-          {/* Píldora de Cola IndexedDB con enlace a la vista PWA */}
-          <button
-            onClick={() => setTabActual('pwa_offline')}
-            className={`px-2 py-1 rounded-md text-[10px] sm:text-[11px] font-mono border flex items-center gap-1 cursor-pointer transition ${
-              totalPendientesLocal > 0
-                ? 'bg-amber-950/50 text-amber-300 border-amber-500/50 hover:bg-amber-900/50'
-                : modoSol
-                  ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                  : 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30'
-            }`}
-            title="Ver registros pendientes en IndexedDB"
-          >
-            <Database className="w-3 h-3 text-emerald-400" />
-            <span>{totalPendientesLocal} pend.</span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className={`inline-flex min-h-8 items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold ${isOnline ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-300 bg-amber-50 text-amber-900'}`} role="status">
+            {isOnline ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
+            <span>{isOnline ? 'En línea' : 'Sin red'}</span>
+          </span>
+          <button type="button" onClick={() => setTabActual('pwa_offline')}
+            className={`relative flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-xl border px-2 text-xs font-bold ${totalPendientesLocal > 0 ? 'border-amber-300 bg-amber-50 text-amber-900' : modoSol ? 'border-slate-200 bg-slate-50 text-slate-700' : 'border-slate-700 bg-slate-800 text-slate-200'}`}
+            aria-label={`Registros pendientes: ${totalPendientesLocal}`} title="Ver registros pendientes">
+            <Database className="h-4 w-4" /><span>{totalPendientesLocal}</span>
           </button>
         </div>
       </div>
-    </header>
-  );
-};
+
+      <div className="flex flex-wrap items-center gap-2">
+        {isInstallable && (
+          <button type="button" onClick={install} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-700 px-3 text-xs font-bold text-white shadow-sm transition-colors hover:bg-emerald-800">
+            <Smartphone className="h-4 w-4" /> Instalar app
+          </button>
+        )}
+        {isIOS && !isInstalled && (
+          <button type="button" onClick={() => setShowIOSPrompt(true)}
+            className={`inline-flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs font-semibold ${modoSol ? 'border-slate-200 bg-white text-slate-700' : 'border-slate-700 bg-slate-800 text-slate-100'}`}>
+            <Smartphone className="h-4 w-4" /> Instalar en iOS
+          </button>
+        )}
+        <button type="button" onClick={() => setModoSol(!modoSol)}
+          className={`inline-flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-colors ${modoSol ? 'border-amber-300 bg-amber-50 text-amber-950 hover:bg-amber-100' : 'border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700'}`}
+          aria-label={modoSol ? 'Activar modo oscuro' : 'Activar modo claro'}>
+          <Sun className="h-4 w-4 text-amber-500" /> {modoSol ? 'Modo claro' : 'Modo oscuro'}
+        </button>
+        {user && (
+          <>
+            <button type="button" onClick={onManageUsers}
+              className={`inline-flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs font-semibold ${modoSol ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50' : 'border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700'}`}
+              title={`Gestionar usuarios · ${user.username}`}>
+              <Settings className="h-4 w-4" /> Usuarios
+            </button>
+            <button type="button" onClick={onLogout}
+              className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-800 hover:bg-rose-100"
+              title="Cerrar sesión"><LogOut className="h-4 w-4" /> Salir</button>
+          </>
+        )}
+      </div>
+    </div>
+  </header>
+);
