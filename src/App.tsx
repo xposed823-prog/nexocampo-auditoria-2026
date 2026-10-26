@@ -87,7 +87,7 @@ function App() {
   const [tabActual, setTabActual] = useState<string>('inicio');
   const [subTabRegistrar, setSubTabRegistrar] = useState<'labores' | 'polisombra' | 'oficios' | 'jornadas' | 'incidentes'>('labores');
   const [subTabReportes, setSubTabReportes] = useState<'rendimiento' | 'consulta'>('rendimiento');
-  const [modoSol, setModoSol] = useState(false);
+  const [modoSol, setModoSol] = useState(true);
   const [docAbierto, setDocAbierto] = useState<string>('08');
 
   // Estado del Formulario de Plástico y Polisombra
@@ -684,28 +684,7 @@ function App() {
             onRestauracionExitosa={hidratarDatosDesdeIndexedDB}
           />
         )}
-
-        {/* Footer Barra de Estado NexoCampo PRO */}
-        <footer className={`mt-6 mb-4 p-3 rounded-xl border text-xs space-y-2 ${
-          modoSol ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-slate-900/60 border-slate-800 text-slate-400'
-        }`}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 font-semibold text-slate-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>NexoCampo PRO v18.1.9</span>
-            </div>
-            <span className="text-[10px] text-emerald-400 font-mono font-medium">Motor Offline-First</span>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-400 pt-1.5 border-t border-slate-800/40">
-            <span>Áreas: Jamaica · Piloto · Púrpura · Naranja</span>
-            <div className="flex items-center gap-2 font-mono font-medium text-emerald-400">
-              <span>36 Colaboradores</span>
-              <span>·</span>
-              <span>23 Labores</span>
-            </div>
-          </div>
-        </footer>
-      </main>
+</main>
 
       {/* Barra de Navegación Inferior Canónica */}
       <Navigation
