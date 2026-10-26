@@ -63,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button type="button" onClick={() => setModoSol(!modoSol)}
           className={`inline-flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-colors ${modoSol ? 'border-amber-300 bg-amber-50 text-amber-950 hover:bg-amber-100' : 'border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700'}`}
           aria-label={modoSol ? 'Activar modo oscuro' : 'Activar modo claro'}>
-          <Sun className="h-4 w-4 text-amber-500" /> {modoSol ? 'Modo claro' : 'Modo oscuro'}
+          <Sun className="h-4 w-4 text-amber-500" /> {modoSol ? 'Modo sol' : 'Modo oscuro'}
         </button>
         {user && (
           <>
