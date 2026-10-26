@@ -1,0 +1,56 @@
+name: Repair lockfile and validate build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/cloudflare-esbuild-peer-conflict
+    paths:
+      - package.json
+      - .github/workflows/repair-lockfile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/cloudflare-esbuild-peer-conflict
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Regenerate package lock
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Commit regenerated lockfile if changed
+        run: |
+          if ! git diff --quiet -- package-lock.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json
+            git commit -m "fix: regenerate lockfile for compatible esbuild"
+            git push origin HEAD:fix/cloudflare-esbuild-peer-conflict
+          else
+            echo "Lockfile already up to date."
+          fi
+
+      - name: Install from lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Type check
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build production bundle
+        run: npm run build
