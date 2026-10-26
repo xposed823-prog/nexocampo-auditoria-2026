@@ -393,7 +393,7 @@ function App() {
 
   return (
     <div className={`min-h-screen transition-colors duration-150 ${modoSol ? 'bg-[#f1f5f9] text-[#334155]' : 'bg-slate-950 text-slate-100'} font-sans`}>
-      <div className={`app-shell max-w-[28rem] w-full mx-auto min-h-screen flex flex-col relative shadow-2xl ${modoSol ? 'bg-[#f8fafc]' : 'bg-slate-900'} pb-32`}>
+      <div data-theme={modoSol ? "light" : "dark"} className={`app-shell max-w-[28rem] w-full mx-auto min-h-screen flex flex-col relative shadow-2xl ${modoSol ? 'bg-[#f8fafc]' : 'bg-slate-900'} pb-32`}>
         
         {/* 1. ENCABEZADO CANÓNICO */}
         <Header
