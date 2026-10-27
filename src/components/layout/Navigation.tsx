@@ -38,7 +38,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   return (
     <nav
-      className={`fixed bottom-0 left-0 right-0 z-40 max-w-[28rem] mx-auto border-t select-none transition-colors duration-150 ${
+      className={`fixed bottom-0 left-0 right-0 z-40 max-w-[28rem] mx-auto border-t select-none transition-colors duration-100 ${
         modoSol
           ? 'bg-white/95 border-slate-200 text-slate-600 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]'
           : 'bg-slate-900/95 border-slate-800 text-slate-400 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]'
@@ -54,11 +54,11 @@ export const Navigation: React.FC<NavigationProps> = ({
               key={item.id}
               type="button"
               onClick={() => setTabActual(item.id)}
-              className={`flex flex-col items-center justify-center h-full min-h-[44px] transition-all duration-150 ${
+              className={`flex flex-col items-center justify-center h-full min-h-[44px] transition-colors duration-100 ${
                 activo
                   ? modoSol
-                    ? 'text-emerald-700 font-bold scale-105'
-                    : 'text-emerald-400 font-bold scale-105'
+                    ? 'text-emerald-800 font-bold'
+                    : 'text-emerald-300 font-bold'
                   : modoSol
                     ? 'hover:text-slate-900 text-slate-500'
                     : 'hover:text-slate-200 text-slate-400'
@@ -67,7 +67,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               <div className={`p-1 rounded-lg transition-colors ${activo ? (modoSol ? 'bg-emerald-50' : 'bg-emerald-500/15') : ''}`}>
                 <Icon className={`w-4 h-4 ${activo ? (modoSol ? 'text-emerald-700' : 'text-emerald-400') : 'currentColor'}`} />
               </div>
-              <span className="text-[10px] tracking-tight mt-0.5 leading-none">
+              <span className="text-[10px] sm:text-[11px] font-medium tracking-tight mt-0.5 leading-none">
                 {item.label}
               </span>
             </button>
