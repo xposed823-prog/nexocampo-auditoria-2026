@@ -1,35 +1,35 @@
 @import "tailwindcss";
 
-/* NexoCampo Auditoría 2026 — sistema visual móvil */
+/* NexoCampo Auditoría 2026 — sistema visual móvil, sobrio y consistente */
 :root {
   color-scheme: light;
-  --nc-brand-50: #ecfdf5;
-  --nc-brand-100: #d1fae5;
-  --nc-brand-200: #a7f3d0;
-  --nc-brand-500: #10b981;
-  --nc-brand-600: #059669;
-  --nc-brand-700: #047857;
-  --nc-brand-800: #065f46;
-  --nc-brand-900: #064e3b;
-  --nc-bg: #f1f5f9;
+  --nc-brand-50: #edf8f1;
+  --nc-brand-100: #d9eee0;
+  --nc-brand-200: #b7dcc5;
+  --nc-brand-500: #2f8f5b;
+  --nc-brand-600: #27784c;
+  --nc-brand-700: #216640;
+  --nc-brand-800: #1c5235;
+  --nc-brand-900: #163f2b;
+  --nc-bg: #f3f6f3;
   --nc-surface: #ffffff;
-  --nc-border: #e2e8f0;
-  --nc-text: #334155;
-  --nc-text-strong: #0f172a;
-  --nc-text-muted: #64748b;
+  --nc-border: #dfe7e1;
+  --nc-text: #34443a;
+  --nc-text-strong: #1c2b21;
+  --nc-text-muted: #607166;
 }
 html {
   min-height: 100%;
   background: var(--nc-bg);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scroll-padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
 }
 body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(ellipse at 10% 0%, rgba(16, 185, 129, .08), transparent 34rem),
+    radial-gradient(ellipse at 12% 0%, rgba(47, 143, 91, .07), transparent 32rem),
     var(--nc-bg);
   color: var(--nc-text);
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -39,67 +39,62 @@ body {
 button, input, select, textarea { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: 3px solid #6ee7b7;
+  outline: 3px solid #83c99d;
   outline-offset: 2px;
 }
 input, select, textarea { max-width: 100%; }
-::selection { color: #064e3b; background: #a7f3d0; }
+::selection { color: #163f2b; background: #d9eee0; }
 .tabular-nums { font-variant-numeric: tabular-nums; }
 
 .app-shell {
-  background: #f8fafc;
+  background: #f8faf8;
   color: var(--nc-text);
-  box-shadow: 0 0 40px rgba(15, 23, 42, .08);
+  box-shadow: 0 8px 36px rgba(26, 53, 35, .08);
 }
 .app-shell > main {
   width: 100%;
   box-sizing: border-box;
 }
 .app-shell header.sticky {
-  border-color: #e2e8f0;
-  background: rgba(255, 255, 255, .94);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  border-color: var(--nc-border);
+  background: rgba(255, 255, 255, .96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 .app-shell nav[aria-label] {
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 .app-shell button {
-  transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+  transition: background-color .14s ease, border-color .14s ease, box-shadow .14s ease, color .14s ease;
 }
-.app-shell button:active { transform: scale(.985); }
 .app-shell input, .app-shell select, .app-shell textarea {
   min-height: 2.75rem;
   border-radius: .75rem;
 }
-.app-shell .rounded-xl.border {
-  border-color: #e2e8f0;
-}
-.app-shell .bg-white {
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .035);
-}
+.app-shell .rounded-xl.border { border-color: var(--nc-border); }
+.app-shell .bg-white { box-shadow: 0 1px 2px rgba(26, 53, 35, .035); }
 
-/* El modo oscuro conserva sus superficies oscuras; el modo claro corrige texto heredado. */
+/* Mantener contraste en modo claro sin alterar las superficies ni los estados semánticos. */
 [data-theme="dark"] { color-scheme: dark; }
-[data-theme="light"] .text-slate-400 { color: #64748b !important; }
-[data-theme="light"] .text-slate-300 { color: #475569 !important; }
-[data-theme="light"] .text-slate-200 { color: #334155 !important; }
-[data-theme="light"] .text-slate-100 { color: #1e293b !important; }
+[data-theme="light"] .text-slate-400 { color: #64756a !important; }
+[data-theme="light"] .text-slate-300 { color: #4d5f53 !important; }
+[data-theme="light"] .text-slate-200 { color: #34443a !important; }
+[data-theme="light"] .text-slate-100 { color: #26372c !important; }
 [data-theme="light"] input,
 [data-theme="light"] select,
 [data-theme="light"] textarea {
-  color: #1e293b;
+  color: #26372c;
   background-color: #ffffff;
-  border-color: #cbd5e1;
+  border-color: #cbd8ce;
 }
 [data-theme="light"] .app-shell header.sticky {
-  border-color: #e2e8f0;
-  background: rgba(255, 255, 255, .94);
+  border-color: var(--nc-border);
+  background: rgba(255, 255, 255, .96);
 }
 [data-theme="dark"] .app-shell header.sticky {
-  border-color: #1e293b;
-  background: rgba(2, 6, 23, .94);
+  border-color: #293a30;
+  background: rgba(18, 30, 23, .96);
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
