@@ -24,38 +24,56 @@ export const ResumenModulo: React.FC<ResumenModuloProps> = ({
         </p>
       </div>
 
-      {/* Tarjetas de Métricas Clave (Grilla 2x2 Ergonómica) */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Jornada Activa</span>
-          <p className="text-lg font-bold font-mono text-emerald-400 mt-1">06:30 - 15:30</p>
-          <span className="text-[10px] text-slate-400 block mt-0.5">475 min netos estimados</span>
-        </div>
-        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Cuadrilla Presente</span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-xl font-bold font-mono text-sky-400">5 / 6</span>
-            <span className="text-xs text-slate-300 font-sans">operarios</span>
+      {/* Indicadores: no mostrar cifras de ejemplo como si fueran datos reales */}
+      <section className="space-y-3" aria-labelledby="resumen-indicadores-titulo">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 id="resumen-indicadores-titulo" className="text-sm font-bold text-slate-800">Resumen operativo</h3>
+            <p className="text-xs text-slate-500 mt-1">Consulta cada módulo para ver los registros disponibles.</p>
           </div>
-          <span className="text-[10px] text-slate-400 block mt-0.5">1 retardo registrado</span>
+          <span className="shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-800">
+            Sin consolidado en vivo
+          </span>
         </div>
-        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Cubiertas (Plástico)</span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-xl font-bold font-mono text-amber-400">75%</span>
-            <span className="text-xs text-slate-300 font-sans">avance</span>
-          </div>
-          <span className="text-[10px] text-amber-400 font-semibold block mt-0.5">Saldo justificado</span>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setTabActual('asistencia')}
+            className={`min-h-[112px] rounded-xl border p-3.5 text-left ${modoSol ? 'bg-white border-slate-200 hover:border-emerald-300' : 'bg-slate-800/50 border-slate-700 hover:border-emerald-700'}`}
+          >
+            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Jornada y asistencia</span>
+            <span className={`mt-2 block text-sm font-bold ${modoSol ? "text-emerald-800" : "text-emerald-300"}`}>Consultar registros</span>
+            <span className="mt-1 block text-xs text-slate-500">Verifica la información registrada.</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTabActual('polisombra')}
+            className={`min-h-[112px] rounded-xl border p-3.5 text-left ${modoSol ? 'bg-white border-slate-200 hover:border-emerald-300' : 'bg-slate-800/50 border-slate-700 hover:border-emerald-700'}`}
+          >
+            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Plástico y polisombra</span>
+            <span className={`mt-2 block text-sm font-bold ${modoSol ? "text-emerald-800" : "text-emerald-300"}`}>Ver avance</span>
+            <span className="mt-1 block text-xs text-slate-500">Consulta las labores registradas.</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTabActual('reportes')}
+            className={`min-h-[112px] rounded-xl border p-3.5 text-left ${modoSol ? 'bg-white border-slate-200 hover:border-emerald-300' : 'bg-slate-800/50 border-slate-700 hover:border-emerald-700'}`}
+          >
+            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Indicadores</span>
+            <span className={`mt-2 block text-sm font-bold ${modoSol ? "text-emerald-800" : "text-emerald-300"}`}>Abrir reportes</span>
+            <span className="mt-1 block text-xs text-slate-500">Consolidados basados en registros.</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setModalIncidenteAbierto(true)}
+            className={`min-h-[112px] rounded-xl border p-3.5 text-left ${modoSol ? 'bg-white border-slate-200 hover:border-amber-300' : 'bg-slate-800/50 border-slate-700 hover:border-amber-700'}`}
+          >
+            <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Seguridad y salud</span>
+            <span className={`mt-2 block text-sm font-bold ${modoSol ? "text-amber-800" : "text-amber-300"}`}>Registrar incidente</span>
+            <span className="mt-1 block text-xs text-slate-500">Abre el formulario de reporte.</span>
+          </button>
         </div>
-        <div className={`p-3.5 rounded-xl border ${modoSol ? 'bg-white border-slate-200' : 'bg-slate-800/50 border-slate-700/50'}`}>
-          <span className="text-[11px] text-slate-400 uppercase font-semibold block">Incidentes SST</span>
-          <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-xl font-bold font-mono text-slate-200">1</span>
-            <span className="text-xs text-slate-300 font-sans">reporte</span>
-          </div>
-          <span className="text-[10px] text-slate-400 block mt-0.5">Severidad leve · Atendido</span>
-        </div>
-      </div>
+      </section>
 
       {/* Accesos Rápidos Táctiles para Android */}
       <div className={`p-4 rounded-xl border space-y-3 ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/30 border-slate-700/50'}`}>
