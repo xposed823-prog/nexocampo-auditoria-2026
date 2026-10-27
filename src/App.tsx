@@ -647,7 +647,7 @@ function App() {
 
         {/* Feedback Toast */}
         {toastMensaje && (
-          <div className="fixed bottom-16 left-4 right-4 max-w-xs mx-auto z-50 bg-emerald-700 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-semibold flex items-center gap-2 animate-bounce">
+          <div className="fixed bottom-16 left-4 right-4 max-w-xs mx-auto z-50 bg-emerald-700 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-semibold flex items-center gap-2 shadow-[0_8px_24px_rgba(22,63,43,0.22)]">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span className="truncate">{toastMensaje}</span>
           </div>
