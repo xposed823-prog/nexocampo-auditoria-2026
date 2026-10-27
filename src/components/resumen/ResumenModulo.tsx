@@ -42,7 +42,7 @@ export const ResumenModulo: React.FC<ResumenModuloProps> = ({
             className={`min-h-[112px] rounded-xl border p-3.5 text-left ${modoSol ? 'bg-white border-slate-200 hover:border-emerald-300' : 'bg-slate-800/50 border-slate-700 hover:border-emerald-700'}`}
           >
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Jornada y asistencia</span>
-            <span className="mt-2 block text-sm font-bold text-emerald-700">Consultar registros</span>
+            <span className="mt-2 block text-sm font-bold ${modoSol ? 'text-emerald-800' : 'text-emerald-300'}">Consultar registros</span>
             <span className="mt-1 block text-xs text-slate-500">Verifica la información registrada.</span>
           </button>
           <button
@@ -51,7 +51,7 @@ export const ResumenModulo: React.FC<ResumenModuloProps> = ({
             className={`min-h-[112px] rounded-xl border p-3.5 text-left ${modoSol ? 'bg-white border-slate-200 hover:border-emerald-300' : 'bg-slate-800/50 border-slate-700 hover:border-emerald-700'}`}
           >
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Plástico y polisombra</span>
-            <span className="mt-2 block text-sm font-bold text-emerald-700">Ver avance</span>
+            <span className="mt-2 block text-sm font-bold ${modoSol ? 'text-emerald-800' : 'text-emerald-300'}">Ver avance</span>
             <span className="mt-1 block text-xs text-slate-500">Consulta las labores registradas.</span>
           </button>
           <button
@@ -60,7 +60,7 @@ export const ResumenModulo: React.FC<ResumenModuloProps> = ({
             className={`min-h-[112px] rounded-xl border p-3.5 text-left ${modoSol ? 'bg-white border-slate-200 hover:border-emerald-300' : 'bg-slate-800/50 border-slate-700 hover:border-emerald-700'}`}
           >
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Indicadores</span>
-            <span className="mt-2 block text-sm font-bold text-emerald-700">Abrir reportes</span>
+            <span className="mt-2 block text-sm font-bold ${modoSol ? 'text-emerald-800' : 'text-emerald-300'}">Abrir reportes</span>
             <span className="mt-1 block text-xs text-slate-500">Consolidados basados en registros.</span>
           </button>
           <button
@@ -69,7 +69,7 @@ export const ResumenModulo: React.FC<ResumenModuloProps> = ({
             className={`min-h-[112px] rounded-xl border p-3.5 text-left ${modoSol ? 'bg-white border-slate-200 hover:border-amber-300' : 'bg-slate-800/50 border-slate-700 hover:border-amber-700'}`}
           >
             <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Seguridad y salud</span>
-            <span className="mt-2 block text-sm font-bold text-amber-700">Registrar incidente</span>
+            <span className="mt-2 block text-sm font-bold ${modoSol ? 'text-amber-800' : 'text-amber-300'}">Registrar incidente</span>
             <span className="mt-1 block text-xs text-slate-500">Abre el formulario de reporte.</span>
           </button>
         </div>
