@@ -884,6 +884,8 @@ function App() {
 
 
 
+      </main>
+
       {/* Barra de Navegación Inferior Canónica */}
       <Navigation
         tabActual={tabActual}
