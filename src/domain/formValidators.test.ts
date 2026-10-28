@@ -10,10 +10,23 @@ describe('validarPlasticoPolisombra', () => {
     assert.equal(result.saldoPendiente, 25);
   });
 
-  it('rechaza una cuadrilla que no tenga exactamente seis integrantes', () => {
+  it('acepta una cuadrilla de cinco integrantes', () => {
     const result = validarPlasticoPolisombra(5, '06:30', '11:30', 100, 100, ['soleado']);
-    assert.equal(result.esValido, false);
-    assert.match(result.errores.integrantes || '', /exactamente 6/i);
+    assert.equal(result.esValido, true);
+    assert.equal(result.errores.integrantes, undefined);
+  });
+
+  it('acepta una cuadrilla de un integrante', () => {
+    const result = validarPlasticoPolisombra(1, '06:30', '11:30', 100, 100, ['soleado']);
+    assert.equal(result.esValido, true);
+  });
+
+  it('rechaza una cuadrilla vacía o superior a seis integrantes', () => {
+    for (const count of [0, 7]) {
+      const result = validarPlasticoPolisombra(count, '06:30', '11:30', 100, 100, ['soleado']);
+      assert.equal(result.esValido, false);
+      assert.match(result.errores.integrantes || '', /entre 1 y 6/i);
+    }
   });
 
   it('rechaza completados por encima de la cantidad total', () => {
