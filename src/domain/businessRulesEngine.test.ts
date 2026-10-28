@@ -62,6 +62,20 @@ test('Rechaza intervalos de labores que se solapan dentro de una jornada', () =>
   assert.equal(res.cuadraExactamente, false);
 });
 
+test('Detecta solapamientos anidados aunque el intervalo intermedio termine antes', () => {
+  const res = calcularJornadaMultiplesLabores(
+    '06:30',
+    '10:30',
+    [
+      { id: 'l1', horaInicio: '06:30', horaFin: '09:30' },
+      { id: 'l2', horaInicio: '07:00', horaFin: '08:00' },
+      { id: 'l3', horaInicio: '08:30', horaFin: '10:00' },
+    ],
+    []
+  );
+  assert.equal(res.cuadraExactamente, false);
+});
+
 // Caso 2c: El cálculo rechaza labores fuera de la jornada general.
 test('Rechaza labores que comienzan antes de la jornada registrada', () => {
   const res = calcularJornadaMultiplesLabores(
