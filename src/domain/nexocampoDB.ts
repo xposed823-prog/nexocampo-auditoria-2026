@@ -264,7 +264,7 @@ export async function dbPut<T extends { id: string }>(store: StoreName, item: T,
     let itemToStore = item;
     if (encrypt) {
       const encrypted = await encryptData(item);
-      itemToStore = { ...item, ...encrypted, _encrypted: true } as T;
+      itemToStore = { id: item.id, ...encrypted, _encrypted: true } as T;
     }
     await _dbRequest(store, 'readwrite', (os) => os.put(itemToStore));
     notificarMutacionDatos(store, 'put', item.id);
@@ -291,23 +291,39 @@ export async function dbDelete(store: StoreName, id: string): Promise<boolean> {
 export async function semillarDatosInicialesSiVacio(db: IDBDatabase): Promise<void> {
   return new Promise((resolve) => {
     const tx = db.transaction(['colaboradores', 'labores', 'areas'], 'readwrite');
-    const colStore = tx.objectStore('colaboradores');
-    const countReq = colStore.count();
+    const stores = {
+      colaboradores: tx.objectStore('colaboradores'),
+      labores: tx.objectStore('labores'),
+      areas: tx.objectStore('areas')
+    };
+    const counts = [
+      stores.colaboradores.count(),
+      stores.labores.count(),
+      stores.areas.count()
+    ];
 
-    countReq.onsuccess = () => {
-      if (countReq.result === 0) {
-        // Cargar 36 colaboradores oficiales
-        COLABORADORES_CATALOGO.forEach((c) => colStore.put(c));
+    let completed = 0;
+    const seedIfEmpty = () => {
+      completed += 1;
+      if (completed !== counts.length) return;
 
-        // Cargar 23 labores oficiales
-        const labStore = tx.objectStore('labores');
-        LABORES_AGRONOMICAS.forEach((l) => labStore.put(l));
-
-        // Cargar 4 áreas oficiales
-        const areaStore = tx.objectStore('areas');
-        AREAS_AGRONOMICAS.forEach((a) => areaStore.put(a));
+      if (counts[0].result === 0) {
+        COLABORADORES_CATALOGO.forEach((c) => stores.colaboradores.put(c));
+      }
+      if (counts[1].result === 0) {
+        LABORES_AGRONOMICAS.forEach((l) => stores.labores.put(l));
+      }
+      if (counts[2].result === 0) {
+        AREAS_AGRONOMICAS.forEach((a) => stores.areas.put(a));
       }
     };
+
+    counts.forEach((request) => {
+      request.onsuccess = seedIfEmpty;
+      request.onerror = () => {
+        // El semillado no debe bloquear el arranque de la PWA.
+      };
+    });
 
     tx.oncomplete = () => resolve();
     tx.onerror = () => resolve(); // No bloquear si falla el semillado
