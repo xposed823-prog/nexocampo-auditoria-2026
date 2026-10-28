@@ -88,10 +88,26 @@ export function calcularJornadaMultiplesLabores(
   const minutosBrutosJornada = minFin - minInicio;
 
   let minutosEfectivosLabores = 0;
-  for (const l of labores) {
-    const lIni = timeStringToMinutes(l.horaInicio);
-    const lFin = timeStringToMinutes(l.horaFin);
-    minutosEfectivosLabores += lFin - lIni;
+  let intervalosValidos = minFin > minInicio;
+  const intervalosOrdenados = labores
+    .map((l) => ({
+      inicio: timeStringToMinutes(l.horaInicio),
+      fin: timeStringToMinutes(l.horaFin)
+    }))
+    .sort((a, b) => a.inicio - b.inicio);
+
+  for (let i = 0; i < intervalosOrdenados.length; i += 1) {
+    const intervalo = intervalosOrdenados[i];
+    const duracion = intervalo.fin - intervalo.inicio;
+    if (
+      duracion <= 0 ||
+      intervalo.inicio < minInicio ||
+      intervalo.fin > minFin ||
+      (i > 0 && intervalo.inicio < intervalosOrdenados[i - 1].fin)
+    ) {
+      intervalosValidos = false;
+    }
+    minutosEfectivosLabores += duracion;
   }
 
   let minutosPausasComputables = 0;
@@ -107,7 +123,7 @@ export function calcularJornadaMultiplesLabores(
     minutosBrutosJornada,
     minutosEfectivosLabores,
     minutosPausasComputables,
-    cuadraExactamente: sumaTotal === minutosBrutosJornada,
+    cuadraExactamente: intervalosValidos && sumaTotal === minutosBrutosJornada,
     totalJornadasCreadas: 1, // Se preserva la regla de una sola jornada
   };
 }
