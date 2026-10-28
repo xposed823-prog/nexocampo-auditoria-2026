@@ -84,7 +84,7 @@ export function validarLabor(
 
 /**
  * Valida el registro especializado de Plástico y Polisombra.
- * Regla: cuadrilla de 6 integrantes; el saldo pendiente requiere justificación.
+ * Regla: cuadrilla de 1 a 6 integrantes; el saldo pendiente requiere justificación.
  * Si cantidad completada < cantidad total, activa requerimiento de justificación.
  */
 export function validarPlasticoPolisombra(
@@ -97,8 +97,8 @@ export function validarPlasticoPolisombra(
 ): ResultadoValidacion & { requiereJustificacion: boolean; saldoPendiente: number } {
   const errores: Record<string, string> = {};
 
-  if (integrantesCount !== 6) {
-    errores.integrantes = 'Seleccione exactamente 6 integrantes para la cuadrilla de plástico y polisombra.';
+  if (!Number.isInteger(integrantesCount) || integrantesCount < 1 || integrantesCount > 6) {
+    errores.integrantes = 'Seleccione entre 1 y 6 integrantes para la cuadrilla de plástico y polisombra.';
   }
 
   if (!horaInicio || !horaFin) {
