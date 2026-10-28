@@ -1,17 +1,8 @@
-import React from 'react';
-import { ClipboardCheck } from 'lucide-react';
-
-export interface ColaboradorItem {
-  id: string;
-  codigo: string;
-  nombreCompleto?: string;
-  alias: string;
-  rol: string;
-  cuadrilla: string;
-}
+import React, { useState } from 'react';
+import { ColaboradorItem } from '../consulta/ConsultaCruzadaModulo';
 
 export interface AsistenciaModuloProps {
-  modoSol: boolean;
+  modoSol?: boolean;
   colaboradoresMock: ColaboradorItem[];
   diasSemana: string[];
   matrizAsistencia: Record<string, 'sin_registrar' | 'presente' | 'retardo' | 'ausencia'>;
@@ -22,127 +13,194 @@ export interface AsistenciaModuloProps {
 }
 
 export const AsistenciaModulo: React.FC<AsistenciaModuloProps> = ({
-  modoSol,
   colaboradoresMock,
-  diasSemana,
   matrizAsistencia,
   rotarAsistencia,
-  setMatrizAsistencia,
-  dispararToast,
-  onMarcarTodosPresentes
+  dispararToast
 }) => {
-  const [filtroBusqueda, setFiltroBusqueda] = React.useState('');
+  const [semanaOffset, setSemanaOffset] = useState(0);
+  const [filtroCuadrilla, setFiltroCuadrilla] = useState('todos');
 
-  const colaboradoresFiltrados = React.useMemo(() => {
-    if (!filtroBusqueda.trim()) return colaboradoresMock;
-    const term = filtroBusqueda.toLowerCase();
-    return colaboradoresMock.filter(c =>
-      c.nombreCompleto?.toLowerCase().includes(term) ||
-      c.alias.toLowerCase().includes(term) ||
-      c.codigo.toLowerCase().includes(term) ||
-      c.cuadrilla.toLowerCase().includes(term)
-    );
-  }, [colaboradoresMock, filtroBusqueda]);
+  const diasEncabezado = [
+    { nombre: 'Lun', fecha: '19/10', idx: 0 },
+    { nombre: 'Mar', fecha: '20/10', idx: 1 },
+    { nombre: 'Mié', fecha: '21/10', idx: 2 },
+    { nombre: 'Jue', fecha: '22/10', idx: 3 },
+    { nombre: 'Vie', fecha: '23/10', idx: 4 },
+    { nombre: 'Sáb', fecha: '24/10', idx: 5 }
+  ];
+
+  const colaboradoresFiltrados = colaboradoresMock.filter(c => {
+    if (filtroCuadrilla === 'todos') return true;
+    return c.cuadrilla === filtroCuadrilla;
+  });
+
+  const exportarCSV = () => {
+    const encabezados = ['Codigo', 'Colaborador', 'Cuadrilla', ...diasEncabezado.map(d => `${d.nombre}_${d.fecha}`)];
+    const filas = colaboradoresFiltrados.map(c => {
+      const estados = diasEncabezado.map(d => matrizAsistencia[`${c.id}-${d.idx}`] || 'sin_registrar');
+      return [c.codigo, `"${c.nombreCompleto || c.alias}"`, c.cuadrilla, ...estados];
+    });
+    const contenido = [encabezados.join(','), ...filas.map(f => f.join(','))].join('\n');
+    const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Asistencia_Semana_19_25_Oct_2026.csv`;
+    link.click();
+    dispararToast('✓ Asistencia exportada en formato CSV');
+  };
 
   return (
-    <div className="space-y-6">
-      <div className={`p-4 rounded-xl border ${modoSol ? 'bg-slate-50 border-slate-300' : 'bg-slate-800/40 border-slate-700/60'}`}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="text-sm font-bold flex items-center gap-2">
-              <ClipboardCheck className="w-4 h-4 text-emerald-500" />
-              Matriz Semanal de Asistencia de Cuadrilla
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Persistencia atómica en IndexedDB (`store: asistencia`). Estado inicial normativo: <code className="text-slate-300">— (sin registrar)</code>. Toque en celda para rotar: Sin registrar &rarr; Presente &rarr; Retardo &rarr; Ausencia.
-            </p>
-          </div>
+    <div className="space-y-3.5 pb-8 select-none">
+      {/* 1. ENCABEZADO ASISTENCIA (Imagen 6) */}
+      <div className="flex items-start justify-between gap-2 pt-1">
+        <div>
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block">
+            ASISTENCIA
+          </span>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">
+            Calendario semanal
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => dispararToast('Abriendo consulta cruzada de asistencia...')}
+          className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-extrabold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
+        >
+          <span>👤</span>
+          <span>Consultar</span>
+        </button>
+      </div>
+
+      {/* 2. BARRA DE CONTROL DE SEMANA (Imagen 6) */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-2 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setSemanaOffset(prev => prev - 1)}
+          className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 flex items-center justify-center font-black text-slate-600 active:scale-95 transition-all"
+        >
+          ‹
+        </button>
+
+        <span className="text-xs font-extrabold text-slate-800 text-center">
+          Semana actual · 19 de oct – 25 de oct
+        </span>
+
+        <button
+          type="button"
+          onClick={() => setSemanaOffset(prev => prev + 1)}
+          className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 flex items-center justify-center font-black text-slate-600 active:scale-95 transition-all"
+        >
+          ›
+        </button>
+      </div>
+
+      {/* 3. SELECTOR DROPDOWN DE COLABORADORES (Imagen 6) */}
+      <div>
+        <select
+          value={filtroCuadrilla}
+          onChange={(e) => setFiltroCuadrilla(e.target.value)}
+          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 shadow-xs focus:outline-none focus:border-emerald-600"
+        >
+          <option value="todos">Todos los colaboradores</option>
+          <option value="A">Cuadrilla A</option>
+          <option value="B">Cuadrilla B</option>
+          <option value="C">Cuadrilla C</option>
+        </select>
+      </div>
+
+      {/* 4. CARD INFORMATIVA: ✓ Presente · — Sin reporte (Imagen 6) */}
+      <div className="rounded-2xl p-3 bg-white border border-slate-200/90 shadow-xs text-[11px] text-slate-600 leading-relaxed font-medium">
+        <strong>✓ Presente</strong> · <strong>— Sin reporte / pendiente</strong>. Las categorías formales de ausencia permanecen en <strong>AUSENCIAS</strong>.
+      </div>
+
+      {/* 5. CARD: REPORTES DE ASISTENCIA (Imagen 6) */}
+      <div className="rounded-2xl p-4 bg-white border border-slate-200/90 shadow-xs space-y-2.5">
+        <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+          <span>📄</span>
+          <span>REPORTES DE ASISTENCIA</span>
+        </h3>
+
+        <div className="grid grid-cols-2 gap-2.5">
           <button
-            onClick={async () => {
-              if (onMarcarTodosPresentes) {
-                await onMarcarTodosPresentes();
-              } else {
-                const actualizada = { ...matrizAsistencia };
-                colaboradoresMock.forEach(c => {
-                  actualizada[`${c.id}-0`] = 'presente';
-                });
-                setMatrizAsistencia(actualizada);
-                dispararToast('Pase de lista matutino completado para hoy');
-              }
-            }}
-            className="min-h-[44px] px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs active:scale-95 transition-all"
+            type="button"
+            onClick={exportarCSV}
+            className="py-2.5 px-3 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-800 font-extrabold text-xs flex items-center justify-center gap-2 shadow-xs active:scale-95 transition-all"
           >
-            Marcar Todos Presentes (Hoy)
+            <span>📥</span>
+            <span>CSV</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="py-2.5 px-3 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-800 font-extrabold text-xs flex items-center justify-center gap-2 shadow-xs active:scale-95 transition-all"
+          >
+            <span>📄</span>
+            <span>PDF / imprimir</span>
           </button>
         </div>
+
+        <p className="text-[10px] text-slate-400 leading-tight">
+          El CSV se guarda en NexoCampo/Asistencia. El PDF se abre para imprimir o guardar desde el navegador.
+        </p>
       </div>
 
-      {/* Buscador de Colaboradores de Campo */}
-      <div className="flex items-center justify-between gap-3">
-        <input
-          type="text"
-          placeholder="Buscar por nombre, código (COL-001) o cuadrilla..."
-          value={filtroBusqueda}
-          onChange={(e) => setFiltroBusqueda(e.target.value)}
-          className={`flex-1 max-w-md px-3 py-2 rounded-lg border text-xs ${
-            modoSol ? 'bg-white border-slate-300 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-100 placeholder-slate-500'
-          }`}
-        />
-        <span className="text-xs font-mono text-slate-400">
-          Mostrando {colaboradoresFiltrados.length} de {colaboradoresMock.length} colaboradores
-        </span>
-      </div>
-
-      {/* Tabla Matriz Semanal Accesible */}
-      <div className={`rounded-xl border overflow-hidden ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/40 border-slate-700/60'}`}>
+      {/* 6. TABLA MATRIZ SEMANAL (Imagen 6) */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs" role="grid" aria-label="Matriz semanal de asistencia">
-            <thead className={modoSol ? 'bg-slate-100 text-slate-700 font-bold' : 'bg-slate-900/80 text-slate-300'}>
+          <table className="w-full text-left text-xs" role="grid">
+            <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-600 font-extrabold text-[11px]">
               <tr>
-                <th className="p-3 w-40">Colaborador</th>
-                <th className="p-3 hidden sm:table-cell">Rol / Cuadrilla</th>
-                {diasSemana.map((dia) => (
-                  <th key={dia} className="p-3 text-center min-w-[56px] font-mono">
-                    {dia}
+                <th className="py-2.5 px-3.5 sticky left-0 bg-slate-50 z-10 w-36">Colaborador</th>
+                {diasEncabezado.map(d => (
+                  <th key={d.idx} className="py-2.5 px-2 text-center min-w-[70px]">
+                    <span className="block">{d.nombre}</span>
+                    <span className="text-[10px] text-slate-400 font-normal">{d.fecha}</span>
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-700/40">
+            <tbody className="divide-y divide-slate-100">
               {colaboradoresFiltrados.map((col) => (
-                <tr key={col.id} className="hover:bg-slate-800/30">
-                  <td className="p-3 font-medium">
-                    <span className="font-mono font-bold text-emerald-400 block text-[11px]">{col.codigo}</span>
-                    <span className="text-xs text-slate-200 block font-semibold">{col.nombreCompleto || col.alias}</span>
-                    {col.nombreCompleto && <span className="text-[10px] text-slate-400 block">{col.alias}</span>}
+                <tr key={col.id} className="hover:bg-slate-50/60 transition-colors">
+                  <td className="py-3 px-3.5 sticky left-0 bg-white z-10 font-extrabold text-xs text-slate-900 border-r border-slate-100">
+                    <span className="block truncate max-w-[130px]">{col.nombreCompleto || col.alias}</span>
+                    <span className="text-[10px] text-slate-400 font-medium block">C-{col.cuadrilla}</span>
                   </td>
-                  <td className="p-3 hidden sm:table-cell text-[11px] text-slate-400">
-                    {col.rol} · {col.cuadrilla}
-                  </td>
-                  {diasSemana.map((dia, idx) => {
-                    const key = `${col.id}-${idx}`;
-                    const est = matrizAsistencia[key] || 'sin_registrar';
+                  {diasEncabezado.map(d => {
+                    const clave = `${col.id}-${d.idx}`;
+                    const estado = matrizAsistencia[clave] || 'sin_registrar';
+
                     return (
-                      <td key={dia} className="p-2 text-center">
-                        <button
-                          type="button"
-                          onClick={() => rotarAsistencia(col.id, idx)}
-                          className={`min-w-[44px] min-h-[44px] w-11 h-11 mx-auto rounded-lg font-mono font-bold text-xs flex items-center justify-center transition-transform active:scale-90 border ${
-                            est === 'presente'
-                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                              : est === 'retardo'
-                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                                : est === 'ausencia'
-                                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                                  : 'bg-slate-900 text-slate-500 border-slate-700 hover:text-slate-300'
-                          }`}
-                          aria-label={`Asistencia ${col.alias} día ${dia}: ${est}`}
-                        >
-                          {est === 'presente' && 'P'}
-                          {est === 'retardo' && 'R'}
-                          {est === 'ausencia' && 'A'}
-                          {est === 'sin_registrar' && '—'}
-                        </button>
+                      <td key={d.idx} className="py-2 px-1 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => rotarAsistencia(col.id, d.idx)}
+                            className={`w-9 h-7 rounded-lg font-black text-xs flex items-center justify-center border transition-all active:scale-90 ${
+                              estado === 'presente'
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                : estado === 'retardo'
+                                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                : estado === 'ausencia'
+                                ? 'bg-rose-100 text-rose-800 border-rose-300'
+                                : 'bg-slate-50 text-slate-400 border-slate-200'
+                            }`}
+                          >
+                            {estado === 'presente' ? '✓' : estado === 'retardo' ? 'R' : estado === 'ausencia' ? 'A' : '—'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => rotarAsistencia(col.id, d.idx)}
+                            className="text-slate-300 hover:text-slate-600 text-[10px] p-0.5"
+                            title="Cambiar estado"
+                          >
+                            ···
+                          </button>
+                        </div>
                       </td>
                     );
                   })}
@@ -150,14 +208,6 @@ export const AsistenciaModulo: React.FC<AsistenciaModuloProps> = ({
               ))}
             </tbody>
           </table>
-        </div>
-
-        {/* Leyenda Semántica Accesible */}
-        <div className="p-3 bg-slate-900/60 border-t border-slate-700/40 flex flex-wrap gap-4 text-[11px] text-slate-400">
-          <span className="flex items-center gap-1.5"><strong className="text-slate-400 font-mono">—</strong> Sin registrar (estado inicial)</span>
-          <span className="flex items-center gap-1.5"><strong className="text-emerald-400 font-mono">P</strong> Presente jornada completa</span>
-          <span className="flex items-center gap-1.5"><strong className="text-amber-400 font-mono">R</strong> Retardo (registro horario)</span>
-          <span className="flex items-center gap-1.5"><strong className="text-rose-400 font-mono">A</strong> Ausencia formalmente registrada</span>
         </div>
       </div>
     </div>

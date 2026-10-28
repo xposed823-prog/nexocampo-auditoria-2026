@@ -43,31 +43,43 @@ export const Header: React.FC<HeaderProps> = ({
   onManageUsers
 }) => {
   return (
-    <header className={`sticky top-0 z-40 border-b ${modoSol ? 'bg-white/95 border-slate-200 shadow-sm' : 'bg-slate-900/90 border-slate-800 backdrop-blur-md'}`}>
-      <div className="max-w-[28rem] mx-auto px-3 py-2 flex items-center justify-between gap-2">
-        
-        {/* Logotipo Oficial NexoCampo PRO */}
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 shrink-0 rounded-[10px] bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-[0_4px_12px_rgba(34,197,94,0.35)] border border-emerald-400/30 text-white font-bold text-base select-none">
-            🌱
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className={`font-extrabold text-sm sm:text-base tracking-tight leading-none ${modoSol ? 'text-slate-900' : 'text-white'}`}>
-                NexoCampo
-              </span>
-              <span className="px-1 py-0.2 text-[8px] font-black uppercase tracking-wider rounded bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
-                PRO
-              </span>
-              <span className="text-[9px] font-mono text-slate-400">
-                v18.1.9
+    <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/80 backdrop-blur-md transition-colors">
+      <div className="max-w-[28rem] mx-auto">
+        {/* Barra Superior con Chips de Estado Offline Nativos (Capturas Oficiales) */}
+        <div className="flex items-center gap-2 px-4 pt-2.5 pb-1 overflow-x-auto text-[11px] font-semibold select-none no-scrollbar">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-300 text-[11px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Offline Listo
+          </span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100/80 text-amber-900 border border-amber-300/80 text-[11px]">
+            <span>🔒</span>
+            Datos en este dispositivo
+          </span>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200 shadow-xs text-[11px]">
+            {isOnline ? 'En línea' : 'Offline'}
+          </span>
+        </div>
+
+        {/* Logotipo Oficial NexoCampo PRO y Controles */}
+        <div className="px-4 py-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0 cursor-pointer" onClick={() => setTabActual('inicio')}>
+            <div className="w-10 h-10 shrink-0 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-md text-white text-xl select-none">
+              🌱
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-lg text-slate-900 tracking-tight leading-none">
+                  NexoCampo
+                </span>
+                <span className="px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider rounded-md bg-emerald-100 text-emerald-700 border border-emerald-300">
+                  PRO
+                </span>
+              </div>
+              <span className="text-[11px] font-medium text-slate-500 block truncate mt-0.5">
+                Control operativo de adecuaciones
               </span>
             </div>
-            <span className={`text-[9px] font-medium tracking-tight block truncate mt-0.5 ${modoSol ? 'text-slate-500' : 'text-slate-400'}`}>
-              Control operativo de adecuaciones
-            </span>
           </div>
-        </div>
 
         {/* Controles de Accesibilidad, Conectividad y PWA */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -167,6 +179,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </div>
-    </header>
-  );
+    </div>
+  </header>
+);
 };

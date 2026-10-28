@@ -392,8 +392,8 @@ function App() {
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-150 ${modoSol ? 'bg-[#f1f5f9] text-[#334155]' : 'bg-slate-950 text-slate-100'} font-sans`}>
-      <div className={`app-shell max-w-[28rem] w-full mx-auto min-h-screen flex flex-col relative shadow-2xl ${modoSol ? 'bg-[#f8fafc]' : 'bg-slate-900'} pb-32`}>
+    <div className="min-h-screen bg-[#f1f5f9] text-[#1e293b] font-sans antialiased">
+      <div className="app-shell max-w-[28rem] w-full mx-auto min-h-screen flex flex-col relative shadow-2xl bg-[#f8fafc] pb-28">
         
         {/* 1. ENCABEZADO CANÓNICO */}
         <Header
@@ -418,11 +418,11 @@ function App() {
         {/* Modal Guía iOS */}
         {showIOSPrompt && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-            <div className="w-full max-w-sm rounded-xl bg-slate-900 border border-slate-700 p-5 text-slate-100 space-y-3">
-              <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
+            <div className="w-full max-w-sm rounded-xl bg-white border border-slate-200 p-5 text-slate-800 space-y-3 shadow-2xl">
+              <h3 className="text-sm font-bold text-emerald-700 flex items-center gap-2">
                 <Smartphone className="w-4 h-4" /> Instalar en iPhone / iPad
               </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-600 leading-relaxed">
                 1. Toca el botón <strong>Compartir</strong> en Safari.<br />
                 2. Selecciona <strong>«Añadir a la pantalla de inicio»</strong>.<br />
                 3. Abre NexoCampo desde tu pantalla de inicio en modo autónomo.
@@ -437,19 +437,17 @@ function App() {
           </div>
         )}
 
-        {/* Botón Flotante Canónico de Notificaciones / Alertas */}
+        {/* Botón Flotante Canónico de Campana / Alertas (Idéntico a las capturas) */}
         <button
           type="button"
           onClick={() => setTabActual('admin')}
-          className={`fixed right-4 bottom-20 z-40 w-11 h-11 rounded-full border shadow-xl flex items-center justify-center text-lg active:scale-95 transition-transform ${
-            modoSol ? 'bg-white border-slate-200 text-slate-700' : 'bg-slate-800 border-slate-700 text-slate-200'
-          }`}
+          className="fixed right-4 bottom-20 z-40 w-13 h-13 rounded-full bg-white border border-slate-200 shadow-[0_6px_20px_rgba(0,0,0,0.14)] flex items-center justify-center text-2xl active:scale-95 transition-transform cursor-pointer"
           aria-label="Notificaciones y Administración"
           title="Notificaciones y Administración"
         >
           🔔
           {totalPendientesLocal > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white">
+            <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white shadow-xs">
               {totalPendientesLocal}
             </span>
           )}
@@ -554,50 +552,10 @@ function App() {
         )}
 
         {(tabActual === 'reportes' || tabActual === 'consulta') && (
-          <div className="space-y-4">
-            <div className={`flex rounded-xl p-1 border ${modoSol ? 'bg-slate-200 border-slate-300' : 'bg-slate-800/80 border-slate-700/60'}`}>
-              <button
-                type="button"
-                onClick={() => { setTabActual('reportes'); setSubTabReportes('rendimiento'); }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all min-h-[44px] flex items-center justify-center gap-1.5 ${
-                  tabActual === 'reportes' && subTabReportes === 'rendimiento'
-                    ? 'bg-emerald-600 text-white shadow'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <FileBarChart className="w-3.5 h-3.5" />
-                <span>Reportes Consolidados</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => { setTabActual('reportes'); setSubTabReportes('consulta'); }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all min-h-[44px] flex items-center justify-center gap-1.5 ${
-                  tabActual === 'consulta' || (tabActual === 'reportes' && subTabReportes === 'consulta')
-                    ? 'bg-sky-600 text-white shadow'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Search className="w-3.5 h-3.5" />
-                <span>Consulta Cruzada</span>
-              </button>
-            </div>
-
-            {(tabActual === 'consulta' || (tabActual === 'reportes' && subTabReportes === 'consulta')) ? (
-              <ConsultaCruzadaModulo
-                modoSol={modoSol}
-                colaboradoresMock={COLABORADORES_MOCK}
-                consultaColaborador={consultaColaborador}
-                setConsultaColaborador={setConsultaColaborador}
-                consultaFecha={consultaFecha}
-                setConsultaFecha={setConsultaFecha}
-              />
-            ) : (
-              <ReportesModulo
-                modoSol={modoSol}
-                dispararToast={dispararToast}
-              />
-            )}
-          </div>
+          <ReportesModulo
+            modoSol={modoSol}
+            dispararToast={dispararToast}
+          />
         )}
 
         {tabActual === 'incidentes' && (

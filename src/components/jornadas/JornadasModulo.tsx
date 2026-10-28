@@ -1,22 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Plus, CheckCircle2, Database, Check } from 'lucide-react';
-import { calcularJornadaLaboral } from '../../domain/jornadaCalculator';
-import { validarJornada } from '../../domain/formValidators';
+import { COLABORADORES_CATALOGO, LABORES_AGRONOMICAS, AREAS_AGRONOMICAS } from '../../domain/catalogoAgronomico';
 import { dbGetAll, guardarJornadaRegistro, JornadaRegistro } from '../../domain/nexocampoDB';
 
 export interface JornadasModuloProps {
-  modoSol: boolean;
+  modoSol?: boolean;
   dispararToast: (msg: string) => void;
   onJornadaGuardada?: () => void;
 }
 
-export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispararToast, onJornadaGuardada }) => {
-  const [fecha, setFecha] = useState('2026-10-19');
-  const [apertura, setApertura] = useState('06:30');
-  const [cierre, setCierre] = useState('15:30');
-  const [pausaComida, setPausaComida] = useState(60);
-  const [pausaActiva, setPausaActiva] = useState(5);
+export const JornadasModulo: React.FC<JornadasModuloProps> = ({
+  dispararToast,
+  onJornadaGuardada
+}) => {
+  const [fecha, setFecha] = useState('2026-10-21');
+  const [modoRegistro, setModoRegistro] = useState<'individual' | 'grupal'>('individual');
+  const [seleccionados, setSeleccionados] = useState<string[]>([]);
   const [jornadasPersistidas, setJornadasPersistidas] = useState<JornadaRegistro[]>([]);
+
+  // Modal de captura de tramo para el colaborador seleccionado
+  const [colaboradorActivo, setColaboradorActivo] = useState<string | null>(null);
+  const [laborSeleccionada, setLaborSeleccionada] = useState(LABORES_AGRONOMICAS[0].id);
+  const [horaInicio, setHoraInicio] = useState('06:30');
+  const [horaFin, setHoraFin] = useState('15:30');
+  const [unidadesCompletadas, setUnidadesCompletadas] = useState(40);
+  const [metaAsignada, setMetaAsignada] = useState(40);
+  const [areaSeleccionada, setAreaSeleccionada] = useState(AREAS_AGRONOMICAS[0].nombre);
   const [guardando, setGuardando] = useState(false);
 
   const cargarJornadas = async () => {
@@ -24,7 +32,7 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
       const items = await dbGetAll<JornadaRegistro>('jornadas');
       setJornadasPersistidas(items || []);
     } catch (e) {
-      console.warn('[JornadasModulo] Error al cargar jornadas de IndexedDB:', e);
+      console.warn('[JornadasModulo] Error al cargar jornadas:', e);
     }
   };
 
@@ -32,34 +40,43 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
     cargarJornadas();
   }, []);
 
-  const calculo = calcularJornadaLaboral(apertura, cierre, [
-    { tipo: 'almuerzo', duracionMinutos: pausaComida, esDeduccionComputable: true },
-    { tipo: 'pausa_5min', duracionMinutos: pausaActiva, esDeduccionComputable: true }
-  ]);
-
-  const handleGuardarJornada = async () => {
-    const val = validarJornada(apertura, cierre);
-    if (!val.esValido) {
-      dispararToast(`Error: ${Object.values(val.errores)[0] || 'Horario inválido'}`);
-      return;
+  const toggleSeleccion = (id: string) => {
+    if (seleccionados.includes(id)) {
+      setSeleccionados(seleccionados.filter(item => item !== id));
+    } else {
+      setSeleccionados([...seleccionados, id]);
     }
+  };
 
+  const abrirRegistroColaborador = (id: string) => {
+    setColaboradorActivo(id);
+  };
+
+  const guardarJornada = async () => {
+    if (!colaboradorActivo) return;
+    setGuardando(true);
     try {
-      setGuardando(true);
+      const laborInfo = LABORES_AGRONOMICAS.find(l => l.id === laborSeleccionada) || LABORES_AGRONOMICAS[0];
       const nuevaJornada: JornadaRegistro = {
-        id: `jornada_${fecha}_${Date.now()}`,
+        id: `jornada_${fecha}_${colaboradorActivo}_${Date.now()}`,
         fecha,
-        colaboradores_ids: ['col_1', 'col_2', 'col_3', 'col_4'],
+        colaboradores_ids: [colaboradorActivo],
         tramos: [
           {
             id: `tramo_${Date.now()}`,
             tipo: 'labor',
-            titulo: 'Jornada Ordinaria Agrícola',
-            hora_inicio: apertura,
-            hora_fin: cierre,
-            unidades: calculo.minutosEfectivosNetos,
-            estado: 'cumple',
-            observaciones: `Apertura ${apertura} a ${cierre}. Descuento comida: ${pausaComida}m, activa: ${pausaActiva}m. Netos: ${calculo.minutosEfectivosNetos} min`
+            titulo: laborInfo.nombre,
+            labor_id: laborInfo.id,
+            labor_nombre: laborInfo.nombre,
+            unidad: laborInfo.unidadMedida,
+            estandar_min: (laborInfo as any).min ?? 6,
+            hora_inicio: horaInicio,
+            hora_fin: horaFin,
+            area: areaSeleccionada,
+            unidades: unidadesCompletadas,
+            completados: unidadesCompletadas,
+            meta: metaAsignada,
+            estado: 'cumple'
           }
         ],
         creadoEn: new Date().toISOString(),
@@ -70,166 +87,240 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
       await guardarJornadaRegistro(nuevaJornada);
       await cargarJornadas();
       if (onJornadaGuardada) onJornadaGuardada();
-      dispararToast('✓ Jornada registrada y persistida en IndexedDB (store: jornadas)');
+      dispararToast('✓ Jornada registrada y guardada en IndexedDB');
+      setColaboradorActivo(null);
     } catch (e: any) {
-      dispararToast(`Error al guardar: ${e?.message || 'Error en IndexedDB'}`);
+      dispararToast(`Error al guardar: ${e?.message || 'Fallo de persistencia'}`);
     } finally {
       setGuardando(false);
     }
   };
 
+  const colaboradoresRegistradosEnFecha = new Set(
+    jornadasPersistidas.filter(j => j.fecha === fecha).flatMap(j => j.colaboradores_ids)
+  );
+
   return (
-    <div className="space-y-6">
-      <div className={`p-4 rounded-xl border ${modoSol ? 'bg-slate-50 border-slate-300' : 'bg-slate-800/40 border-slate-700/60'}`}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="text-sm font-bold flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-emerald-500" />
-              Módulo de Jornadas y Segmentos Horarios
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Jornada general canónica única con persistencia real en IndexedDB (`store: jornadas`). Permite registrar apertura, descansos y verificar minutos netos computables sin duplicidad.
-            </p>
-          </div>
-          <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-bold">
-            Canónica: 540m brutos / 475m netos
-          </span>
+    <div className="space-y-4 pb-8 select-none">
+      {/* 1. CARD PRINCIPAL: REGISTRAR JORNADA (Imagen 5) */}
+      <div className="rounded-3xl p-5 bg-white border border-slate-200/90 shadow-xs space-y-4">
+        <h2 className="text-xl font-black text-slate-900 tracking-tight">
+          Registrar jornada
+        </h2>
+
+        {/* Campo FECHA */}
+        <div>
+          <label className="block text-[11px] font-extrabold text-slate-600 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <span>📅</span>
+            <span>FECHA</span>
+          </label>
+          <input
+            type="date"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600"
+          />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Configuración de Jornada */}
-        <div className={`p-5 rounded-xl border space-y-4 ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/50 border-slate-700/60'}`}>
-          <h3 className="font-bold text-xs uppercase tracking-wider text-slate-300">
-            Horario de la Jornada General
-          </h3>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Fecha de Jornada</label>
-            <input
-              type="date"
-              value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-slate-100"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Hora Apertura</label>
-              <input
-                type="time"
-                value={apertura}
-                onChange={(e) => setApertura(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-slate-100"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Hora Cierre</label>
-              <input
-                type="time"
-                value={cierre}
-                onChange={(e) => setCierre(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-slate-100"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-700/40">
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Pausa Comidas (Minutos)</label>
-              <input
-                type="number"
-                value={pausaComida}
-                onChange={(e) => setPausaComida(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-slate-100"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Pausas Activas (Minutos)</label>
-              <input
-                type="number"
-                value={pausaActiva}
-                onChange={(e) => setPausaActiva(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-slate-100"
-              />
-            </div>
-          </div>
+        {/* Botones TOGGLE: Individual | Grupal */}
+        <div className="grid grid-cols-2 gap-2.5 pt-1">
+          <button
+            type="button"
+            onClick={() => setModoRegistro('individual')}
+            className={`min-h-[48px] py-2.5 px-4 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all ${
+              modoRegistro === 'individual'
+                ? 'bg-[#047857] text-white shadow-sm'
+                : 'bg-[#0f766e]/70 text-white/90 hover:bg-[#0f766e]'
+            }`}
+          >
+            <span>👤</span>
+            <span>Individual</span>
+          </button>
 
           <button
-            onClick={handleGuardarJornada}
-            disabled={guardando}
-            className="w-full min-h-[44px] py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
+            type="button"
+            onClick={() => setModoRegistro('grupal')}
+            className={`min-h-[48px] py-2.5 px-4 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all ${
+              modoRegistro === 'grupal'
+                ? 'bg-[#047857] text-white shadow-sm'
+                : 'bg-[#0f766e]/70 text-white/90 hover:bg-[#0f766e]'
+            }`}
           >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>{guardando ? 'Persistiendo en IndexedDB...' : 'Guardar Jornada en IndexedDB'}</span>
+            <span>👥</span>
+            <span>Grupal</span>
           </button>
         </div>
+      </div>
 
-        {/* Resumen de Minutos Computables */}
-        <div className={`p-5 rounded-xl border space-y-4 ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/50 border-slate-700/60'}`}>
-          <h3 className="font-bold text-xs uppercase tracking-wider text-slate-300">
-            Cómputo en Tiempo Real (Motor Desacoplado)
+      {/* 2. SUBSECCIÓN: COLABORADORES (0/36) - Imagen 5 */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">
+            COLABORADORES ({colaboradoresRegistradosEnFecha.size}/{COLABORADORES_CATALOGO.length})
           </h3>
+        </div>
 
-          <div className="space-y-3">
-            <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 flex justify-between items-center text-xs">
-              <span className="text-slate-400">Minutos Brutos en Finca:</span>
-              <span className="font-mono font-bold text-slate-200 text-sm">{calculo.minutosBrutos} min</span>
-            </div>
-            <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 flex justify-between items-center text-xs">
-              <span className="text-slate-400">Total Deducciones Computables:</span>
-              <span className="font-mono font-bold text-amber-400 text-sm">{calculo.minutosDescansosComida + calculo.minutosPausasAdicionales} min</span>
-            </div>
-            <div className="p-3.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 flex justify-between items-center text-xs">
-              <span className="font-bold text-emerald-300">Minutos Efectivos Netos:</span>
-              <span className="font-mono font-bold text-emerald-400 text-base">{calculo.minutosEfectivosNetos} min</span>
-            </div>
-          </div>
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs divide-y divide-slate-100 overflow-hidden">
+          {COLABORADORES_CATALOGO.map((col) => {
+            const registrado = colaboradoresRegistradosEnFecha.has(col.id);
+            const marcado = seleccionados.includes(col.id);
 
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            *Regla de protección: múltiples labores dentro de este rango no multiplican la duración general de la jornada (Invariante canónica: 475 min netos).
-          </p>
+            return (
+              <div
+                key={col.id}
+                className="p-3.5 px-4 flex items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <input
+                    type="checkbox"
+                    checked={marcado}
+                    onChange={() => toggleSeleccion(col.id)}
+                    className="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <div className="min-w-0">
+                    <span className="font-extrabold text-xs text-slate-900 block truncate">
+                      {col.nombreCompleto || col.alias}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium block">
+                      Cuadrilla {col.cuadrilla} · {col.rol}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => abrirRegistroColaborador(col.id)}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all active:scale-95 shrink-0 ${
+                    registrado
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                      : 'bg-slate-100 text-[#1e40af] border-slate-200 hover:bg-slate-200'
+                  }`}
+                >
+                  {registrado ? 'REGISTRADO' : 'REGISTRAR'}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Registro Histórico de Jornadas Persistidas en IndexedDB */}
-      <div className={`p-5 rounded-xl border space-y-3 ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/40 border-slate-700/60'}`}>
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Database className="w-3.5 h-3.5 text-emerald-400" />
-            Jornadas Guardadas en IndexedDB ({jornadasPersistidas.length})
-          </h3>
-          <span className="text-[11px] text-slate-400 font-mono">Store: 'jornadas'</span>
-        </div>
+      {/* Modal de Registro de Jornada para el Colaborador */}
+      {colaboradorActivo && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl text-slate-800">
+            <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto sm:hidden" />
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900">
+                  Registrar Labor de Campo
+                </h3>
+                <p className="text-xs text-emerald-700 font-bold">
+                  {COLABORADORES_CATALOGO.find(c => c.id === colaboradorActivo)?.nombreCompleto}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setColaboradorActivo(null)}
+                className="text-slate-400 hover:text-slate-700 text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
 
-        {jornadasPersistidas.length === 0 ? (
-          <p className="text-xs text-slate-500 italic py-2">
-            No hay jornadas persistidas aún. Al presionar "Guardar Jornada en IndexedDB", quedará guardada de forma duradera sin depender de la memoria de sesión.
-          </p>
-        ) : (
-          <div className="divide-y divide-slate-800">
-            {jornadasPersistidas.slice(-5).reverse().map((j) => (
-              <div key={j.id} className="py-2.5 flex items-center justify-between text-xs">
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-600 mb-1">Labor Agronómica</label>
+                <select
+                  value={laborSeleccionada}
+                  onChange={(e) => setLaborSeleccionada(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-medium"
+                >
+                  {LABORES_AGRONOMICAS.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.nombre} ({l.unidadMedida})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <div className="flex items-center gap-2 font-mono font-semibold text-slate-200">
-                    <span>{j.fecha}</span>
-                    <span className="text-[11px] text-emerald-400">({j.tramos?.[0]?.unidades || 475} min netos)</span>
-                  </div>
-                  <div className="text-[10px] text-slate-400 truncate max-w-xs mt-0.5">
-                    {j.tramos?.[0]?.titulo || 'Jornada'} · {j.tramos?.[0]?.hora_inicio} a {j.tramos?.[0]?.hora_fin}
-                  </div>
+                  <label className="block font-bold text-slate-600 mb-1">Hora Inicio</label>
+                  <input
+                    type="time"
+                    value={horaInicio}
+                    onChange={(e) => setHoraInicio(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono font-medium"
+                  />
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono ${j.sincronizado ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}`}>
-                    {j.sincronizado ? 'Sincronizado' : 'Pendiente Sync'}
-                  </span>
+                <div>
+                  <label className="block font-bold text-slate-600 mb-1">Hora Fin</label>
+                  <input
+                    type="time"
+                    value={horaFin}
+                    onChange={(e) => setHoraFin(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono font-medium"
+                  />
                 </div>
               </div>
-            ))}
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold text-slate-600 mb-1">Cantidad Realizada</label>
+                  <input
+                    type="number"
+                    value={unidadesCompletadas}
+                    onChange={(e) => setUnidadesCompletadas(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono font-bold text-emerald-700"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-600 mb-1">Meta Oficial</label>
+                  <input
+                    type="number"
+                    value={metaAsignada}
+                    onChange={(e) => setMetaAsignada(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono font-bold text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-600 mb-1">Área Agronómica</label>
+                <select
+                  value={areaSeleccionada}
+                  onChange={(e) => setAreaSeleccionada(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white font-medium"
+                >
+                  {AREAS_AGRONOMICAS.map((a) => (
+                    <option key={a.id} value={a.nombre}>
+                      {a.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="pt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setColaboradorActivo(null)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={guardarJornada}
+                disabled={guardando}
+                className="flex-1 py-2.5 rounded-xl bg-[#047857] hover:bg-[#065f46] text-white font-bold text-xs shadow-xs"
+              >
+                {guardando ? 'Guardando...' : 'Guardar Jornada'}
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

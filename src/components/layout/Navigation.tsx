@@ -38,36 +38,27 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   return (
     <nav
-      className={`fixed bottom-0 left-0 right-0 z-40 max-w-[28rem] mx-auto border-t select-none transition-colors duration-150 ${
-        modoSol
-          ? 'bg-white/95 border-slate-200 text-slate-600 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]'
-          : 'bg-slate-900/95 border-slate-800 text-slate-400 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]'
-      } backdrop-blur-md pb-[env(safe-area-inset-bottom,0px)]`}
+      className="fixed bottom-0 left-0 right-0 z-40 max-w-[28rem] mx-auto bg-white/98 border-t border-slate-200 text-slate-500 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] backdrop-blur-md pb-[env(safe-area-inset-bottom,0px)] select-none"
       aria-label="Navegación principal inferior NexoCampo"
     >
-      <div className="grid grid-cols-6 h-14 items-center px-1">
+      <div className="grid grid-cols-6 h-15 items-center px-1">
         {VISTAS_NEXOCAMPO.map((item) => {
-          const Icon = item.icon;
           const activo = tabActual === item.id;
           return (
             <button
               key={item.id}
               type="button"
               onClick={() => setTabActual(item.id)}
-              className={`flex flex-col items-center justify-center h-full min-h-[44px] transition-all duration-150 ${
+              className={`flex flex-col items-center justify-center h-full min-h-[48px] py-1 transition-all ${
                 activo
-                  ? modoSol
-                    ? 'text-emerald-700 font-bold scale-105'
-                    : 'text-emerald-400 font-bold scale-105'
-                  : modoSol
-                    ? 'hover:text-slate-900 text-slate-500'
-                    : 'hover:text-slate-200 text-slate-400'
+                  ? 'text-emerald-800 font-extrabold'
+                  : 'text-slate-600 hover:text-slate-900 font-medium'
               }`}
             >
-              <div className={`p-1 rounded-lg transition-colors ${activo ? (modoSol ? 'bg-emerald-50' : 'bg-emerald-500/15') : ''}`}>
-                <Icon className={`w-4 h-4 ${activo ? (modoSol ? 'text-emerald-700' : 'text-emerald-400') : 'currentColor'}`} />
+              <div className={`p-1.5 rounded-xl transition-all ${activo ? 'bg-emerald-100/80 shadow-xs scale-105' : ''}`}>
+                <span className="text-lg leading-none select-none">{item.emoji}</span>
               </div>
-              <span className="text-[10px] tracking-tight mt-0.5 leading-none">
+              <span className={`text-[10px] tracking-tight mt-0.5 leading-tight ${activo ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>
                 {item.label}
               </span>
             </button>
