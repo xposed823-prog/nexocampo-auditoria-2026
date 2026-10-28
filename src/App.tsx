@@ -283,7 +283,7 @@ function App() {
         labor: pwaLaborTest,
         cantidad: pwaCantidadTest,
         horario: pwaHorasTest,
-        fecha: new Date().toISOString().split('T')[0],
+        fecha: fechaLocalHoy(),
         guardadoModo: isOnline ? 'online_direct' : 'offline_indexeddb'
       };
       await guardarRegistroPendiente('jornada', payload);
@@ -352,7 +352,7 @@ function App() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `nexocampo_db_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `nexocampo_db_backup_${fechaLocalHoy()}.json`;
       a.click();
       URL.revokeObjectURL(url);
       dispararToast('✓ Archivo JSON de respaldo descargado.');
@@ -370,16 +370,14 @@ function App() {
     else if (estadoActual === 'retardo') siguiente = 'ausencia';
     else if (estadoActual === 'ausencia') siguiente = 'sin_registrar';
 
-    // 1. Actualización reactiva instantánea en memoria
-    setMatrizAsistencia(prev => ({ ...prev, [key]: siguiente }));
-
-    // 2. Persistencia atómica en IndexedDB (store: asistencia)
+    // Confirmar primero la persistencia para no mostrar como guardado un cambio fallido.
     try {
       const fechaCalculada = fechaSemanaActual(diaIdx);
       await guardarAsistenciaAtomica(colId, fechaCalculada, siguiente);
-      dispararToast(`✓ Asistencia en IndexedDB (${colId} día ${DIAS_SEMANA[diaIdx]}): ${siguiente}`);
+      setMatrizAsistencia(prev => ({ ...prev, [key]: siguiente }));
+      dispararToast(`✓ Asistencia guardada (${colId}, ${DIAS_SEMANA[diaIdx]}): ${siguiente}`);
     } catch (e) {
-      dispararToast(`Asistencia en memoria (${colId}): ${siguiente}`);
+      dispararToast('No se pudo guardar la asistencia. El estado anterior se conserva.');
     }
   };
 
@@ -394,13 +392,12 @@ function App() {
       lote.push({ colaborador_id: c.id, fecha: fechaHoy, estado: 'presente' });
     });
 
-    setMatrizAsistencia(actualizada);
-
     try {
       await guardarLoteAsistencia(lote);
-      dispararToast('✓ Pase de lista matutino persistido en IndexedDB (store: asistencia)');
+      setMatrizAsistencia(actualizada);
+      dispararToast('✓ Pase de lista matutino guardado.');
     } catch (e) {
-      dispararToast('Pase de lista matutino completado para hoy');
+      dispararToast('No se pudo guardar el pase de lista. No se modificó la matriz.');
     }
   };
 
