@@ -48,6 +48,31 @@ test('Caso 2: Tres labores consecutivas (210m + 105m + 180m + pausas 45m = 540m 
   assert.equal(res.totalJornadasCreadas, 1);
 });
 
+// Caso 2b: El cálculo rechaza labores solapadas aunque las duraciones sumen la jornada.
+test('Rechaza intervalos de labores que se solapan dentro de una jornada', () => {
+  const res = calcularJornadaMultiplesLabores(
+    '06:30',
+    '10:30',
+    [
+      { id: 'l1', horaInicio: '06:30', horaFin: '09:00' },
+      { id: 'l2', horaInicio: '08:30', horaFin: '10:00' },
+    ],
+    []
+  );
+  assert.equal(res.cuadraExactamente, false);
+});
+
+// Caso 2c: El cálculo rechaza labores fuera de la jornada general.
+test('Rechaza labores que comienzan antes de la jornada registrada', () => {
+  const res = calcularJornadaMultiplesLabores(
+    '06:30',
+    '10:30',
+    [{ id: 'l1', horaInicio: '06:00', horaFin: '10:00' }],
+    []
+  );
+  assert.equal(res.cuadraExactamente, false);
+});
+
 // Caso 3: Varias subtareas que heredan horario (no duplican período)
 test('Caso 3: Subtareas que heredan horario no generan solapamiento temporal', () => {
   const existente = [
