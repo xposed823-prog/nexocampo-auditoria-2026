@@ -96,17 +96,18 @@ export function calcularJornadaMultiplesLabores(
     }))
     .sort((a, b) => a.inicio - b.inicio);
 
-  for (let i = 0; i < intervalosOrdenados.length; i += 1) {
-    const intervalo = intervalosOrdenados[i];
+  let finMaximoAnterior = Number.NEGATIVE_INFINITY;
+  for (const intervalo of intervalosOrdenados) {
     const duracion = intervalo.fin - intervalo.inicio;
     if (
       duracion <= 0 ||
       intervalo.inicio < minInicio ||
       intervalo.fin > minFin ||
-      (i > 0 && intervalo.inicio < intervalosOrdenados[i - 1].fin)
+      intervalo.inicio < finMaximoAnterior
     ) {
       intervalosValidos = false;
     }
+    finMaximoAnterior = Math.max(finMaximoAnterior, intervalo.fin);
     minutosEfectivosLabores += duracion;
   }
 
