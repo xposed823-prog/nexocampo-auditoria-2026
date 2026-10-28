@@ -263,8 +263,12 @@ export async function initCrypto(): Promise<boolean> {
  * Deriva una clave de cifrado espec\u00edfica para un usuario desde su PIN
  */
 async function deriveUserKeyFromPin(pin: string, userId: string): Promise<CryptoKey> {
-  // Generar salt \u00fanico por usuario
-  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  // Reutilizar la sal persistida para poder derivar la misma clave tras recargar.
+  const saltStoreKey = `${USER_SALT_STORE}_${userId}`;
+  const storedSalt = sessionStorage.getItem(saltStoreKey);
+  const salt = storedSalt
+    ? new Uint8Array(JSON.parse(storedSalt))
+    : window.crypto.getRandomValues(new Uint8Array(16));
   
   // Derivar clave usando PBKDF2
   const encoder = new TextEncoder();
@@ -292,7 +296,7 @@ async function deriveUserKeyFromPin(pin: string, userId: string): Promise<Crypto
   );
 
   // Almacenar salt asociado al usuario en sessionStorage
-  sessionStorage.setItem(`${USER_SALT_STORE}_${userId}`, JSON.stringify(Array.from(salt)));
+  sessionStorage.setItem(saltStoreKey, JSON.stringify(Array.from(salt)));
   
   return userKey;
 }
