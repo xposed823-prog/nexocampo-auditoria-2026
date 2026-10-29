@@ -310,12 +310,16 @@ function App() {
     try {
       const res = await dispararBackgroundSync();
       if (res.metodo === 'offline-queued') {
-        dispararToast('Dispositivo sin conexión: registrado para cuando vuelva la señal.');
+        dispararToast('Sin conexión: la cola local se conserva para un nuevo intento.');
+      } else if (res.metodo === 'background-sync') {
+        dispararToast('Sincronización programada; falta confirmar la recepción del servidor.');
+      } else if (res.metodo === 'nothing-to-sync') {
+        dispararToast('No hay registros pendientes de sincronizar.');
       } else {
-        dispararToast('✓ Sincronización completada con el servidor central');
+        dispararToast('Sincronización confirmada por el servidor.');
         if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('NexoCampo — Sincronización Exitosa', {
-            body: `Se han sincronizado los registros acumulados con el servidor.`,
+          new Notification('NexoCampo — Sincronización confirmada', {
+            body: 'El servidor confirmó la recepción de todos los registros pendientes.',
             icon: '/pwa-192x192.png'
           });
         }
