@@ -34,7 +34,7 @@ La aplicación alternativa no debe recibir una copia monolítica de `index.html`
 - Jornadas base y tramos de labores, con separación de tiempos y validación de solapamientos.
 - Rendimiento técnico y estados de labor; los trabajos pendientes no deben incrementar el rendimiento del día.
 - Oficios Varios medido por tareas asignadas/completadas, sin inventar un estándar temporal.
-- Plástico/Polisombra con cuadrilla de seis, subtareas y herencia horaria.
+- Plástico/Polisombra con cuadrilla de 1 a 6 integrantes, subtareas y herencia horaria.
 - Asistencia, ausencias, consulta cruzada e incidentes con persistencia local implementada en la rama.
 - Respaldo y restauración JSON, historial local y copia manual a Google Drive.
 - Exportación CSV consolidada; XLSX real no implementado y PDF mediante impresión del navegador.
