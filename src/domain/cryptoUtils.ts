@@ -20,7 +20,7 @@ const USER_PIN_KEY = 'nexocampo_user_pin';
 function toArrayBufferSource(bytes: Uint8Array): ArrayBuffer {
   const copy = new Uint8Array(bytes.byteLength);
   copy.set(bytes);
-  return copy.buffer;
+  return copy.buffer as ArrayBuffer;
 }
 
 async function deriveKeyFromPassword(password: string, salt: Uint8Array = new TextEncoder().encode('nexocampo_salt_v1')): Promise<CryptoKey> {
