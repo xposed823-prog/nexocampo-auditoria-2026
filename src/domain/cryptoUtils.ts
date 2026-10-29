@@ -1,55 +1,39 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
- * 
- * NexoCampo 2026 - Utilidades de Cifrado Web Crypto API
- * Implementación de cifrado AES-GCM-256 para protecciòn de datos en IndexedDB
+ *
+ * NexoCampo Auditoría 2026 — Web Crypto API (AES-GCM-256).
+ *
+ * Compatibility note: getEncryptionKey() is retained only to read legacy records.
+ * New encryption always requires a user-specific PIN-derived key; it never silently
+ * encrypts new data with the compiled-in legacy secret.
  */
-
-// Clave maestra derivada de una frase secreta (en producción, usar una clave generada aleatoriamente)
-// Para este prototipo, usamos una clave estática pero en producción DEBE ser generada por usuario
-const MASTER_PASSWORD = 'NexoCampo2026_SecretKey_DoNotExpose';
-
-// Cache para la clave de cifrado
+const LEGACY_MASTER_PASSWORD = 'NexoCampo2026_SecretKey_DoNotExpose';
 let cryptoKey: CryptoKey | null = null;
 let userCryptoKey: CryptoKey | null = null;
+let userCryptoKeyId: string | null = null;
 
-// Storage key for user-specific encryption key
 const USER_ENCRYPTION_KEY_STORE = 'nexocampo_user_encryption_key';
 const USER_SALT_STORE = 'nexocampo_user_salt';
-
-// Session storage key for current user
 const CURRENT_USER_KEY = 'nexocampo_current_user_id';
+const USER_PIN_KEY = 'nexocampo_user_pin';
 
-// Copia a un ArrayBuffer propio para compatibilidad estricta con Web Crypto y TypeScript moderno.
 function toArrayBufferSource(bytes: Uint8Array): ArrayBuffer {
   const copy = new Uint8Array(bytes.byteLength);
   copy.set(bytes);
-  return copy.buffer as ArrayBuffer;
+  return copy.buffer;
 }
 
-/**
- * Deriva una clave AES-GCM-256 desde una contraseña usando PBKDF2
- */
 async function deriveKeyFromPassword(password: string, salt: Uint8Array = new TextEncoder().encode('nexocampo_salt_v1')): Promise<CryptoKey> {
-  const encoder = new TextEncoder();
-  const passwordBuffer = encoder.encode(password);
-  
   const importedKey = await window.crypto.subtle.importKey(
     'raw',
-    passwordBuffer,
+    new TextEncoder().encode(password),
     { name: 'PBKDF2' },
     false,
     ['deriveKey']
   );
-
   return window.crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      salt: toArrayBufferSource(salt),
-      iterations: 100000,
-      hash: 'SHA-256'
-    },
+    { name: 'PBKDF2', salt: toArrayBufferSource(salt), iterations: 100000, hash: 'SHA-256' },
     importedKey,
     { name: 'AES-GCM', length: 256 },
     false,
@@ -57,9 +41,6 @@ async function deriveKeyFromPassword(password: string, salt: Uint8Array = new Te
   );
 }
 
-/**
- * Genera una clave AES-GCM-256 aleatoria
- */
 export async function generateRandomKey(): Promise<CryptoKey> {
   return window.crypto.subtle.generateKey(
     { name: 'AES-GCM', length: 256 },
@@ -68,17 +49,10 @@ export async function generateRandomKey(): Promise<CryptoKey> {
   );
 }
 
-/**
- * Exporta una clave CryptoKey a formato raw (Uint8Array)
- */
 export async function exportKeyToRaw(key: CryptoKey): Promise<Uint8Array> {
-  const exported = await window.crypto.subtle.exportKey('raw', key);
-  return new Uint8Array(exported);
+  return new Uint8Array(await window.crypto.subtle.exportKey('raw', key));
 }
 
-/**
- * Importa una clave desde formato raw
- */
 export async function importKeyFromRaw(rawKey: Uint8Array): Promise<CryptoKey> {
   return window.crypto.subtle.importKey(
     'raw',
@@ -90,101 +64,65 @@ export async function importKeyFromRaw(rawKey: Uint8Array): Promise<CryptoKey> {
 }
 
 /**
- * Obtiene o genera la clave de cifrado
- * En producción, esta clave debería ser almacenada en localStorage o IndexedDB
- * y protegida por autenticación del usuario
+ * Legacy key loader. Keep for backwards compatibility when reading older records.
+ * Do not use this function to encrypt new user data.
  */
 export async function getEncryptionKey(): Promise<CryptoKey> {
-  if (cryptoKey) {
-    return cryptoKey;
-  }
+  if (cryptoKey) return cryptoKey;
 
-  // Intentar obtener la clave de localStorage
   const storedKey = localStorage.getItem('nexocampo_encryption_key');
   if (storedKey) {
     try {
-      const rawKey = new Uint8Array(JSON.parse(storedKey));
-      cryptoKey = await importKeyFromRaw(rawKey);
+      cryptoKey = await importKeyFromRaw(new Uint8Array(JSON.parse(storedKey)));
       return cryptoKey;
-    } catch (e) {
-      console.warn('[NexoCampo Crypto] Error al cargar clave almacenada, generando nueva:', e);
+    } catch (error) {
+      console.error('[NexoCampo Crypto] No se pudo importar la clave heredada:', error);
+      throw new Error('La clave de cifrado heredada no se puede leer. No se reemplazó para evitar perder acceso a los datos.');
     }
   }
 
-  // Generar nueva clave
-  cryptoKey = await deriveKeyFromPassword(MASTER_PASSWORD);
-  
-  // Guardar en localStorage para persistencia
+  // This legacy fallback must be removed only after a tested migration of old records.
+  cryptoKey = await deriveKeyFromPassword(LEGACY_MASTER_PASSWORD);
   try {
     const rawKey = await exportKeyToRaw(cryptoKey);
     localStorage.setItem('nexocampo_encryption_key', JSON.stringify(Array.from(rawKey)));
-  } catch (e) {
-    console.warn('[NexoCampo Crypto] No se pudo guardar la clave en localStorage:', e);
+  } catch (error) {
+    console.warn('[NexoCampo Crypto] No se pudo persistir la clave heredada:', error);
   }
-
   return cryptoKey;
 }
 
-/**
- * Genera un vector de inicialización (IV) aleatorio
- */
 function generateIV(): Uint8Array {
-  return window.crypto.getRandomValues(new Uint8Array(12)); // 12 bytes = 96 bits para AES-GCM
+  return window.crypto.getRandomValues(new Uint8Array(12));
 }
 
-/**
- * Cifra datos usando AES-GCM-256
- * @param data - Datos a cifrar (string o objeto)
- * @returns Objeto con iv y ciphertext en formato Base64
- */
-export async function encryptData(data: any): Promise<{ iv: string; ciphertext: string }> {
-  const key = await getUserEncryptionKey();
+export async function encryptData(data: unknown): Promise<{ iv: string; ciphertext: string }> {
+  const key = await getRequiredUserEncryptionKey();
   const iv = generateIV();
-  
-  const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(JSON.stringify(data));
-
+  const dataBuffer = new TextEncoder().encode(JSON.stringify(data));
   const ciphertextBuffer = await window.crypto.subtle.encrypt(
     { name: 'AES-GCM', iv: toArrayBufferSource(iv) },
     key,
     toArrayBufferSource(dataBuffer)
   );
-
   return {
     iv: btoa(String.fromCharCode(...Array.from(iv))),
     ciphertext: btoa(String.fromCharCode(...Array.from(new Uint8Array(ciphertextBuffer))))
   };
 }
 
-/**
- * Descifra datos cifrados con AES-GCM-256
- * @param encrypted - Objeto con iv y ciphertext en Base64
- * @returns Datos originales descifrados
- */
 export async function decryptData(encrypted: { iv: string; ciphertext: string }): Promise<any> {
   const key = await getUserEncryptionKey();
-  
-  const iv = new Uint8Array(
-    Array.from(atob(encrypted.iv)).map(c => c.charCodeAt(0))
-  );
-  const ciphertext = new Uint8Array(
-    Array.from(atob(encrypted.ciphertext)).map(c => c.charCodeAt(0))
-  );
-
+  const iv = new Uint8Array(Array.from(atob(encrypted.iv)).map((character) => character.charCodeAt(0)));
+  const ciphertext = new Uint8Array(Array.from(atob(encrypted.ciphertext)).map((character) => character.charCodeAt(0)));
   const decryptedBuffer = await window.crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
+    { name: 'AES-GCM', iv: toArrayBufferSource(iv) },
     key,
-    ciphertext
+    toArrayBufferSource(ciphertext)
   );
-
-  const decoder = new TextDecoder();
-  const decryptedString = decoder.decode(decryptedBuffer);
-  return JSON.parse(decryptedString);
+  return JSON.parse(new TextDecoder().decode(decryptedBuffer));
 }
 
-/**
- * Cifra un campo específico de un objeto
- */
 export async function encryptField<T extends Record<string, any>>(
   obj: T,
   field: keyof T
@@ -196,155 +134,106 @@ export async function encryptField<T extends Record<string, any>>(
   return result;
 }
 
-/**
- * Descifra campos cifrados de un objeto
- */
-export async function decryptFields<T extends Record<string, any>>(
-  obj: T
-): Promise<T> {
+export async function decryptFields<T extends Record<string, any>>(obj: T): Promise<T> {
   const result = { ...obj };
   const encryptedFields = (obj as any)._encryptedFields || [];
-  
   for (const field of encryptedFields) {
-    if (result[field] && typeof result[field] === 'object' && 'iv' in result[field] && 'ciphertext' in result[field]) {
-      (result as Record<string, any>)[field] = await decryptData(result[field]);
+    const value = result[field];
+    if (value && typeof value === 'object' && 'iv' in value && 'ciphertext' in value) {
+      (result as Record<string, any>)[field] = await decryptData(value);
     }
   }
-  
   delete (result as any)._encryptedFields;
   return result;
 }
 
-/**
- * Verifica si un objeto tiene campos cifrados
- */
 export function hasEncryptedFields(obj: any): boolean {
-  return obj && typeof obj === 'object' && Array.isArray(obj._encryptedFields);
+  return Boolean(obj && typeof obj === 'object' && Array.isArray(obj._encryptedFields));
 }
 
-/**
- * Limpia la clave de cifrado de la memoria
- * Útil para cuando el usuario cierra sesión
- */
 export function clearEncryptionKey(): void {
   cryptoKey = null;
 }
 
-/**
- * Elimina la clave de cifrado del almacenamiento
- */
 export function deleteEncryptionKey(): void {
   localStorage.removeItem('nexocampo_encryption_key');
   clearEncryptionKey();
 }
 
-/**
- * Inicializa el sistema de cifrado
- * Debe ser llamado al inicio de la aplicación
- */
 export async function initCrypto(): Promise<boolean> {
-  try {
-    // Verificar si Web Crypto API está disponible
-    if (!window.crypto || !window.crypto.subtle) {
-      console.error('[NexoCampo Crypto] Web Crypto API no está disponible');
-      return false;
-    }
-    
-    // Intentar obtener/generar la clave
-    await getUserEncryptionKey();
-    return true;
-  } catch (e) {
-    console.error('[NexoCampo Crypto] Error al inicializar cifrado:', e);
-    return false;
-  }
+  return Boolean(window.crypto?.subtle);
 }
 
-/**
- * Deriva una clave de cifrado espec\u00edfica para un usuario desde su PIN
- */
 async function deriveUserKeyFromPin(pin: string, userId: string): Promise<CryptoKey> {
-  // Reutilizar la sal persistida para poder derivar la misma clave tras recargar.
   const saltStoreKey = `${USER_SALT_STORE}_${userId}`;
-  const storedSalt = sessionStorage.getItem(saltStoreKey);
+  // A salt is not a secret; it must survive closing the tab so records remain decryptable.
+  // Migrate the earlier sessionStorage salt once, if present.
+  let storedSalt = localStorage.getItem(saltStoreKey);
+  if (!storedSalt) {
+    storedSalt = sessionStorage.getItem(saltStoreKey);
+    if (storedSalt) localStorage.setItem(saltStoreKey, storedSalt);
+  }
   const salt = storedSalt
     ? new Uint8Array(JSON.parse(storedSalt))
     : window.crypto.getRandomValues(new Uint8Array(16));
-  
-  // Derivar clave usando PBKDF2
-  const encoder = new TextEncoder();
-  const pinBuffer = encoder.encode(pin);
-  
+
   const importedKey = await window.crypto.subtle.importKey(
     'raw',
-    pinBuffer,
+    new TextEncoder().encode(pin),
     { name: 'PBKDF2' },
     false,
     ['deriveKey']
   );
-
   const userKey = await window.crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      salt: salt,
-      iterations: 100000,
-      hash: 'SHA-256'
-    },
+    { name: 'PBKDF2', salt: toArrayBufferSource(salt), iterations: 100000, hash: 'SHA-256' },
     importedKey,
     { name: 'AES-GCM', length: 256 },
     false,
     ['encrypt', 'decrypt']
   );
-
-  // Almacenar salt asociado al usuario en sessionStorage
-  sessionStorage.setItem(saltStoreKey, JSON.stringify(Array.from(salt)));
-  
+  localStorage.setItem(saltStoreKey, JSON.stringify(Array.from(salt)));
   return userKey;
 }
 
-/**
- * Inicializa el cifrado para un usuario espec\u00edfico
- */
 export async function setUserEncryptionKey(pin: string): Promise<void> {
-  // Obtener el usuario actual
   const currentUserId = sessionStorage.getItem(CURRENT_USER_KEY);
-  if (!currentUserId) {
-    throw new Error('No hay usuario autenticado');
-  }
+  if (!currentUserId) throw new Error('No hay usuario identificado para inicializar el cifrado.');
+  if (!pin) throw new Error('El PIN no puede estar vacío.');
 
-  // Derivar clave del PIN del usuario
   userCryptoKey = await deriveUserKeyFromPin(pin, currentUserId);
-  
-  // Almacenar referencia del usuario
-  sessionStorage.setItem(CURRENT_USER_KEY, currentUserId);
+  userCryptoKeyId = currentUserId;
+}
+
+async function getRequiredUserEncryptionKey(): Promise<CryptoKey> {
+  const currentUserId = sessionStorage.getItem(CURRENT_USER_KEY);
+  const userPin = sessionStorage.getItem(USER_PIN_KEY);
+  if (!currentUserId || !userPin) {
+    throw new Error('No se cifraron datos nuevos: se requiere una sesión de usuario con PIN.');
+  }
+  if (userCryptoKey && userCryptoKeyId === currentUserId) return userCryptoKey;
+  userCryptoKey = await deriveUserKeyFromPin(userPin, currentUserId);
+  userCryptoKeyId = currentUserId;
+  return userCryptoKey;
 }
 
 /**
- * Obtiene la clave de cifrado del usuario actual
- * Usa la clave derivada del PIN si est\u00e1 disponible, de lo contrario usa la clave maestra
+ * Read path supports legacy records. New writes use getRequiredUserEncryptionKey().
  */
 export async function getUserEncryptionKey(): Promise<CryptoKey> {
-  if (userCryptoKey) {
-    return userCryptoKey;
-  }
-
-  // Intentar restaurar desde sessionStorage
   const currentUserId = sessionStorage.getItem(CURRENT_USER_KEY);
-  const userPin = sessionStorage.getItem('nexocampo_user_pin');
-  
+  const userPin = sessionStorage.getItem(USER_PIN_KEY);
   if (currentUserId && userPin) {
+    if (userCryptoKey && userCryptoKeyId === currentUserId) return userCryptoKey;
     userCryptoKey = await deriveUserKeyFromPin(userPin, currentUserId);
+    userCryptoKeyId = currentUserId;
     return userCryptoKey;
   }
-
-  // Caer de nuevo a la clave maestra
-  console.warn('[NexoCampo Crypto] No se encontr\u00f3 clave de usuario, usando clave maestra');
+  console.warn('[NexoCampo Crypto] Lectura sin sesión de usuario: se intenta compatibilidad con registros heredados.');
   return getEncryptionKey();
 }
 
-/**
- * Limpia la clave de cifrado del usuario
- */
 export function clearUserEncryptionKey(): void {
   userCryptoKey = null;
+  userCryptoKeyId = null;
   sessionStorage.removeItem(CURRENT_USER_KEY);
 }
