@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Sun,
-  Wifi,
-  WifiOff,
-  Smartphone,
-  Database,
-} from 'lucide-react';
+import { Sun, Wifi, WifiOff, Smartphone, Database, Sprout } from 'lucide-react';
 
 export interface HeaderProps {
   modoSol: boolean;
@@ -21,118 +15,76 @@ export interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  modoSol,
-  setModoSol,
-  isOnline,
-  isInstallable,
-  isInstalled,
-  isIOS,
-  install,
-  setShowIOSPrompt,
-  totalPendientesLocal,
-  setTabActual,
+  modoSol, setModoSol, isOnline, isInstallable, isInstalled, isIOS,
+  install, setShowIOSPrompt, totalPendientesLocal, setTabActual
 }) => {
+  const controlBase = 'min-h-[44px] rounded-xl border inline-flex items-center justify-center gap-1.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500';
+
   return (
-    <header className={`sticky top-0 z-40 border-b ${modoSol ? 'bg-white/95 border-slate-200 shadow-sm' : 'bg-slate-900/90 border-slate-800 backdrop-blur-md'}`}>
+    <header className={`sticky top-0 z-40 border-b ${modoSol ? 'bg-white/95 border-slate-200 shadow-sm' : 'bg-slate-900/95 border-slate-800 backdrop-blur-md'}`}>
       <div className="max-w-[28rem] mx-auto px-3 py-2 flex items-center justify-between gap-2">
-        
-        {/* Logotipo Oficial NexoCampo PRO */}
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 shrink-0 rounded-[10px] bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-[0_4px_12px_rgba(34,197,94,0.35)] border border-emerald-400/30 text-white font-bold text-base select-none">
-            🌱
+          <div className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-emerald-600 to-green-800 flex items-center justify-center shadow-sm border border-emerald-500/30 text-white">
+            <Sprout className="w-5 h-5" aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className={`font-extrabold text-sm sm:text-base tracking-tight leading-none ${modoSol ? 'text-slate-900' : 'text-white'}`}>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className={`font-extrabold text-sm sm:text-base tracking-tight leading-tight ${modoSol ? 'text-slate-900' : 'text-white'}`}>
                 NexoCampo
               </span>
-              <span className="px-1 py-0.2 text-[8px] font-black uppercase tracking-wider rounded bg-emerald-500/20 text-emerald-500 border border-emerald-500/30">
-                PRO
-              </span>
-              <span className="text-[9px] font-mono text-slate-400">
-                v18.1.9
+              <span className="hidden xs:inline-flex px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
+                Auditoría 2026
               </span>
             </div>
-            <span className={`text-[9px] font-medium tracking-tight block truncate mt-0.5 ${modoSol ? 'text-slate-500' : 'text-slate-400'}`}>
-              Control operativo de adecuaciones
+            <span className={`text-[10px] font-medium block truncate mt-0.5 ${modoSol ? 'text-slate-500' : 'text-slate-400'}`}>
+              Supervisión de campo · PWA
             </span>
           </div>
         </div>
 
-        {/* Controles de Accesibilidad, Conectividad y PWA */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Indicador de Conectividad en Campo */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <div
-            className={`px-2 py-1 rounded-md text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 border transition-colors ${
-              isOnline
-                ? (modoSol ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30')
-                : (modoSol ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-950/60 text-amber-300 border-amber-500/50')
-            }`}
-            title={isOnline ? 'Conexión activa con el servidor central' : 'Modo Offline en Campo: Guardando en IndexedDB'}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center border ${isOnline
+              ? (modoSol ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30')
+              : (modoSol ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-amber-950/60 text-amber-300 border-amber-500/50')}`}
+            title={isOnline ? 'Dispositivo conectado a internet; sincronización remota no garantizada' : 'Sin internet; los datos locales permanecen en el dispositivo'}
+            aria-label={isOnline ? 'Con conexión a internet' : 'Sin conexión a internet'}
           >
-            {isOnline ? (
-              <>
-                <Wifi className={`w-3.5 h-3.5 ${modoSol ? 'text-emerald-700' : 'text-emerald-300'}`} />
-                <span className="hidden sm:inline">En Línea</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className={`w-3.5 h-3.5 ${modoSol ? 'text-amber-700' : 'text-amber-300'}`} />
-                <span>Offline</span>
-              </>
-            )}
+            {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
           </div>
 
-          {/* Botón de Instalación In-App PWA */}
           {isInstallable && (
-            <button
-              onClick={install}
-              className="min-h-[44px] px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-sm transition"
-              aria-label="Instalar NexoCampo como aplicación móvil"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Instalar App</span>
+            <button onClick={install} className={`${controlBase} px-2.5 bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-bold border-emerald-700`} aria-label="Instalar NexoCampo como aplicación móvil">
+              <Smartphone className="w-4 h-4" />
+              <span className="hidden sm:inline">Instalar</span>
             </button>
           )}
 
           {isIOS && !isInstalled && (
-            <button
-              onClick={() => setShowIOSPrompt(true)}
-              className={`min-h-[44px] px-2 py-1 rounded-lg border text-[10px] font-semibold flex items-center gap-1 ${modoSol ? 'bg-slate-100 border-slate-300 text-slate-700' : 'bg-slate-800 border-slate-700 text-slate-200'}`}
-            >
-              <Smartphone className="w-3 h-3 text-emerald-400" />
-              <span>Instalar iOS</span>
+            <button onClick={() => setShowIOSPrompt(true)} className={`${controlBase} px-2 bg-slate-100 border-slate-300 text-slate-700 text-[10px] font-semibold`} aria-label="Instrucciones de instalación en iOS">
+              <Smartphone className="w-4 h-4" />
             </button>
           )}
 
-          {/* Botón Modo Sol */}
           <button
             onClick={() => setModoSol(!modoSol)}
-            className={`min-h-[36px] px-2.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors border ${
-              modoSol
-                ? 'bg-amber-100 border-amber-400 text-amber-950'
-                : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
-            }`}
-            aria-label="Alternar modo contraste sol campo"
+            className={`${controlBase} w-10 ${modoSol ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700'}`}
+            aria-label={modoSol ? 'Activar modo oscuro' : 'Activar modo claro'}
+            title={modoSol ? 'Activar modo oscuro' : 'Activar modo claro'}
           >
-            <Sun className="w-3.5 h-3.5 text-amber-500" />
-            <span className="hidden sm:inline">{modoSol ? 'Normal' : 'Sol'}</span>
+            <Sun className="w-4 h-4 text-amber-500" />
           </button>
 
-          {/* Píldora de Cola IndexedDB con enlace a la vista PWA */}
           <button
             onClick={() => setTabActual('pwa_offline')}
-            className={`px-2 py-1 rounded-md text-[10px] sm:text-[11px] font-mono border flex items-center gap-1 cursor-pointer transition ${
-              totalPendientesLocal > 0
-                ? 'bg-amber-950/50 text-amber-300 border-amber-500/50 hover:bg-amber-900/50'
-                : modoSol
-                  ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                  : 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30'
-            }`}
-            title="Ver registros pendientes en IndexedDB"
+            className={`${controlBase} px-2 ${totalPendientesLocal > 0
+              ? 'bg-amber-50 text-amber-900 border-amber-300'
+              : modoSol ? 'bg-emerald-50 text-emerald-900 border-emerald-200' : 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30'}`}
+            title="Ver registros pendientes en la cola local"
+            aria-label={`Ver cola local: ${totalPendientesLocal} registros pendientes`}
           >
-            <Database className="w-3 h-3 text-emerald-400" />
-            <span>{totalPendientesLocal} pend.</span>
+            <Database className="w-3.5 h-3.5" />
+            <span className="text-[10px] font-bold tabular-nums">{totalPendientesLocal}</span>
           </button>
         </div>
       </div>
