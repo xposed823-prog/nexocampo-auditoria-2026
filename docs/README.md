@@ -1,6 +1,8 @@
-# ÍNDICE MAESTRO DE DOCUMENTACIÓN Y AUDITORÍAS — NEXOCAMPO PRO (v18.1.9)
+# Índice maestro de documentación y auditorías — NexoCampo Auditoría 2026
 
-Este directorio reúne y preserva todos los informes técnicos, auditorías de fidelidad, análisis de seguridad, bancos de pruebas matemáticas y certificaciones generados durante el ciclo de inspección y validación del proyecto.
+Este directorio reúne informes técnicos, auditorías, análisis de seguridad, bancos de pruebas y especificaciones generados durante la evolución del proyecto.
+
+> **Aviso de vigencia:** los estados y conteos de pruebas que aparecen más abajo son registros documentales previos; no deben interpretarse como certificación del commit actual. La verificación vigente se confirma en GitHub Actions. Consulta [el informe de correcciones Full Code](REPORTE_FULL_CODE_2026-10-29.md), que registra los cambios recientes, los riesgos abiertos y las pruebas pendientes.
 
 ---
 
