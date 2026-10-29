@@ -119,15 +119,15 @@ input, select, textarea { max-width: 100%; }
   background-color: #ffffff;
   border-color: #cbd8ce;
 }
-[data-theme="light"] .app-shell header.sticky {
+.app-shell[data-theme="light"] header.sticky {
   border-color: var(--nc-border);
   background: rgba(255, 255, 255, .94);
 }
-[data-theme="dark"] .app-shell header.sticky {
+.app-shell[data-theme="dark"] header.sticky {
   border-color: #293a30;
   background: rgba(18, 30, 23, .96);
 }
-[data-theme="dark"] .app-shell {
+.app-shell[data-theme="dark"] {
   background: #101b15;
   color: #e4eee7;
 }
