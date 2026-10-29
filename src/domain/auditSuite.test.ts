@@ -162,7 +162,7 @@ test('AUDITORÍA 7.1 - Plástico y Polisombra: Límite de 6 integrantes en cuadr
 
   const valInvalida = validarPlasticoPolisombra(7, '07:00', '15:00', 100, 100, ['soleado']);
   assert.equal(valInvalida.esValido, false);
-  assert.match(valInvalida.errores.integrantes, /exactamente 6 integrantes/i);
+  assert.match(valInvalida.errores.integrantes, /entre 1 y 6 integrantes/i);
 });
 
 test('AUDITORÍA 7.2 - Plástico y Polisombra: Motivos previstos de pendiente (tiempo, viento, lluvia)', () => {
