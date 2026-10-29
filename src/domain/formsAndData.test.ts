@@ -33,7 +33,7 @@ test('Validación de Plástico y Polisombra: acepta de uno a seis integrantes y 
   // Caso de más de 6 integrantes
   const excesoIntegrantes = validarPlasticoPolisombra(7, '07:00', '11:00', 100, 80, ['soleado']);
   assert.equal(excesoIntegrantes.esValido, false);
-  assert.match(excesoIntegrantes.errores.integrantes, /exactamente 6 integrantes/i);
+  assert.match(excesoIntegrantes.errores.integrantes, /entre 1 y 6 integrantes/i);
 
   // Caso válido con saldo pendiente (80 completados de 100)
   const conSaldo = validarPlasticoPolisombra(6, '07:00', '11:00', 100, 80, ['soleado', 'vientos_fuertes']);
