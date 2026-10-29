@@ -44,7 +44,7 @@ function fechaLocalHoy(): string {
  * Solicita sincronización. Registrar Background Sync solo significa que la tarea
  * quedó programada; no significa que los datos ya hayan llegado a un servidor.
  */
-export async function dispararBackgroundSync(): Promise<{ exito: boolean; metodo: 'background-sync' | 'direct-sync' | 'offline-queued' }> {
+export async function dispararBackgroundSync(): Promise<{ exito: boolean; metodo: 'background-sync' | 'direct-sync' | 'offline-queued' | 'nothing-to-sync' }> {
   if (!navigator.onLine) {
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       try {
@@ -73,7 +73,7 @@ export async function dispararBackgroundSync(): Promise<{ exito: boolean; metodo
   }
 
   const pendientes = await obtenerRegistrosPendientes();
-  if (pendientes.length === 0) return { exito: true, metodo: 'direct-sync' };
+  if (pendientes.length === 0) return { exito: true, metodo: 'nothing-to-sync' };
 
   const respuesta = await fetch('/api/sync', {
     method: 'POST',
