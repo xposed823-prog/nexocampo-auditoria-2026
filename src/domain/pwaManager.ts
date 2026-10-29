@@ -1,10 +1,10 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
- * 
- * NexoCampo 2026 - Conector TypeScript para PWA, IndexedDB y Background Sync
+ *
+ * NexoCampo Auditoría 2026 — cola local y contrato de sincronización.
+ * La cola solo se limpia cuando un backend confirma explícitamente el lote completo.
  */
-
 import {
   initDB,
   guardarRegistroPendiente,
@@ -34,11 +34,17 @@ export interface JornadaConfirmadaItem {
   estado: string;
 }
 
+function fechaLocalHoy(): string {
+  const hoy = new Date();
+  const pad = (valor: number) => String(valor).padStart(2, '0');
+  return `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
+}
+
 /**
- * Registra o despacha el evento Background Sync en el Service Worker
+ * Solicita sincronización. Registrar Background Sync solo significa que la tarea
+ * quedó programada; no significa que los datos ya hayan llegado a un servidor.
  */
 export async function dispararBackgroundSync(): Promise<{ exito: boolean; metodo: 'background-sync' | 'direct-sync' | 'offline-queued' }> {
-  // Si estamos sin conexión, intentar registrar la tarea sync si el navegador lo permite
   if (!navigator.onLine) {
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       try {
@@ -47,14 +53,13 @@ export async function dispararBackgroundSync(): Promise<{ exito: boolean; metodo
           await reg.sync.register('sync-jornadas');
           return { exito: true, metodo: 'background-sync' };
         }
-      } catch (e) {
-        console.warn('Sync registration failed:', e);
+      } catch (error) {
+        console.warn('No se pudo programar Background Sync; la cola local se conserva:', error);
       }
     }
     return { exito: true, metodo: 'offline-queued' };
   }
 
-  // Si estamos en línea, intentar Background Sync primero
   if ('serviceWorker' in navigator && 'SyncManager' in window) {
     try {
       const reg = await (navigator.serviceWorker as any).ready;
@@ -62,39 +67,47 @@ export async function dispararBackgroundSync(): Promise<{ exito: boolean; metodo
         await reg.sync.register('sync-jornadas');
         return { exito: true, metodo: 'background-sync' };
       }
-    } catch (e) {
-      console.warn('SyncManager no disponible, recurriendo a sincronización directa');
+    } catch (error) {
+      console.warn('Background Sync no disponible; se intentará la vía directa:', error);
     }
   }
 
-  // Fallback: sincronización directa
   const pendientes = await obtenerRegistrosPendientes();
-  if (pendientes.length === 0) {
-    return { exito: true, metodo: 'direct-sync' };
-  }
+  if (pendientes.length === 0) return { exito: true, metodo: 'direct-sync' };
 
-  const res = await fetch('/api/sync', {
+  const respuesta = await fetch('/api/sync', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ registros: pendientes })
   });
 
-  if (res.ok) {
-    for (const item of pendientes) {
-      await guardarJornadaConfirmada({
-        id: item.payload?.id || `jornada_${Date.now()}`,
-        entidad: item.entidad,
-        fecha: item.payload?.fecha || new Date().toISOString().split('T')[0],
-        datos: item.payload,
-        sincronizadoEn: new Date().toISOString(),
-        estado: 'sincronizado'
-      });
-    }
-    await limpiarRegistrosPendientes();
-    return { exito: true, metodo: 'direct-sync' };
-  } else {
-    throw new Error(`Error en servidor: HTTP ${res.status}`);
+  if (!respuesta.ok) {
+    throw new Error(`Sincronización no confirmada (HTTP ${respuesta.status}). Los registros siguen en la cola local.`);
   }
+
+  let confirmacion: { success?: boolean; sincronizados?: number };
+  try {
+    confirmacion = await respuesta.json();
+  } catch {
+    throw new Error('El servidor no devolvió una confirmación JSON válida. La cola local se conserva.');
+  }
+
+  if (confirmacion.success !== true || confirmacion.sincronizados !== pendientes.length) {
+    throw new Error('El servidor no confirmó la recepción de todo el lote. La cola local se conserva.');
+  }
+
+  for (const item of pendientes) {
+    await guardarJornadaConfirmada({
+      id: item.payload?.id || `jornada_${Date.now()}`,
+      entidad: item.entidad,
+      fecha: item.payload?.fecha || fechaLocalHoy(),
+      datos: item.payload,
+      sincronizadoEn: new Date().toISOString(),
+      estado: 'sincronizado'
+    });
+  }
+  await limpiarRegistrosPendientes();
+  return { exito: true, metodo: 'direct-sync' };
 }
 
 export {
