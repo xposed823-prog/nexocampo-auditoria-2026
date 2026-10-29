@@ -1,27 +1,11 @@
 /**
- * NexoCampo 2026 - PWA Offline-First
- * Archivo: public/service-worker.js
- * 
- * Service Worker de alto rendimiento para operaciones agrícolas en campo abierto.
- * 
- * Decisiones Técnicas Clave:
- * 1. Estrategia de Caché Dual:
- *    - Navegación / Documentos: Network-First con fallback a offline.html.
- *    - Shell Estático (CSS, JS, Iconos, Manifiesto): Cache-First con Stale-While-Revalidate.
- * 2. Background Sync (Evento 'sync'):
- *    - Permite al supervisor guardar planillas sin conectividad. Cuando el dispositivo
- *      recupera señal (3G/4G/Wi-Fi en campamento), el navegador despierta al Service Worker
- *      para vaciar la cola de IndexedDB sin requerir que la aplicación esté abierta.
- * 3. Notificación Automática al Usuario:
- *    - Conforme al requerimiento normativo, tras completar con éxito la sincronización
- *      en segundo plano, se invoca self.registration.showNotification(...) confirmando
- *      la cantidad de registros agrícolas subidos al servidor central.
- * 4. Difusión a Clientes Activos:
- *    - Envía mensajes postMessage a las ventanas abiertas para refrescar contadores en vivo.
+ * NexoCampo Auditoría 2026 — Service Worker PWA.
+ * La sincronización solo se confirma cuando el backend responde success=true
+ * y sincronizados coincide exactamente con el tamaño del lote.
  */
 
-const CACHE_NAME_STATIC = 'nexocampo-static-v1';
-const CACHE_NAME_DYNAMIC = 'nexocampo-dynamic-v1';
+const CACHE_NAME_STATIC = 'nexocampo-static-v2';
+const CACHE_NAME_DYNAMIC = 'nexocampo-dynamic-v2';
 
 const STATIC_ASSETS = [
   '/',
@@ -42,26 +26,25 @@ const DB_VERSION = 1;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME_STATIC).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.warn('[Service Worker] Precaché parcial:', err);
-      });
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME_STATIC)
+      .then((cache) => cache.addAll(STATIC_ASSETS).catch((error) => {
+        console.warn('[Service Worker] Precaché parcial:', error);
+      }))
+      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', (event) => {
   const currentCaches = [CACHE_NAME_STATIC, CACHE_NAME_DYNAMIC];
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
+    caches.keys()
+      .then((cacheNames) => Promise.all(
         cacheNames.map((cacheName) => {
-          if (!currentCaches.includes(cacheName)) {
-            return caches.delete(cacheName);
-          }
+          if (!currentCaches.includes(cacheName)) return caches.delete(cacheName);
+          return undefined;
         })
-      );
-    }).then(() => self.clients.claim())
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
@@ -71,15 +54,14 @@ self.addEventListener('fetch', (event) => {
 
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request).catch(() => {
-        return new Response(JSON.stringify({
-          error: 'Offline',
-          message: 'Sin conexión de red en campo. Datos almacenados en cola local.'
-        }), {
-          status: 503,
-          headers: { 'Content-Type': 'application/json' }
-        });
-      })
+      fetch(request).catch(() => new Response(JSON.stringify({
+        success: false,
+        error: 'API_UNAVAILABLE',
+        message: 'No hay conexión con el servicio remoto. La cola local se conserva.'
+      }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      }))
     );
     return;
   }
@@ -88,17 +70,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {
-          return caches.open(CACHE_NAME_DYNAMIC).then((cache) => {
-            cache.put(request, networkResponse.clone());
-            return networkResponse;
-          });
+          if (networkResponse && networkResponse.ok) {
+            caches.open(CACHE_NAME_DYNAMIC).then((cache) => cache.put(request, networkResponse.clone()));
+          }
+          return networkResponse;
         })
-        .catch(() => {
-          return caches.match(request).then((cachedResponse) => {
-            if (cachedResponse) return cachedResponse;
-            return caches.match('/offline.html');
-          });
-        })
+        .catch(() => caches.match(request).then((cachedResponse) => cachedResponse || caches.match('/offline.html')))
     );
     return;
   }
@@ -109,64 +86,70 @@ self.addEventListener('fetch', (event) => {
       return fetch(request).then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME_DYNAMIC).then((cache) => {
-            cache.put(request, responseToCache);
-          });
+          caches.open(CACHE_NAME_DYNAMIC).then((cache) => cache.put(request, responseToCache));
         }
         return networkResponse;
-      }).catch((err) => {
-        console.warn('[Service Worker] Fallo de red:', err);
+      }).catch((error) => {
+        console.warn('[Service Worker] Fallo de red:', error);
+        return undefined;
       });
     })
   );
 });
 
 self.addEventListener('sync', (event) => {
-  console.log(`[Service Worker] Evento sync: ${event.tag}`);
   if (event.tag === 'sync-jornadas' || event.tag === 'sync-registros' || event.tag.startsWith('sync-')) {
     event.waitUntil(procesarColaSincronizacion());
   }
 });
 
 async function procesarColaSincronizacion() {
+  const db = await abrirIndexedDB();
+  const pendientes = await leerPendientesDesdeIDB(db);
+  if (!pendientes || pendientes.length === 0) return;
+
+  const respuesta = await fetch('/api/sync', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-PWA-Sync-Origin': 'ServiceWorker-BackgroundSync'
+    },
+    body: JSON.stringify({ registros: pendientes })
+  });
+
+  if (!respuesta.ok) {
+    throw new Error(`Sincronización no confirmada (HTTP ${respuesta.status}); la cola se conserva.`);
+  }
+
+  let confirmacion;
   try {
-    const db = await abrirIndexedDB();
-    const pendientes = await leerPendientesDesdeIDB(db);
+    confirmacion = await respuesta.json();
+  } catch {
+    throw new Error('El servidor no devolvió JSON válido; la cola se conserva.');
+  }
 
-    if (!pendientes || pendientes.length === 0) return;
+  if (confirmacion?.success !== true || confirmacion?.sincronizados !== pendientes.length) {
+    throw new Error('El servidor no confirmó el lote completo; la cola se conserva.');
+  }
 
-    const respuesta = await fetch('/api/sync', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-PWA-Sync-Origin': 'ServiceWorker-BackgroundSync'
-      },
-      body: JSON.stringify({ registros: pendientes })
+  await migrarPendientesAConfirmados(db, pendientes);
+  await mostrarNotificacionSincronizacion(pendientes.length);
+
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  for (const client of clients) {
+    client.postMessage({
+      type: 'SYNC_COMPLETED',
+      total: pendientes.length,
+      timestamp: new Date().toISOString()
     });
-
-    if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
-
-    await migrarPendientesAConfirmados(db, pendientes);
-    await mostrarNotificacionSincronizacion(pendientes.length);
-
-    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const client of clients) {
-      client.postMessage({
-        type: 'SYNC_COMPLETED',
-        total: pendientes.length,
-        timestamp: new Date().toISOString()
-      });
-    }
-  } catch (error) {
-    console.error('[Service Worker] Error sync:', error);
-    throw error;
   }
 }
 
 async function mostrarNotificacionSincronizacion(cantidad) {
   if (self.Notification && self.Notification.permission === 'granted') {
-    return self.registration.showNotification('NexoCampo — Sincronización Exitosa', {
-      body: `Se han sincronizado correctamente ${cantidad} registro(s) agrícola(s) con el servidor central.`,
+    return self.registration.showNotification('NexoCampo — Sincronización confirmada', {
+      body: `El servidor confirmó la recepción de ${cantidad} registro(s).`,
       icon: '/pwa-192x192.png',
       badge: '/pwa-192x192.png',
       vibrate: [150, 80, 150],
@@ -179,8 +162,8 @@ async function mostrarNotificacionSincronizacion(cantidad) {
 function abrirIndexedDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onsuccess = (e) => resolve(e.target.result);
-    request.onerror = (e) => reject(e.target.error);
+    request.onsuccess = (event) => resolve(event.target.result);
+    request.onerror = (event) => reject(event.target.error);
   });
 }
 
@@ -188,11 +171,17 @@ function leerPendientesDesdeIDB(db) {
   return new Promise((resolve, reject) => {
     if (!db.objectStoreNames.contains('registros_pendientes')) return resolve([]);
     const tx = db.transaction('registros_pendientes', 'readonly');
-    const store = tx.objectStore('registros_pendientes');
-    const request = store.getAll();
+    const request = tx.objectStore('registros_pendientes').getAll();
     request.onsuccess = () => resolve(request.result || []);
     request.onerror = () => reject(request.error);
+    tx.onerror = () => reject(tx.error);
   });
+}
+
+function fechaLocalHoy() {
+  const hoy = new Date();
+  const pad = (valor) => String(valor).padStart(2, '0');
+  return `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
 }
 
 function migrarPendientesAConfirmados(db, pendientes) {
@@ -200,14 +189,15 @@ function migrarPendientesAConfirmados(db, pendientes) {
     const tx = db.transaction(['registros_pendientes', 'jornadas'], 'readwrite');
     const pendStore = tx.objectStore('registros_pendientes');
     const jornStore = tx.objectStore('jornadas');
+    const ahora = new Date().toISOString();
 
     pendientes.forEach((item) => {
       jornStore.put({
         id: item.payload?.id || `jornada_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         entidad: item.entidad,
-        fecha: item.payload?.fecha || new Date().toISOString().split('T')[0],
+        fecha: item.payload?.fecha || fechaLocalHoy(),
         datos: item.payload,
-        sincronizadoEn: new Date().toISOString(),
+        sincronizadoEn: ahora,
         estado: 'sincronizado'
       });
     });
@@ -215,6 +205,7 @@ function migrarPendientesAConfirmados(db, pendientes) {
     pendStore.clear();
     tx.oncomplete = () => resolve(true);
     tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new Error('Transacción de sincronización cancelada'));
   });
 }
 
@@ -223,11 +214,10 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          return client.focus();
-        }
+        if (client.url.includes(self.location.origin) && 'focus' in client) return client.focus();
       }
       if (self.clients.openWindow) return self.clients.openWindow('/');
+      return undefined;
     })
   );
 });
