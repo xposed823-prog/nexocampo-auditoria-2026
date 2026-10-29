@@ -1,80 +1,112 @@
 @import "tailwindcss";
 
-/* NexoCampo Auditoría 2026 — sistema visual móvil, sobrio y consistente */
+/* NexoCampo Auditoría 2026 — sistema visual agrícola, claro y mobile-first */
 :root {
   color-scheme: light;
-  --nc-brand-50: #edf8f1;
-  --nc-brand-100: #d9eee0;
-  --nc-brand-200: #b7dcc5;
-  --nc-brand-500: #2f8f5b;
-  --nc-brand-600: #27784c;
-  --nc-brand-700: #216640;
-  --nc-brand-800: #1c5235;
-  --nc-brand-900: #163f2b;
-  --nc-bg: #f3f6f3;
+  --nc-brand-50: #ecfdf5;
+  --nc-brand-100: #d1fae5;
+  --nc-brand-200: #a7f3d0;
+  --nc-brand-500: #10b981;
+  --nc-brand-600: #059669;
+  --nc-brand-700: #047857;
+  --nc-brand-800: #065f46;
+  --nc-brand-900: #064e3b;
+  --nc-bg: #f5f8f5;
   --nc-surface: #ffffff;
-  --nc-border: #dfe7e1;
-  --nc-text: #34443a;
-  --nc-text-strong: #1c2b21;
-  --nc-text-muted: #607166;
+  --nc-border: #dce7df;
+  --nc-text: #33443a;
+  --nc-text-strong: #172b20;
+  --nc-text-muted: #607268;
+  --nc-radius: 1rem;
+  --nc-shadow-card: 0 2px 5px rgba(20, 52, 34, .035), 0 12px 28px rgba(20, 52, 34, .045);
 }
+* { box-sizing: border-box; }
 html {
   min-height: 100%;
   background: var(--nc-bg);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  scroll-padding-top: 5rem;
   scroll-padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
 }
 body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(ellipse at 12% 0%, rgba(47, 143, 91, .07), transparent 32rem),
+    radial-gradient(ellipse at 8% 0%, rgba(16, 185, 129, .09), transparent 30rem),
+    radial-gradient(ellipse at 96% 20%, rgba(132, 204, 22, .045), transparent 26rem),
     var(--nc-bg);
   color: var(--nc-text);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 button, input, select, textarea { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: 3px solid #83c99d;
+  outline: 3px solid #34d399;
   outline-offset: 2px;
 }
 input, select, textarea { max-width: 100%; }
-::selection { color: #163f2b; background: #d9eee0; }
+::selection { color: #064e3b; background: #d1fae5; }
 .tabular-nums { font-variant-numeric: tabular-nums; }
 
 .app-shell {
   background: #f8faf8;
   color: var(--nc-text);
-  box-shadow: 0 8px 36px rgba(26, 53, 35, .08);
+  box-shadow: 0 10px 42px rgba(26, 53, 35, .09);
+  isolation: isolate;
 }
 .app-shell > main {
   width: 100%;
   box-sizing: border-box;
+  padding-left: clamp(.75rem, 3.5vw, 1rem);
+  padding-right: clamp(.75rem, 3.5vw, 1rem);
 }
 .app-shell header.sticky {
   border-color: var(--nc-border);
-  background: rgba(255, 255, 255, .96);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 1px 0 rgba(25, 55, 36, .035);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
 }
 .app-shell nav[aria-label] {
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
 }
 .app-shell button {
-  transition: background-color .14s ease, border-color .14s ease, box-shadow .14s ease, color .14s ease;
+  transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease, color .16s ease, transform .16s ease;
 }
+.app-shell button:active { transform: translateY(1px); }
 .app-shell input, .app-shell select, .app-shell textarea {
   min-height: 2.75rem;
-  border-radius: .75rem;
+  border-radius: .8rem;
 }
-.app-shell .bg-white { box-shadow: 0 1px 2px rgba(26, 53, 35, .035); }
+.app-shell input, .app-shell select, .app-shell textarea {
+  border-color: #cbd8ce;
+}
+.app-shell input::placeholder, .app-shell textarea::placeholder { color: #7b8b80; opacity: 1; }
+.app-shell .bg-white {
+  border-color: rgba(207, 222, 212, .9);
+  box-shadow: var(--nc-shadow-card);
+}
+.app-shell main h1, .app-shell main h2, .app-shell main h3 {
+  color: var(--nc-text-strong);
+  letter-spacing: -.025em;
+}
+.app-shell main h1 { line-height: 1.18; }
+.app-shell main h2 { line-height: 1.25; }
+.app-shell main p { line-height: 1.55; }
+.app-shell main label { line-height: 1.35; }
+.app-shell main button { min-height: 2.75rem; }
+.app-shell nav[aria-label] {
+  border-color: var(--nc-border);
+  box-shadow: 0 -6px 24px rgba(24, 52, 34, .08);
+}
+.app-shell nav[aria-label] button { min-width: 0; }
+.app-shell nav[aria-label] button span { white-space: nowrap; }
 
-/* Mantener contraste en modo claro sin alterar las superficies ni los estados semánticos. */
+/* Contraste coherente del modo claro; se conservan los colores semánticos de estado. */
 [data-theme="dark"] { color-scheme: dark; }
 [data-theme="light"] .text-slate-400 { color: #64756a !important; }
 [data-theme="light"] .text-slate-300 { color: #4d5f53 !important; }
@@ -89,11 +121,28 @@ input, select, textarea { max-width: 100%; }
 }
 [data-theme="light"] .app-shell header.sticky {
   border-color: var(--nc-border);
-  background: rgba(255, 255, 255, .96);
+  background: rgba(255, 255, 255, .94);
 }
 [data-theme="dark"] .app-shell header.sticky {
   border-color: #293a30;
   background: rgba(18, 30, 23, .96);
+}
+[data-theme="dark"] .app-shell {
+  background: #101b15;
+  color: #e4eee7;
+}
+[data-theme="dark"] .app-shell main h1,
+[data-theme="dark"] .app-shell main h2,
+[data-theme="dark"] .app-shell main h3 { color: #f0f7f2; }
+
+@media (max-width: 360px) {
+  .app-shell header.sticky > div { gap: .35rem; padding-inline: .5rem; }
+  .app-shell header.sticky button { padding-inline: .45rem; }
+  .app-shell nav[aria-label] .grid { height: 3.5rem; }
+  .app-shell nav[aria-label] button span { font-size: 9px; }
+}
+@media (min-width: 600px) {
+  .app-shell { border-left: 1px solid rgba(220, 231, 223, .75); border-right: 1px solid rgba(220, 231, 223, .75); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
