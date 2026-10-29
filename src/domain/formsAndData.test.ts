@@ -29,7 +29,7 @@ test('Validación de Labor: requiere fin > inicio y cantidad >= 0', () => {
   assert.equal(valido.esValido, true);
 });
 
-test('Validación de Plástico y Polisombra: exige exactamente seis integrantes y detecta justificación pendiente', () => {
+test('Validación de Plástico y Polisombra: acepta de uno a seis integrantes y detecta justificación pendiente', () => {
   // Caso de más de 6 integrantes
   const excesoIntegrantes = validarPlasticoPolisombra(7, '07:00', '11:00', 100, 80, ['soleado']);
   assert.equal(excesoIntegrantes.esValido, false);
