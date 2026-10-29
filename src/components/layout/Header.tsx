@@ -32,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span className={`font-extrabold text-sm sm:text-base tracking-tight leading-tight ${modoSol ? 'text-slate-900' : 'text-white'}`}>
                 NexoCampo
               </span>
-              <span className="hidden xs:inline-flex px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
+              <span className="hidden sm:inline-flex px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-wide rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
                 Auditoría 2026
               </span>
             </div>
