@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Pruebas, tipos y build
+    name: Pruebas, tipos, dependencias y build
     runs-on: ubuntu-latest
     steps:
       - name: Descargar código
@@ -32,6 +32,10 @@ jobs:
 
       - name: Instalar dependencias bloqueadas
         run: npm ci --legacy-peer-deps
+
+      - name: Auditar vulnerabilidades de dependencias
+        run: npm audit --audit-level=high
+        continue-on-error: true
 
       - name: Ejecutar pruebas automatizadas
         run: npm test
