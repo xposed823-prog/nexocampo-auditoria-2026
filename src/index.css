@@ -131,9 +131,9 @@ input, select, textarea { max-width: 100%; }
   background: #101b15;
   color: #e4eee7;
 }
-[data-theme="dark"] .app-shell main h1,
-[data-theme="dark"] .app-shell main h2,
-[data-theme="dark"] .app-shell main h3 { color: #f0f7f2; }
+.app-shell[data-theme="dark"] main h1,
+.app-shell[data-theme="dark"] main h2,
+.app-shell[data-theme="dark"] main h3 { color: #f0f7f2; }
 
 @media (max-width: 360px) {
   .app-shell header.sticky > div { gap: .35rem; padding-inline: .5rem; }
