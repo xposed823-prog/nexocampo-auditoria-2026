@@ -32,7 +32,7 @@
 2. La contraseña maestra heredada permanece únicamente para compatibilidad de lectura de datos antiguos. No debe declararse el sistema criptográfico completamente seguro hasta identificar registros heredados, diseñar una migración y retirar esa clave sin perder acceso a datos.
 3. El proyecto mantiene dos modelos de persistencia: IndexedDB de negocio y almacenes usados por el subsistema PWA. Hay que verificar la frontera entre ambos antes de consolidarlos; no se cambió el esquema de base de datos.
 4. La compilación, los tests y el chequeo TypeScript deben quedar confirmados en GitHub Actions tras estos commits.
-5. Falta ejecutar auditoría de dependencias e identificar la vulnerabilidad alta reportada previamente.
+5. Se identificó la vulnerabilidad alta GHSA-27r3-jxmh-p828 en body-parser anterior a 1.20.9 y se actualizó el lockfile a 1.20.9. Falta confirmar en CI que `npm audit` ya no detecta esa vulnerabilidad.
 6. Se requiere prueba visual y funcional real en Android: modo claro/oscuro, anchura de 320 px, instalación, uso sin conexión, reintentos y restauración.
 
 ## Verificación
