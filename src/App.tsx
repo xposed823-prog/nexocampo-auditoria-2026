@@ -628,24 +628,6 @@ function App() {
           </div>
         )}
 
-        {/* Botón Flotante Canónico de Notificaciones / Alertas */}
-        <button
-          type="button"
-          onClick={() => setTabActual('admin')}
-          className={`fixed right-4 bottom-20 z-40 w-11 h-11 rounded-full border shadow-xl flex items-center justify-center text-lg active:scale-95 transition-transform ${
-            modoSol ? 'bg-white border-slate-200 text-slate-700' : 'bg-slate-800 border-slate-700 text-slate-200'
-          }`}
-          aria-label="Notificaciones y Administración"
-          title="Notificaciones y Administración"
-        >
-          🔔
-          {totalPendientesLocal > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white">
-              {totalPendientesLocal}
-            </span>
-          )}
-        </button>
-
         {/* Feedback Toast */}
         {toastMensaje && (
           <div className="fixed bottom-16 left-4 right-4 max-w-xs mx-auto z-50 bg-emerald-700 text-white px-3 py-2 rounded-lg shadow-lg text-xs font-semibold flex items-center gap-2 shadow-[0_8px_24px_rgba(22,63,43,0.22)]">
