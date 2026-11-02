@@ -69,7 +69,7 @@ app.post('/api/sync', (req, res) => {
     code: 'SYNC_BACKEND_NOT_CONFIGURED',
     message: 'Sincronización deshabilitada: no existe almacenamiento remoto durable configurado. La cola local debe conservarse.'
   });
-};
+});
 
 /**
  * Catálogo de Colaboradores
