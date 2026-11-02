@@ -10,11 +10,9 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Smartphone, AlertTriangle, Check, X, Search, FileBarChart, User, LogOut } from 'lucide-react';
 import { usePWAInstall, useOnlineStatus } from './domain/usePWAInstall';
 import {
-  guardarRegistroPendiente,
   obtenerRegistrosPendientes,
   contarPendientes,
-  exportarBaseDatosJSON,
-  dispararBackgroundSync
+  exportarBaseDatosJSON
 } from './domain/pwaManager';
 import {
   validarPlasticoPolisombra,
@@ -231,17 +229,11 @@ function App() {
   const isOnline = useOnlineStatus();
   const [totalPendientesLocal, setTotalPendientesLocal] = useState<number>(0);
   const [pwaListaPendientes, setPwaListaPendientes] = useState<any[]>([]);
-  const [pwaArchivoSeleccionado, setPwaArchivoSeleccionado] = useState<string>('service-worker.js');
   const [pwaSyncCargando, setPwaSyncCargando] = useState<boolean>(false);
   const [showIOSPrompt, setShowIOSPrompt] = useState<boolean>(false);
 
-  // Formulario interactivo de prueba para guardar registros offline
-  const [pwaColaboradorTest, setPwaColaboradorTest] = useState('col_1');
-  const [pwaLaborTest, setPwaLaborTest] = useState('Poda de formación');
-  const [pwaCantidadTest, setPwaCantidadTest] = useState(85);
-  const [pwaHorasTest, setPwaHorasTest] = useState('06:30 - 15:30');
-
   const refrescarColaPWA = async () => {
+    setPwaSyncCargando(true);
     try {
       const count = await contarPendientes();
       setTotalPendientesLocal(count);
@@ -249,6 +241,8 @@ function App() {
       setPwaListaPendientes(items);
     } catch (e) {
       console.warn('Error al consultar cola IndexedDB:', e);
+    } finally {
+      setPwaSyncCargando(false);
     }
   };
 
@@ -274,63 +268,6 @@ function App() {
       window.removeEventListener('online', refrescarColaPWA);
     };
   }, []);
-
-  const guardarRegistroOfflineTest = async () => {
-    try {
-      const payload = {
-        id: `jornada_${Date.now()}`,
-        colaboradorId: pwaColaboradorTest,
-        labor: pwaLaborTest,
-        cantidad: pwaCantidadTest,
-        horario: pwaHorasTest,
-        fecha: fechaLocalHoy(),
-        guardadoModo: isOnline ? 'online_direct' : 'offline_indexeddb'
-      };
-      await guardarRegistroPendiente('jornada', payload);
-      dispararToast('✓ Registro guardado en IndexedDB local seguro');
-      await refrescarColaPWA();
-
-      try {
-        if ('serviceWorker' in navigator && 'SyncManager' in window) {
-          const reg = await (navigator.serviceWorker as any).ready;
-          if (reg?.sync) {
-            await reg.sync.register('sync-jornadas');
-          }
-        }
-      } catch (syncErr) {
-        console.warn('Sync registration deferred:', syncErr);
-      }
-    } catch (err: any) {
-      dispararToast('Error al persistir en IndexedDB');
-    }
-  };
-
-  const ejecutarSincronizacionManual = async () => {
-    setPwaSyncCargando(true);
-    try {
-      const res = await dispararBackgroundSync();
-      if (res.metodo === 'offline-queued') {
-        dispararToast('Sin conexión: la cola local se conserva para un nuevo intento.');
-      } else if (res.metodo === 'background-sync') {
-        dispararToast('Sincronización programada; falta confirmar la recepción del servidor.');
-      } else if (res.metodo === 'nothing-to-sync') {
-        dispararToast('No hay registros pendientes de sincronizar.');
-      } else {
-        dispararToast('Sincronización confirmada por el servidor.');
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('NexoCampo — Sincronización confirmada', {
-            body: 'El servidor confirmó la recepción de todos los registros pendientes.',
-            icon: '/pwa-192x192.png'
-          });
-        }
-      }
-      await refrescarColaPWA();
-    } catch (e: any) {
-      dispararToast('Error durante la sincronización: ' + e.message);
-    } finally {
-      setPwaSyncCargando(false);
-    }
-  };
 
   const solicitarPermisoNotificaciones = async () => {
     if ('Notification' in window) {
@@ -835,24 +772,11 @@ function App() {
             modoSol={modoSol}
             isOnline={isOnline}
             totalPendientesLocal={totalPendientesLocal}
-            pwaColaboradorTest={pwaColaboradorTest}
-            setPwaColaboradorTest={setPwaColaboradorTest}
-            pwaLaborTest={pwaLaborTest}
-            setPwaLaborTest={setPwaLaborTest}
-            pwaHorasTest={pwaHorasTest}
-            setPwaHorasTest={setPwaHorasTest}
-            pwaCantidadTest={pwaCantidadTest}
-            setPwaCantidadTest={setPwaCantidadTest}
-            colaboradoresMock={COLABORADORES_MOCK}
-            guardarRegistroOfflineTest={guardarRegistroOfflineTest}
-            ejecutarSincronizacionManual={ejecutarSincronizacionManual}
             pwaSyncCargando={pwaSyncCargando}
             pwaListaPendientes={pwaListaPendientes}
             refrescarColaPWA={refrescarColaPWA}
             solicitarPermisoNotificaciones={solicitarPermisoNotificaciones}
             descargarBackupJSON={descargarBackupJSON}
-            pwaArchivoSeleccionado={pwaArchivoSeleccionado}
-            setPwaArchivoSeleccionado={setPwaArchivoSeleccionado}
           />
         )}
 
