@@ -1,5 +1,7 @@
 # Índice maestro de documentación y auditorías — NexoCampo Auditoría 2026
 
+> **Auditoría vigente (2026-11-01):** [Auditoría experta de estabilidad, limpieza y UX](AUDITORIA_EXPERTA_ESTABILIDAD_UX_2026-11-01.md).
+
 Este directorio reúne informes técnicos, auditorías, análisis de seguridad, bancos de pruebas y especificaciones generados durante la evolución del proyecto.
 
 > **Aviso de vigencia:** los estados y conteos de pruebas que aparecen más abajo son registros documentales previos; no deben interpretarse como certificación del commit actual. La verificación vigente se confirma en GitHub Actions. Consulta [el informe de correcciones Full Code](REPORTE_FULL_CODE_2026-10-29.md), que registra los cambios recientes, los riesgos abiertos y las pruebas pendientes.
@@ -10,7 +12,7 @@ Este directorio reúne informes técnicos, auditorías, análisis de seguridad, 
 
 | Comando Ejecutado | Documento Técnico en Repositorio | Objetivo Principal del Análisis | Estado |
 | :---: | :--- | :--- | :---: |
-| `/audit` | `docs/AUDITORIA_FASE_1_NEXOCAMPO.md` | Auditoría de solo lectura, matriz de fidelidad de 12 módulos y plan de corrección de dependencias. | **Certificado** |
+| `/audit` | `docs/AUDITORIA_FASE_1_NEXOCAMPO.md` | Auditoría de solo lectura, matriz de fidelidad de 12 módulos y plan de corrección de dependencias. | Histórico — no valida el commit actual |
 | `/review` | `docs/REVISION_FIDELIDAD_NEXOCAMPO_V18.md` | Revisión de correspondencia con la versión de referencia v18.1.9. | **Certificado** |
 | `/explain` | `docs/EXPLICACION_ARQUITECTURA_NEXOCAMPO.md` | Explicación detallada de la arquitectura Offline-First y el modelo de datos. | **Certificado** |
 | `/test` | `docs/REPORTE_PRUEBAS_TEST_SUITE.md` | Banco de pruebas unitarias automatizadas con `node:test`. | **Certificado** |
