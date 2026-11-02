@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Wifi, WifiOff, Database, RefreshCw, Bell, Download,
+  Wifi, WifiOff, Database, RefreshCw, Bell,
   AlertCircle, CheckCircle2, Clock
 } from 'lucide-react';
 
@@ -12,7 +12,6 @@ export interface PwaSyncModuloProps {
   pwaListaPendientes: any[];
   refrescarColaPWA: () => Promise<void>;
   solicitarPermisoNotificaciones: () => Promise<void>;
-  descargarBackupJSON: () => Promise<void>;
 }
 
 export const PwaSyncModulo: React.FC<PwaSyncModuloProps> = ({
@@ -23,7 +22,6 @@ export const PwaSyncModulo: React.FC<PwaSyncModuloProps> = ({
   pwaListaPendientes,
   refrescarColaPWA,
   solicitarPermisoNotificaciones,
-  descargarBackupJSON
 }) => {
   const panel = modoSol
     ? 'bg-white border-slate-200 text-slate-800'
@@ -115,15 +113,11 @@ export const PwaSyncModulo: React.FC<PwaSyncModuloProps> = ({
 
       <section className={`rounded-2xl border p-4 ${panel}`}>
         <h3 className="text-sm font-bold">Herramientas del dispositivo</h3>
-        <p className={`mt-1 text-xs ${muted}`}>Permisos y respaldo local. El respaldo debe guardarse en un lugar seguro.</p>
+        <p className={`mt-1 text-xs ${muted}`}>Permisos del dispositivo. Para respaldar o restaurar los datos operativos, usa Administración → Respaldos.</p>
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button type="button" onClick={() => void solicitarPermisoNotificaciones()}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 text-xs font-bold text-amber-900 hover:bg-amber-100">
             <Bell className="h-4 w-4" /> Activar notificaciones
-          </button>
-          <button type="button" onClick={() => void descargarBackupJSON()}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-3 text-xs font-bold text-white hover:bg-emerald-800">
-            <Download className="h-4 w-4" /> Exportar respaldo JSON
           </button>
         </div>
       </section>
