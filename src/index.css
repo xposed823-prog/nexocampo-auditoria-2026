@@ -152,3 +152,134 @@ input, select, textarea { max-width: 100%; }
     transition-duration: .01ms !important;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Sistema visual v2 · NexoCampo Auditoría
+   Estética: verde profundo, superficies limpias y jerarquía clara.
+   Solo presentación; no modifica lógica ni datos de negocio.
+   ───────────────────────────────────────────────────────────── */
+.app-shell {
+  --nc-bg: #f3f7f2;
+  --nc-surface: #ffffff;
+  --nc-surface-soft: #edf4ee;
+  --nc-border: #d9e5da;
+  --nc-ink: #1d3325;
+  --nc-muted: #5e7464;
+  --nc-accent: #08764b;
+  --nc-accent-strong: #065f3b;
+  background-color: var(--nc-bg);
+  color: var(--nc-ink);
+}
+.app-shell[data-theme="dark"] {
+  --nc-bg: #101b14;
+  --nc-surface: #17251b;
+  --nc-surface-soft: #1c2d21;
+  --nc-border: #304638;
+  --nc-ink: #e8f1e9;
+  --nc-muted: #a6b8aa;
+  --nc-accent: #34d399;
+  --nc-accent-strong: #6ee7b7;
+  background-color: var(--nc-bg);
+  color: var(--nc-ink);
+}
+.app-shell[data-theme="light"] main {
+  background-color: transparent;
+}
+.app-shell[data-theme="light"] main h1,
+.app-shell[data-theme="light"] main h2,
+.app-shell[data-theme="light"] main h3 {
+  color: var(--nc-ink);
+}
+.app-shell[data-theme="light"] .bg-white {
+  background-color: var(--nc-surface);
+  border-color: var(--nc-border);
+  box-shadow: 0 1px 2px rgba(20, 50, 30, .035), 0 8px 22px rgba(20, 50, 30, .045);
+}
+.app-shell[data-theme="light"] .bg-slate-50 {
+  background-color: var(--nc-surface-soft);
+}
+.app-shell[data-theme="light"] .border-slate-200,
+.app-shell[data-theme="light"] .border-slate-300 {
+  border-color: var(--nc-border);
+}
+.app-shell[data-theme="light"] .text-slate-800,
+.app-shell[data-theme="light"] .text-slate-900 {
+  color: var(--nc-ink);
+}
+.app-shell[data-theme="light"] .text-slate-500,
+.app-shell[data-theme="light"] .text-slate-600 {
+  color: var(--nc-muted);
+}
+.app-shell[data-theme="light"] header.sticky {
+  background: rgba(255, 255, 255, .92);
+  border-color: var(--nc-border);
+}
+.app-shell[data-theme="dark"] .bg-slate-900 {
+  background-color: #101b14;
+}
+.app-shell[data-theme="dark"] .bg-slate-800 {
+  background-color: #17251b;
+}
+.app-shell[data-theme="dark"] .bg-slate-800\/40,
+.app-shell[data-theme="dark"] .bg-slate-800\/50 {
+  background-color: rgba(28, 45, 33, .78);
+}
+.app-shell[data-theme="dark"] .border-slate-700,
+.app-shell[data-theme="dark"] .border-slate-700\/60 {
+  border-color: var(--nc-border);
+}
+.app-shell[data-theme="dark"] .text-slate-400 {
+  color: #a6b8aa;
+}
+.app-shell[data-theme="dark"] input,
+.app-shell[data-theme="dark"] select,
+.app-shell[data-theme="dark"] textarea {
+  background-color: #101b14;
+  color: #e8f1e9;
+  border-color: #3a5141;
+}
+.app-shell input,
+.app-shell select,
+.app-shell textarea {
+  border-radius: .75rem;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.app-shell input:focus,
+.app-shell select:focus,
+.app-shell textarea:focus {
+  border-color: var(--nc-accent);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, .14);
+}
+.app-shell button:disabled {
+  cursor: not-allowed;
+  filter: saturate(.65);
+}
+.app-shell main section,
+.app-shell main article {
+  scroll-margin-top: 5.25rem;
+}
+.app-shell main .rounded-xl {
+  border-radius: 1rem;
+}
+.app-shell nav[aria-label="Navegación principal"] {
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  padding-bottom: max(.25rem, env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 600px) {
+  .app-shell {
+    margin-block: 1rem;
+    min-height: calc(100vh - 2rem);
+    border-radius: 1.25rem;
+    overflow: clip;
+  }
+}
+@media (max-width: 360px) {
+  .app-shell main {
+    padding-inline: .625rem;
+  }
+  .app-shell main .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1rem;
+  }
+}
+
