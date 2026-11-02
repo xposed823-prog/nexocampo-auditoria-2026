@@ -341,7 +341,7 @@ export const AdminModulo: React.FC<AdminModuloProps> = ({
               16 Casos Canónicos de Auditoría
             </h4>
             <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold">
-              46/46 PASS (100%)
+              Casos documentados · CI pendiente
             </span>
           </div>
           <p className="text-xs text-slate-400">
@@ -350,23 +350,23 @@ export const AdminModulo: React.FC<AdminModuloProps> = ({
           <div className="space-y-1.5 text-[11px] font-mono text-slate-300 pt-1">
             <div className="p-2 rounded bg-slate-900 border border-slate-800 flex justify-between">
               <span>Caso 1: Jornada 1 labor (475m)</span>
-              <span className="text-emerald-400">✓ PASS</span>
+              <span className="text-slate-400">Especificado</span>
             </div>
             <div className="p-2 rounded bg-slate-900 border border-slate-800 flex justify-between">
               <span>Caso 2: Jornada mixta 3 labores (540m)</span>
-              <span className="text-emerald-400">✓ PASS</span>
+              <span className="text-slate-400">Especificado</span>
             </div>
             <div className="p-2 rounded bg-slate-900 border border-slate-800 flex justify-between">
               <span>Caso 4: Anti-solapamiento temporal</span>
-              <span className="text-emerald-400">✓ PASS</span>
+              <span className="text-slate-400">Especificado</span>
             </div>
             <div className="p-2 rounded bg-slate-900 border border-slate-800 flex justify-between">
               <span>Caso 11: Media ponderada (86.36%)</span>
-              <span className="text-emerald-400">✓ PASS</span>
+              <span className="text-slate-400">Especificado</span>
             </div>
             <div className="p-2 rounded bg-slate-900 border border-slate-800 flex justify-between">
               <span>Caso 14: Oficios Varios aislado</span>
-              <span className="text-emerald-400">✓ PASS</span>
+              <span className="text-slate-400">Especificado</span>
             </div>
           </div>
         </div>
