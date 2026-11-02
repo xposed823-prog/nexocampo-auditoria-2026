@@ -49,6 +49,8 @@
   - se conserva el acceso a refrescar cola, notificaciones y exportar JSON.
 - Eliminados de `App.tsx` los estados, callbacks e imports ligados al formulario de prueba offline.
 - Eliminados imports y estado del shell que no tenían uso.
+- Retirados los badges estáticos “46/46 PASS” y “Test OK” en Administración/Laboratorio; ahora se distinguen los casos documentados de los resultados de CI.
+- Eliminada la exportación de respaldo duplicada desde el panel PWA; se remite a Administración → Respaldos, que es la vía canónica.
 
 ## Elementos que se conservaron deliberadamente
 
