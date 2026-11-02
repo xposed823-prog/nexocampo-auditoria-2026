@@ -41,19 +41,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Almacén en memoria simulado para persistencia del servidor
-const baseDeDatosServidor = {
-  jornadasSincronizadas: [],
-  auditoriaSync: []
-};
+// No se utiliza un almacén en memoria para confirmar sincronizaciones.
+// La persistencia durable y autenticada debe implementarse antes de habilitar /api/sync.
 
 /**
  * Healthcheck de conectividad para dispositivos en campo
  */
 app.get('/api/health', (req, res) => {
   res.status(200).json({
-    status: 'ONLINE',
-    servidor: 'NexoCampo Central Backend 2026',
+    status: 'SERVER_RUNNING',
+    servidor: 'NexoCampo Backend — entorno de desarrollo',
+    sincronizacion: 'DISABLED_NO_DURABLE_STORAGE',
+    message: 'La API de sincronización no está habilitada; este healthcheck solo confirma que Express está ejecutándose.',
     horaServidor: new Date().toISOString(),
     uptime: process.uptime()
   });
@@ -63,51 +62,14 @@ app.get('/api/health', (req, res) => {
  * Endpoint de Sincronización en Segundo Plano (Consumido por el Service Worker y el cliente)
  */
 app.post('/api/sync', (req, res) => {
-  const { registros } = req.body;
-
-  if (!Array.isArray(registros) || registros.length === 0) {
-    return res.status(400).json({
-      success: false,
-      error: 'Formato inválido. Se requiere un arreglo de registros no vacío.'
-    });
-  }
-
-  console.log(`[Servidor] Recibido lote de sincronización con ${registros.length} registros desde PWA.`);
-  
-  const ahora = new Date().toISOString();
-  let procesadosExitosos = 0;
-
-  for (const item of registros) {
-    const registroProcesado = {
-      id: item.payload?.id || `srv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      entidad: item.entidad || 'jornada',
-      datos: item.payload,
-      recibidoEn: ahora,
-      origenSync: req.headers['x-pwa-sync-origin'] || 'Cliente-Directo'
-    };
-
-    baseDeDatosServidor.jornadasSincronizadas.push(registroProcesado);
-    procesadosExitosos++;
-  }
-
-  // Registro de auditoría
-  baseDeDatosServidor.auditoriaSync.push({
-    loteId: `lote_${Date.now()}`,
-    totalRegistros: procesadosExitosos,
-    recibidoEn: ahora,
-    ip: req.ip
+  // Fail closed: no se debe confirmar recepción hasta disponer de persistencia durable,
+  // autenticación, idempotencia y validación del esquema de datos.
+  return res.status(501).json({
+    success: false,
+    code: 'SYNC_BACKEND_NOT_CONFIGURED',
+    message: 'Sincronización deshabilitada: no existe almacenamiento remoto durable configurado. La cola local debe conservarse.'
   });
-
-  console.log(`[Servidor] Lote procesado con éxito. Total acumulado en servidor: ${baseDeDatosServidor.jornadasSincronizadas.length}`);
-
-  return res.status(200).json({
-    success: true,
-    message: 'Lote de registros agrícolas sincronizado con éxito en el servidor central.',
-    sincronizados: procesadosExitosos,
-    totalServidor: baseDeDatosServidor.jornadasSincronizadas.length,
-    timestamp: ahora
-  });
-});
+};
 
 /**
  * Catálogo de Colaboradores
@@ -151,7 +113,7 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`====================================================`);
     console.log(` [NexoCampo 2026] Servidor Express PWA Activo`);
     console.log(` Puerto: http://localhost:${PORT}`);
-    console.log(` Endpoint Sync: http://localhost:${PORT}/api/sync`);
+    console.log(` Endpoint Sync: DESHABILITADO hasta configurar almacenamiento durable y autenticación`);
     console.log(` Healthcheck:   http://localhost:${PORT}/api/health`);
     console.log(`====================================================`);
   });
