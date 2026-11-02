@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Smartphone, AlertTriangle, Check, X, Search, FileBarChart, User, LogOut } from 'lucide-react';
+import { CheckCircle2, Smartphone, Search, FileBarChart } from 'lucide-react';
 import { usePWAInstall, useOnlineStatus } from './domain/usePWAInstall';
 import {
   obtenerRegistrosPendientes,
@@ -20,7 +20,7 @@ import {
   EstadoVisualNegocio
 } from './domain/formValidators';
 import { detectarSolapamientoTemporal } from './domain/businessRulesEngine';
-import { COLABORADORES_CATALOGO, AREAS_AGRONOMICAS, LABORES_AGRONOMICAS } from './domain/catalogoAgronomico';
+import { COLABORADORES_CATALOGO, LABORES_AGRONOMICAS } from './domain/catalogoAgronomico';
 import {
   abrirDB,
   dbGetAll,
@@ -103,7 +103,6 @@ const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 // Componente principal envuelto en AuthProvider
 function App() {
   const [tabActual, setTabActual] = useState<string>('inicio');
-  const [subTabRegistrar, setSubTabRegistrar] = useState<'labores' | 'polisombra' | 'oficios' | 'jornadas' | 'incidentes'>('labores');
   const [subTabReportes, setSubTabReportes] = useState<'rendimiento' | 'consulta'>('rendimiento');
   const [modoSol, setModoSol] = useState(true);
   const [docAbierto, setDocAbierto] = useState<string>('08');
