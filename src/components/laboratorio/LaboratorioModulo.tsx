@@ -20,7 +20,7 @@ export const LaboratorioModulo: React.FC<LaboratorioModuloProps> = ({ modoSol })
             </p>
           </div>
           <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold">
-            46/46 Unit Tests Aprobados (Node.js)
+            Casos ilustrativos · CI independiente
           </span>
         </div>
       </div>
@@ -137,7 +137,7 @@ export const LaboratorioModulo: React.FC<LaboratorioModuloProps> = ({ modoSol })
             <div key={c.num} className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 space-y-1">
               <div className="flex items-center justify-between">
                 <span className="font-mono font-bold text-emerald-400">Caso {c.num}</span>
-                <span className="text-[10px] text-emerald-300">✓ Test OK</span>
+                <span className="text-[10px] text-slate-400">Caso descrito</span>
               </div>
               <p className="font-semibold text-slate-200 text-[11px] truncate">{c.titulo}</p>
               <p className="text-[10px] text-slate-400 font-mono">{c.estado}</p>
