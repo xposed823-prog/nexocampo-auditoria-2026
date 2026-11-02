@@ -22,7 +22,7 @@
 4. **CI no confirmado en los últimos cambios**: los últimos commits visuales no tienen un estado de Actions visible desde esta revisión. No se afirma que tests, TypeScript, npm audit o build estén aprobados.
 5. **Backend Express prototipo en memoria**: el archivo `server.js` almacenaba sincronizaciones solo en RAM y devolvía éxito; un reinicio podía perder datos después de que el cliente vaciara su cola. El endpoint ahora responde 501 hasta contar con persistencia durable, autenticación e idempotencia.
 6. **Prueba de regresión del endpoint**: se añadió `src/domain/serverSync.test.ts` para exigir que el backend no confirme sincronización mientras siga deshabilitado.
-5. **Aceptación real en Android pendiente**: no se han comprobado interacción táctil, teclado, scroll, instalación, modo offline, contraste ni restauración desde un navegador móvil real.
+7. **Aceptación real en Android pendiente**: no se han comprobado interacción táctil, teclado, scroll, instalación, modo offline, contraste ni restauración desde un navegador móvil real.
 
 ### P1 — UX / precisión visual
 
