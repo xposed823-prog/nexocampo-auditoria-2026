@@ -20,6 +20,8 @@
 2. **Sin API de sincronización real**: el endpoint de desarrollo devuelve 501. La cola no debe limpiarse ni marcarse como sincronizada sin confirmación completa del backend.
 3. **Cifrado heredado pendiente**: persiste una clave maestra embebida para lectura de registros antiguos y la clave heredada se puede guardar en localStorage. No afirmar seguridad criptográfica completa hasta migrar registros, verificar lectura y retirar compatibilidad heredada sin pérdida.
 4. **CI no confirmado en los últimos cambios**: los últimos commits visuales no tienen un estado de Actions visible desde esta revisión. No se afirma que tests, TypeScript, npm audit o build estén aprobados.
+5. **Backend Express prototipo en memoria**: el archivo `server.js` almacenaba sincronizaciones solo en RAM y devolvía éxito; un reinicio podía perder datos después de que el cliente vaciara su cola. El endpoint ahora responde 501 hasta contar con persistencia durable, autenticación e idempotencia.
+6. **Prueba de regresión del endpoint**: se añadió `src/domain/serverSync.test.ts` para exigir que el backend no confirme sincronización mientras siga deshabilitado.
 5. **Aceptación real en Android pendiente**: no se han comprobado interacción táctil, teclado, scroll, instalación, modo offline, contraste ni restauración desde un navegador móvil real.
 
 ### P1 — UX / precisión visual
@@ -42,6 +44,7 @@
 - Retirados los tres accesos rápidos duplicados de Inicio. Se conserva el grid de acceso principal.
 - Unificado el sistema visual mediante tokens verde agrícola, superficies, contraste, inputs y paneles diferenciados para claro/oscuro.
 - Simplificado el panel PWA: quitado el simulador de registros ficticios, el inspector de código de ocho archivos y las afirmaciones no verificadas sobre backend.
+- El endpoint Express de sincronización quedó cerrado por defecto (HTTP 501) y se agregó prueba de regresión para evitar confirmaciones falsas.
 - El panel PWA ahora informa claramente que:
   - internet disponible no equivale a sincronización;
   - no hay backend remoto configurado;
