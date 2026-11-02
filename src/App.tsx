@@ -11,8 +11,7 @@ import { CheckCircle2, Smartphone, Search, FileBarChart } from 'lucide-react';
 import { usePWAInstall, useOnlineStatus } from './domain/usePWAInstall';
 import {
   obtenerRegistrosPendientes,
-  contarPendientes,
-  exportarBaseDatosJSON
+  contarPendientes
 } from './domain/pwaManager';
 import {
   validarPlasticoPolisombra,
@@ -282,22 +281,6 @@ function App() {
       }
     } else {
       dispararToast('Notificaciones no soportadas en este navegador');
-    }
-  };
-
-  const descargarBackupJSON = async () => {
-    try {
-      const json = await exportarBaseDatosJSON();
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `nexocampo_db_backup_${fechaLocalHoy()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      dispararToast('✓ Archivo JSON de respaldo descargado.');
-    } catch (e: any) {
-      dispararToast('Error al generar respaldo JSON');
     }
   };
 
@@ -775,7 +758,6 @@ function App() {
             pwaListaPendientes={pwaListaPendientes}
             refrescarColaPWA={refrescarColaPWA}
             solicitarPermisoNotificaciones={solicitarPermisoNotificaciones}
-            descargarBackupJSON={descargarBackupJSON}
           />
         )}
 
