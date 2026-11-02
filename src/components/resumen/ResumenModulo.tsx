@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, ArrowRight, Plus } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 export interface ResumenModuloProps {
   modoSol: boolean;
@@ -75,33 +75,6 @@ export const ResumenModulo: React.FC<ResumenModuloProps> = ({
         </div>
       </section>
 
-      {/* Accesos Rápidos Táctiles para Android */}
-      <div className={`p-4 rounded-xl border space-y-3 ${modoSol ? 'bg-white border-slate-300' : 'bg-slate-800/30 border-slate-700/50'}`}>
-        <h3 className="font-semibold text-xs uppercase tracking-wider text-slate-400">Acciones Táctiles de Campo</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <button
-            onClick={() => setTabActual('asistencia')}
-            className="min-h-[48px] py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-between"
-          >
-            <span>Pase de Lista Rápido</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setTabActual('polisombra')}
-            className="min-h-[48px] py-2.5 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs flex items-center justify-between"
-          >
-            <span>Registrar Plástico/Malla</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setModalIncidenteAbierto(true)}
-            className="min-h-[48px] py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/40 font-semibold text-xs flex items-center justify-between"
-          >
-            <span>Reportar Incidente SST</span>
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
