@@ -27,6 +27,7 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
   const [jornadasPersistidas, setJornadasPersistidas] = useState<JornadaRegistro[]>([]);
   const [guardando, setGuardando] = useState(false);
   const [cargando, setCargando] = useState(true);
+  const esDomingo = Boolean(fecha) && new Date(`${fecha}T12:00:00`).getDay() === 0;
 
   useEffect(() => {
     if (!fecha) return;
@@ -45,6 +46,8 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
       setPausaActiva(5);
     } else {
       // Domingo: no hay jornada ordinaria configurada.
+      // Domingo no tiene jornada ordinaria. Se conserva un horario visual
+      // no operativo; el cálculo y el guardado quedan bloqueados ese día.
       setApertura('06:30');
       setCierre('06:30');
       setPausaComida(0);
@@ -67,10 +70,19 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
     cargarJornadas();
   }, []);
 
-  const calculo = calcularJornadaLaboral(apertura, cierre, [
-    { tipo: 'almuerzo', duracionMinutos: pausaComida, esDeduccionComputable: true },
-    { tipo: 'pausa_5min', duracionMinutos: pausaActiva, esDeduccionComputable: true }
-  ]);
+  // Nunca permitir que una hora inválida lance una excepción durante el render.
+  // Un domingo no tiene cálculo ordinario y no se puede guardar como jornada.
+  const calculo = (() => {
+    if (esDomingo) return null;
+    try {
+      return calcularJornadaLaboral(apertura, cierre, [
+        { tipo: 'almuerzo', duracionMinutos: pausaComida, esDeduccionComputable: true },
+        { tipo: 'pausa_5min', duracionMinutos: pausaActiva, esDeduccionComputable: true }
+      ]);
+    } catch {
+      return null;
+    }
+  })();
 
   const jornadasBase = jornadasPersistidas
     .filter((jornada) => (jornada.tramos || []).some((tramo) => tramo.tipo === 'jornada_base'))
@@ -85,6 +97,14 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
   const guardarJornadaBase = async () => {
     if (!fecha) {
       dispararToast('Selecciona la fecha de la jornada.');
+      return;
+    }
+    if (esDomingo) {
+      dispararToast('El domingo no tiene jornada ordinaria configurada.');
+      return;
+    }
+    if (!calculo) {
+      dispararToast('Corrige el horario: la hora de cierre debe ser posterior a la apertura.');
       return;
     }
     if (colaboradoresSeleccionados.length === 0) {
@@ -125,7 +145,7 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
       hora_fin: cierre,
       minutos_efectivos_jornada: calculo.minutosEfectivosNetos,
       estandar_min: null,
-      observaciones: `Ventana ${apertura}–${cierre}. Descuento de alimentación: ${pausaComida} min; pausas activas: ${pausaActiva} min; tiempo efectivo calculado: ${calculo.minutosEfectivosNetos} min.`
+      observaciones: `Ventana ${apertura}–${cierre}. Descuento de alimentación: ${pausaComida} min; pausas activas: ${pausaActiva} min; tiempo efectivo calculado: ${calculo ? `${calculo.minutosEfectivosNetos} min` : '—'}.`
     };
     const nuevaJornada: JornadaRegistro = {
       id: jornadaId,
@@ -166,6 +186,8 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
         <p className={`text-xs mt-2 leading-relaxed ${secundario}`}>
           La jornada define la ventana general de trabajo y sus minutos efectivos. No se guarda como una labor productiva,
           por lo que no bloquea las labores consecutivas ni suma minutos dos veces al rendimiento técnico.
+          {esDomingo && <span className="block mt-2 font-semibold text-amber-600">Domingo: no hay jornada ordinaria configurada; el registro está deshabilitado.</span>}
+          {!esDomingo && !calculo && <span className="block mt-2 font-semibold text-amber-600">Horario inválido: el cierre debe ser posterior a la apertura.</span>}
         </p>
       </section>
 
@@ -202,11 +224,11 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
           <div className="p-4 rounded-xl bg-slate-900 border border-emerald-500/30 space-y-2">
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs text-slate-400">Duración bruta</span>
-              <span className="text-sm font-mono font-bold text-slate-100">{calculo.minutosBrutos} min</span>
+              <span className="text-sm font-mono font-bold text-slate-100">{calculo ? `${calculo.minutosBrutos} min` : '—'}</span>
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs text-slate-400">Descuentos</span>
-              <span className="text-sm font-mono font-bold text-amber-300">{calculo.totalDeduccionesMinutos} min</span>
+              <span className="text-sm font-mono font-bold text-amber-300">{calculo ? `${calculo.totalDeduccionesMinutos} min` : '—'}</span>
             </div>
             <div className="pt-2 border-t border-slate-700 flex items-center justify-between gap-3">
               <span className="text-xs font-semibold text-emerald-300">Tiempo efectivo de jornada</span>
@@ -231,7 +253,7 @@ export const JornadasModulo: React.FC<JornadasModuloProps> = ({ modoSol, dispara
               </label>
             ))}
           </div>
-          <button type="button" onClick={guardarJornadaBase} disabled={guardando || cargando} className="w-full min-h-[46px] rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2">
+          <button type="button" onClick={guardarJornadaBase} disabled={guardando || cargando || esDomingo || !calculo} className="w-full min-h-[46px] rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2">
             {guardando ? <Database className="w-4 h-4 animate-pulse" /> : <Plus className="w-4 h-4" />}
             {guardando ? 'Guardando…' : 'Guardar jornada base en IndexedDB'}
           </button>
